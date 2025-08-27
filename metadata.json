@@ -1,0 +1,5 @@
+{
+  "name": "Aula Integral COL",
+  "description": "A web-based admin panel for managing students, incidents, and assessments, inspired by the Aula Integral COL technical specification. This application provides a modern, responsive interface for educators to track student progress, log classroom incidents, and analyze evaluation data.",
+  "requestFramePermissions": []
+}
