@@ -7,6 +7,7 @@ import Assessments from './pages/Assessments';
 import Resources from './pages/Resources';
 import Profile from './pages/Profile';
 import Incidents from './pages/Incidents';
+import ParentPortal from './pages/ParentPortal';
 import { Page } from './types';
 import { initDB } from './db';
 import { SIDEBAR_ITEMS } from './constants';
@@ -61,6 +62,8 @@ const App: React.FC = () => {
         return <Resources />;
       case 'Profile':
         return <Profile />;
+      case 'ParentPortal':
+        return <ParentPortal />;
       default:
         return <Dashboard />;
     }

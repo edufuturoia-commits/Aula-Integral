@@ -1,17 +1,11 @@
 import React from 'react';
 import type { User } from '../types';
+import { MOCK_USER } from '../constants';
 
 interface HeaderProps {
   currentPage: string;
   isOnline: boolean;
 }
-
-const mockUser: User = {
-    name: 'Prof. Carmen',
-    avatarUrl: 'https://picsum.photos/seed/user/100/100',
-    role: 'Coordinador(a)'
-};
-
 
 const StatusIndicator: React.FC<{isOnline: boolean}> = ({ isOnline }) => (
   <div className="flex items-center space-x-2">
@@ -33,10 +27,10 @@ const Header: React.FC<HeaderProps> = ({ currentPage, isOnline }) => {
         <StatusIndicator isOnline={isOnline} />
         <div className="w-px h-8 bg-gray-200"></div>
         <div className="flex items-center space-x-3">
-          <img src={mockUser.avatarUrl} alt={mockUser.name} className="h-10 w-10 rounded-full object-cover" />
+          <img src={MOCK_USER.avatarUrl} alt={MOCK_USER.name} className="h-10 w-10 rounded-full object-cover" />
           <div className="hidden md:block">
-            <p className="font-semibold text-gray-700">{mockUser.name}</p>
-            <p className="text-xs text-gray-500">{mockUser.role}</p>
+            <p className="font-semibold text-gray-700">{MOCK_USER.name}</p>
+            <p className="text-xs text-gray-500">{MOCK_USER.role}</p>
           </div>
         </div>
       </div>

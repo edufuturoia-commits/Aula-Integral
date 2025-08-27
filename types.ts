@@ -1,7 +1,7 @@
 
 
 
-export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Incidents';
+export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Incidents' | 'ParentPortal';
 
 export interface Student {
   id: number;
@@ -46,7 +46,7 @@ export interface NotificationSettings {
 export interface User {
   name: string;
   avatarUrl: string;
-  role: string;
+  role: 'Coordinador(a)' | 'Docente';
   email?: string;
   phone?: string;
   notifications?: NotificationSettings;
@@ -106,6 +106,14 @@ export interface Assessment {
   questions: Question[];
 }
 
+export interface StudentAssessmentResult {
+    studentId: number;
+    assessmentId: string;
+    assessmentTitle: string;
+    score: number; // Score out of 100
+    completedAt: string;
+}
+
 // Nuevos tipos para el módulo de Recursos
 export enum ResourceType {
     PDF = 'PDF',
@@ -122,4 +130,77 @@ export interface Resource {
     subjectArea: SubjectArea;
     url: string; // En un caso real, sería la URL al bucket de S3/GCS
     content?: string; // Contenido generado por IA
+}
+
+// Nuevos tipos para Asistencia
+export enum AttendanceStatus {
+  PRESENT = 'Presente',
+  ABSENT = 'Ausente',
+  TARDY = 'Tarde',
+}
+
+export interface AttendanceRecord {
+  id: string; // Composite key: `${studentId}-${date}`
+  studentId: number;
+  date: string; // YYYY-MM-DD format
+  status: AttendanceStatus;
+  synced: boolean;
+}
+
+// Tipo para mensajes de acudientes
+export interface ParentMessage {
+  studentId: number;
+  studentName: string;
+  studentAvatar: string;
+  lastMessage: string;
+  timestamp: string;
+  unread: boolean;
+  conversation: {
+    sender: 'teacher' | 'parent';
+    text: string;
+    timestamp: string;
+  }[];
+}
+
+// Tipos para Citaciones
+export enum CitationStatus {
+  PENDING = 'Pendiente',
+  CONFIRMED = 'Confirmada',
+  COMPLETED = 'Realizada',
+  CANCELLED = 'Cancelada',
+}
+
+export interface Citation {
+  id: string;
+  studentId: number;
+  studentName: string;
+  studentAvatar: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  location: string;
+  reason: string;
+  status: CitationStatus;
+  cancellationReason?: string;
+}
+
+// Tipos para Comunicados (Mensajería Masiva)
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  recipients: 'all' | { grade: string; group: string; };
+  timestamp: string;
+  sentBy: string;
+}
+
+export interface Teacher {
+  id: string;
+  name: string;
+  avatarUrl: string;
+  subject: SubjectArea;
+  isHomeroomTeacher?: boolean;
+  assignedGroup?: {
+    grade: string;
+    group: string;
+  };
 }

@@ -1,9 +1,12 @@
-import type { Incident, Resource } from './types';
+import type { Incident, Resource, AttendanceRecord, Announcement } from './types';
+import { MOCK_ANNOUNCEMENTS } from './constants';
 
 const DB_NAME = 'AulaIntegralDB';
-const DB_VERSION = 2; // Incremented version to trigger onupgradeneeded
+const DB_VERSION = 5; // Incremented version to trigger onupgradeneeded
 const INCIDENTS_STORE_NAME = 'incidents';
 const RESOURCES_STORE_NAME = 'resources';
+const ATTENDANCE_STORE_NAME = 'attendance';
+const ANNOUNCEMENTS_STORE_NAME = 'announcements';
 
 let db: IDBDatabase;
 
@@ -27,6 +30,8 @@ export const initDB = (): Promise<boolean> => {
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
+      const transaction = (event.target as IDBOpenDBRequest).transaction;
+
       if (!db.objectStoreNames.contains(INCIDENTS_STORE_NAME)) {
         const incidentsStore = db.createObjectStore(INCIDENTS_STORE_NAME, { keyPath: 'id' });
         incidentsStore.createIndex('synced', 'synced', { unique: false });
@@ -34,6 +39,26 @@ export const initDB = (): Promise<boolean> => {
       }
       if (!db.objectStoreNames.contains(RESOURCES_STORE_NAME)) {
         db.createObjectStore(RESOURCES_STORE_NAME, { keyPath: 'id' });
+      }
+
+      let attendanceStore: IDBObjectStore;
+      if (!db.objectStoreNames.contains(ATTENDANCE_STORE_NAME)) {
+        attendanceStore = db.createObjectStore(ATTENDANCE_STORE_NAME, { keyPath: 'id' });
+      } else if (transaction) {
+        attendanceStore = transaction.objectStore(ATTENDANCE_STORE_NAME);
+      } else {
+        return; 
+      }
+      
+      if (!attendanceStore.indexNames.contains('date')) {
+        attendanceStore.createIndex('date', 'date', { unique: false });
+      }
+      if (!attendanceStore.indexNames.contains('studentId')) {
+        attendanceStore.createIndex('studentId', 'studentId', { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains(ANNOUNCEMENTS_STORE_NAME)) {
+        db.createObjectStore(ANNOUNCEMENTS_STORE_NAME, { keyPath: 'id' });
       }
     };
   });
@@ -125,4 +150,76 @@ export const getDownloadedResources = (): Promise<Resource[]> => {
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
     });
+};
+
+// --- Attendance Functions ---
+
+export const addOrUpdateAttendanceRecord = (record: AttendanceRecord): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const store = getStore(ATTENDANCE_STORE_NAME, 'readwrite');
+        const request = store.put(record);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+};
+
+export const getAttendanceForDate = (date: string): Promise<AttendanceRecord[]> => {
+    return new Promise((resolve, reject) => {
+        const store = getStore(ATTENDANCE_STORE_NAME, 'readonly');
+        const index = store.index('date');
+        const request = index.getAll(IDBKeyRange.only(date));
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+};
+
+export const getAllAttendanceRecords = (): Promise<AttendanceRecord[]> => {
+    return new Promise((resolve, reject) => {
+        const store = getStore(ATTENDANCE_STORE_NAME, 'readonly');
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        request.onerror = () => reject(request.error);
+    });
+};
+
+// --- Announcement Functions ---
+export const addAnnouncement = (announcement: Announcement): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const store = getStore(ANNOUNCEMENTS_STORE_NAME, 'readwrite');
+    const request = store.add(announcement);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+};
+
+export const getAnnouncements = (): Promise<Announcement[]> => {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(ANNOUNCEMENTS_STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(ANNOUNCEMENTS_STORE_NAME);
+    const countRequest = store.count();
+
+    countRequest.onsuccess = () => {
+      if (countRequest.result === 0) {
+        // Store is empty, seed it with mock data
+        let completed = 0;
+        MOCK_ANNOUNCEMENTS.forEach(ann => {
+          const addReq = store.add(ann);
+          addReq.onsuccess = () => {
+            completed++;
+            if (completed === MOCK_ANNOUNCEMENTS.length) {
+              // After all are added, resolve with the mock data
+              resolve([...MOCK_ANNOUNCEMENTS].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+            }
+          };
+          addReq.onerror = () => reject(addReq.error);
+        });
+      } else {
+        // Store has data, just get all
+        const getAllRequest = store.getAll();
+        getAllRequest.onsuccess = () => resolve(getAllRequest.result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+        getAllRequest.onerror = () => reject(getAllRequest.error);
+      }
+    };
+    countRequest.onerror = () => reject(countRequest.error);
+  });
 };
