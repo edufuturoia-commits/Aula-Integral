@@ -5,15 +5,20 @@ import ImportStudentsModal from '../components/ImportStudentsModal';
 import CitationModal from '../components/CitationModal';
 import GroupMessageModal from '../components/GroupMessageModal';
 import CancelCitationModal from '../components/CancelCitationModal';
-import type { Student, Incident, ParentMessage, Citation } from '../types';
+import AddStudentModal from '../components/AddStudentModal'; // Import new modal
+import type { Student, Incident, ParentMessage, Citation, CoordinationMessage } from '../types';
 import { CitationStatus } from '../types';
-import { addIncident, getIncidents, getUnsyncedIncidents, updateIncident, deleteIncident } from '../db';
-import { MOCK_STUDENTS, GRADES, GROUPS, MOCK_PARENT_MESSAGES, MOCK_CITATIONS } from '../constants';
+import { addIncident, getIncidents, getUnsyncedIncidents, updateIncident, deleteIncident, addOrUpdateStudents } from '../db';
+import { GRADES, GROUPS, MOCK_PARENT_MESSAGES, MOCK_CITATIONS, MOCK_COORDINATION_MESSAGES, MOCK_USER } from '../constants';
 import AttendanceTaker from '../components/AttendanceTaker';
+import ManualViewer from '../components/ManualViewer';
+import EventPostersViewer from '../components/EventPostersViewer';
 
 
 interface ClassroomProps {
   isOnline: boolean;
+  students: Student[];
+  setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
 }
 
 const SyncingIcon: React.FC<{className?: string}> = ({className}) => (
@@ -63,11 +68,11 @@ const ChatModal: React.FC<{
     return (
          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg mx-4 flex flex-col h-[70vh]" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b flex items-center space-x-3">
-                     <img src={chat.studentAvatar} alt={chat.studentName} className="w-10 h-10 rounded-full" />
-                     <div>
+                <div className="p-4 border-b flex items-center space-x-3 min-w-0">
+                     <img src={chat.studentAvatar} alt={chat.studentName} className="w-10 h-10 rounded-full flex-shrink-0" />
+                     <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-bold">Chat con Acudiente de</h3>
-                        <p className="text-sm text-gray-600">{chat.studentName}</p>
+                        <p className="text-sm text-gray-600 break-words">{chat.studentName}</p>
                      </div>
                 </div>
                 <div ref={chatContainerRef} className="flex-1 p-6 space-y-4 overflow-y-auto bg-gray-50">
@@ -75,7 +80,7 @@ const ChatModal: React.FC<{
                         <div key={index} className={`flex items-end gap-2 ${msg.sender === 'teacher' ? 'justify-end' : ''}`}>
                              {msg.sender === 'parent' && <img src={chat.studentAvatar} className="w-8 h-8 rounded-full" alt="parent" />}
                             <div className={`max-w-md p-3 rounded-xl ${msg.sender === 'teacher' ? 'bg-primary text-white rounded-br-none' : 'bg-gray-200 text-gray-800 rounded-bl-none'}`}>
-                                <p className="text-sm">{msg.text}</p>
+                                <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                                 <p className="text-xs opacity-70 mt-1 text-right">{msg.timestamp}</p>
                             </div>
                             {msg.sender === 'teacher' && <img src="https://picsum.photos/seed/user/100/100" className="w-8 h-8 rounded-full" alt="teacher" />}
@@ -101,11 +106,10 @@ const ChatModal: React.FC<{
 };
 
 
-const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
-  const [students, setStudents] = useState<Student[]>(MOCK_STUDENTS);
+const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents }) => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [isCitationModalOpen, setIsCitationModalOpen] = useState(false);
   const [isGroupMessageModalOpen, setIsGroupMessageModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -116,11 +120,15 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
   const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [groupFilter, setGroupFilter] = useState<string>('all');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'students' | 'attendance'>('students');
-  const [rightPanelTab, setRightPanelTab] = useState<'incidents' | 'messages' | 'citations'>('incidents');
+  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'manual' | 'events'>('students');
+  const [rightPanelTab, setRightPanelTab] = useState<'incidents' | 'messages' | 'citations' | 'coordination'>('incidents');
   const [parentMessages, setParentMessages] = useState<ParentMessage[]>(MOCK_PARENT_MESSAGES);
   const [activeChat, setActiveChat] = useState<ParentMessage | null>(null);
   const [citations, setCitations] = useState<Citation[]>(MOCK_CITATIONS);
+  const [coordinationConversation, setCoordinationConversation] = useState<CoordinationMessage[]>(MOCK_COORDINATION_MESSAGES);
+  const [newCoordinationMessage, setNewCoordinationMessage] = useState('');
+  const coordinationChatRef = useRef<HTMLDivElement>(null);
+
 
   
   const isInitialMount = useRef(true);
@@ -148,6 +156,13 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
   useEffect(() => {
     loadIncidents();
   }, [loadIncidents]);
+  
+  useEffect(() => {
+    if (coordinationChatRef.current) {
+        coordinationChatRef.current.scrollTop = coordinationChatRef.current.scrollHeight;
+    }
+  }, [coordinationConversation]);
+
 
   const openModalForStudent = (student: Student) => {
     setSelectedStudent(student);
@@ -169,11 +184,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
     await addIncident(newIncident);
     await loadIncidents();
     handleCloseModal();
-    if(isOnline) {
-      showSyncMessage("Incidencia guardada y sincronizada.");
-    } else {
-      showSyncMessage("Incidencia guardada localmente. Se sincronizará al recuperar la conexión.");
-    }
+    showSyncMessage("Incidencia guardada. Coordinación ha sido notificada.");
   };
   
   const handleSaveCitations = (newCitations: Citation[]) => {
@@ -204,20 +215,20 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
     showSyncMessage("Mensaje grupal enviado a todos los acudientes.");
   };
 
-  const handleImportStudents = (studentNames: string[], grade: string, group: string) => {
-      const newStudents: Student[] = studentNames.map((name, index) => ({
-          id: Date.now() + index,
-          name,
-          avatarUrl: `https://picsum.photos/seed/${Date.now() + index}/100/100`,
-          grade: grade,
-          group: group,
-      }));
-      setStudents(prev => [...prev, ...newStudents].sort((a, b) => a.name.localeCompare(b.name)));
-      setIsImportModalOpen(false);
-      showSyncMessage(`${newStudents.length} estudiante(s) añadido(s) a ${grade} - Grupo ${group} exitosamente.`);
-      setGradeFilter(grade);
-      setGroupFilter(group);
-  }
+  const handleSaveNewStudent = async (newStudentData: { name: string; grade: string; group: string }) => {
+    const newStudent: Student = {
+        id: Date.now(),
+        name: newStudentData.name,
+        avatarUrl: `https://picsum.photos/seed/${Date.now()}/100/100`,
+        grade: newStudentData.grade,
+        group: newStudentData.group,
+    };
+    const updatedStudents = [...students, newStudent];
+    await addOrUpdateStudents(updatedStudents);
+    setStudents(updatedStudents.sort((a, b) => a.name.localeCompare(b.name)));
+    setIsAddStudentModalOpen(false);
+    showSyncMessage(`${newStudent.name} ha sido añadido exitosamente.`);
+  };
   
     const handleArchiveIncident = async (id: string) => {
         const incidentToUpdate = incidents.find(inc => inc.id === id);
@@ -250,6 +261,36 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
             prevChat ? { ...prevChat, conversation: newConversation } : null
         );
     };
+    
+    const handleSendToCoordination = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newCoordinationMessage.trim()) return;
+
+        const readConversation = coordinationConversation.map(m => ({ ...m, readByTeacher: true }));
+        
+        const teacherMessage: CoordinationMessage = {
+            id: `cm_${Date.now()}`,
+            sender: 'teacher',
+            text: newCoordinationMessage,
+            timestamp: 'Ahora',
+            readByTeacher: true,
+        };
+
+        setCoordinationConversation([...readConversation, teacherMessage]);
+        setNewCoordinationMessage('');
+
+        setTimeout(() => {
+            const coordinationReply: CoordinationMessage = {
+                id: `cm_${Date.now() + 1}`,
+                sender: 'coordination',
+                text: 'Recibido, profe. Gracias por la información, lo revisaremos a la brevedad.',
+                timestamp: 'Ahora',
+                readByTeacher: false,
+            };
+            setCoordinationConversation(prev => [...prev, coordinationReply]);
+        }, 2000);
+    };
+
 
   const syncPendingIncidents = useCallback(async () => {
     setIsSyncing(true);
@@ -282,10 +323,43 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
       syncPendingIncidents();
     }
   }, [isOnline, isSyncing, syncPendingIncidents]);
+  
+  const handleFabClick = () => {
+    switch (rightPanelTab) {
+        case 'incidents':
+            setSelectedStudent(null);
+            setIsModalOpen(true);
+            break;
+        case 'citations':
+            setIsCitationModalOpen(true);
+            break;
+        case 'messages':
+            setIsGroupMessageModalOpen(true);
+            break;
+        default:
+            // No action for 'coordination' tab
+            console.log("No default FAB action for this tab.");
+    }
+  };
+
+  const getFabTitle = () => {
+    switch(rightPanelTab) {
+        case 'incidents':
+            return 'Registrar Incidencia';
+        case 'citations':
+            return 'Crear Nueva Citación';
+        case 'messages':
+            return 'Nuevo Mensaje Grupal';
+        default:
+            return '';
+    }
+  }
+
 
   const pendingSyncCount = activeIncidents.filter(i => !i.synced).length;
   const unreadMessagesCount = parentMessages.filter(m => m.unread).length;
   const pendingCitationsCount = citations.filter(c => c.status === CitationStatus.PENDING).length;
+  const unreadCoordinationMessagesCount = useMemo(() => coordinationConversation.filter(m => m.sender === 'coordination' && !m.readByTeacher).length, [coordinationConversation]);
   
   const getStatusClass = (status: CitationStatus) => {
     switch (status) {
@@ -316,6 +390,19 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
                     >
                         Control de Asistencia
                     </button>
+                    <button
+                        onClick={() => setActiveTab('events')}
+                        className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'events' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                    >
+                        Eventos Institucionales
+                    </button>
+                     <button
+                        onClick={() => setActiveTab('manual')}
+                        className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'manual' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                        aria-current={activeTab === 'manual' ? 'page' : undefined}
+                    >
+                        Manual de Convivencia
+                    </button>
                 </nav>
             </div>
       </div>
@@ -324,38 +411,42 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
                 <StudentList 
-                students={filteredStudents} 
-                onSelectStudent={openModalForStudent}
-                onImportClick={() => setIsImportModalOpen(true)} 
-                grades={availableGrades}
-                selectedGrade={gradeFilter}
-                onGradeChange={setGradeFilter}
-                groups={availableGroups}
-                selectedGroup={groupFilter}
-                onGroupChange={setGroupFilter}
+                    students={filteredStudents} 
+                    onSelectStudent={openModalForStudent}
+                    onAddStudentClick={() => setIsAddStudentModalOpen(true)} 
+                    grades={availableGrades}
+                    selectedGrade={gradeFilter}
+                    onGradeChange={setGradeFilter}
+                    groups={availableGroups}
+                    selectedGroup={groupFilter}
+                    onGroupChange={setGroupFilter}
                 />
             </div>
             <div className="bg-white rounded-xl shadow-md flex flex-col">
                 <div className="p-4 border-b border-gray-200">
-                    <nav className="-mb-px flex space-x-4" aria-label="Right Panel Tabs">
+                    <nav className="-mb-px flex space-x-4 overflow-x-auto" aria-label="Right Panel Tabs">
                          <button onClick={() => setRightPanelTab('incidents')} className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${rightPanelTab === 'incidents' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
                             Incidencias
                             {pendingSyncCount > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{pendingSyncCount}</span>}
                          </button>
                          <button onClick={() => setRightPanelTab('messages')} className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${rightPanelTab === 'messages' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
-                            Mensajes
+                            Acudientes
                             {unreadMessagesCount > 0 && <span className="bg-accent text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{unreadMessagesCount}</span>}
                          </button>
                          <button onClick={() => setRightPanelTab('citations')} className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${rightPanelTab === 'citations' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
                             Citaciones
                              {pendingCitationsCount > 0 && <span className="bg-yellow-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{pendingCitationsCount}</span>}
                          </button>
+                         <button onClick={() => setRightPanelTab('coordination')} className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${rightPanelTab === 'coordination' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+                            Coordinación
+                             {unreadCoordinationMessagesCount > 0 && <span className="bg-blue-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{unreadCoordinationMessagesCount}</span>}
+                         </button>
                     </nav>
                 </div>
 
-                <div className="p-4 flex-1 overflow-y-auto">
+                <div className="flex-1 flex flex-col overflow-hidden">
                     {rightPanelTab === 'incidents' && (
-                         <ul className="space-y-3 h-full max-h-[60vh]">
+                         <ul className="space-y-3 h-full max-h-[60vh] overflow-y-auto p-4">
                             {activeIncidents.map(incident => (
                                 <li key={incident.id} className={`p-3 rounded-md border ${incident.synced ? 'bg-gray-50 border-gray-200' : 'bg-amber-50 border-amber-200'}`}>
                                     <div className="flex justify-between items-start">
@@ -387,25 +478,25 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
                         </ul>
                     )}
                     {rightPanelTab === 'messages' && (
-                        <div>
-                             <button onClick={() => setIsGroupMessageModalOpen(true)} className="w-full mb-4 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors flex items-center justify-center space-x-2">
+                        <div className="p-4 flex-1 flex flex-col overflow-hidden">
+                             <button onClick={() => setIsGroupMessageModalOpen(true)} className="w-full mb-4 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors flex items-center justify-center space-x-2 flex-shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-1.707 1.707A1 1 0 003 15v1a1 1 0 001 1h12a1 1 0 001-1v-1a1 1 0 00-.293-.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
                                 <span>Nuevo Mensaje Grupal</span>
                             </button>
-                            <ul className="space-y-3 h-full max-h-[55vh] overflow-y-auto">
+                            <ul className="space-y-3 flex-1 overflow-y-auto">
                                 {parentMessages.map(msg => (
                                     <li key={msg.studentId} onClick={() => setActiveChat(msg)} className="p-3 rounded-md border bg-gray-50 border-gray-200 cursor-pointer hover:bg-blue-50 hover:border-blue-300">
                                         <div className="flex items-start gap-3">
-                                            <div className="relative">
+                                            <div className="relative flex-shrink-0">
                                                 <img src={msg.studentAvatar} alt={msg.studentName} className="w-10 h-10 rounded-full" />
                                                 {msg.unread && <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-white"></span>}
                                             </div>
-                                            <div className="flex-1">
+                                            <div className="flex-1 min-w-0">
                                                 <div className="flex justify-between text-sm">
                                                     <p className="font-semibold">{msg.studentName}</p>
-                                                    <p className="text-xs text-gray-500">{msg.timestamp}</p>
+                                                    <p className="text-xs text-gray-500 flex-shrink-0 ml-2">{msg.timestamp}</p>
                                                 </div>
-                                                <p className={`text-sm text-gray-600 truncate ${msg.unread ? 'font-bold text-gray-800' : ''}`}>{msg.lastMessage}</p>
+                                                <p className={`text-sm text-gray-600 ${msg.unread ? 'font-bold text-gray-800' : ''}`}>{msg.lastMessage}</p>
                                             </div>
                                         </div>
                                     </li>
@@ -415,12 +506,12 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
                         </div>
                     )}
                      {rightPanelTab === 'citations' && (
-                        <div>
-                             <button onClick={() => setIsCitationModalOpen(true)} className="w-full mb-4 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors flex items-center justify-center space-x-2">
+                        <div className="p-4 flex-1 flex flex-col overflow-hidden">
+                             <button onClick={() => setIsCitationModalOpen(true)} className="w-full mb-4 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors flex items-center justify-center space-x-2 flex-shrink-0">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>
                                 <span>Crear Nueva Citación</span>
                             </button>
-                            <ul className="space-y-3 h-full max-h-[55vh] overflow-y-auto">
+                            <ul className="space-y-3 flex-1 overflow-y-auto">
                                 {sortedCitations.map(cit => (
                                     <li key={cit.id} className={`p-3 rounded-md border ${cit.status === CitationStatus.CANCELLED ? 'bg-gray-200 border-gray-300' : 'bg-gray-50 border-gray-200'}`}>
                                         <div className="flex items-start gap-3">
@@ -452,6 +543,42 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
                             </ul>
                         </div>
                     )}
+                    {rightPanelTab === 'coordination' && (
+                        <>
+                            <div className="p-4 border-b flex items-center space-x-3 flex-shrink-0">
+                                <img src={MOCK_USER.avatarUrl} alt={MOCK_USER.name} className="w-10 h-10 rounded-full" />
+                                <div>
+                                    <h3 className="text-lg font-bold">Chat con Coordinación</h3>
+                                    <p className="text-sm text-gray-600">{MOCK_USER.name}</p>
+                                </div>
+                            </div>
+                            <div ref={coordinationChatRef} className="flex-1 p-6 space-y-4 overflow-y-auto bg-gray-50">
+                                {coordinationConversation.map((msg) => (
+                                    <div key={msg.id} className={`flex items-end gap-2 ${msg.sender === 'teacher' ? 'justify-end' : ''}`}>
+                                        {msg.sender === 'coordination' && <img src={MOCK_USER.avatarUrl} className="w-8 h-8 rounded-full" alt="coordination" />}
+                                        <div className={`max-w-md p-3 rounded-xl ${msg.sender === 'teacher' ? 'bg-primary text-white rounded-br-none' : 'bg-gray-200 text-gray-800 rounded-bl-none'}`}>
+                                            <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
+                                            <p className="text-xs opacity-70 mt-1 text-right">{msg.timestamp}</p>
+                                        </div>
+                                        {msg.sender === 'teacher' && <img src="https://picsum.photos/seed/profesor/100/100" className="w-8 h-8 rounded-full" alt="teacher" />}
+                                    </div>
+                                ))}
+                            </div>
+                            <form onSubmit={handleSendToCoordination} className="p-4 border-t bg-white flex items-center gap-4 flex-shrink-0">
+                                <textarea
+                                    value={newCoordinationMessage}
+                                    onChange={(e) => setNewCoordinationMessage(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendToCoordination(e); }}}
+                                    placeholder="Escribe un mensaje a coordinación..."
+                                    className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white text-gray-900 placeholder-gray-500"
+                                    rows={1}
+                                />
+                                <button type="submit" className="bg-primary text-white rounded-full p-3 hover:bg-primary-focus transition-colors disabled:bg-gray-300" disabled={!newCoordinationMessage.trim()}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                                </button>
+                            </form>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
@@ -461,19 +588,29 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
         <AttendanceTaker students={filteredStudents} isOnline={isOnline} />
       )}
 
+      {activeTab === 'events' && (
+        <EventPostersViewer />
+      )}
 
-      {isModalOpen && selectedStudent && (
+      {activeTab === 'manual' && (
+        <ManualViewer />
+      )}
+
+
+      {isModalOpen && (
         <IncidentModal
           student={selectedStudent}
+          students={students}
           onClose={handleCloseModal}
           onSave={handleSaveIncident}
+          reporterName="Prof. Carmen"
         />
       )}
 
-      {isImportModalOpen && (
-          <ImportStudentsModal
-            onClose={() => setIsImportModalOpen(false)}
-            onSave={handleImportStudents}
+      {isAddStudentModalOpen && (
+          <AddStudentModal
+            onClose={() => setIsAddStudentModalOpen(false)}
+            onSave={handleSaveNewStudent}
           />
       )}
 
@@ -507,11 +644,11 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline }) => {
         />
       )}
 
-      {activeTab === 'students' && (
+      {activeTab === 'students' && rightPanelTab !== 'coordination' && (
         <button 
-            onClick={() => alert("Seleccione un estudiante de la lista para registrar una incidencia.")}
+            onClick={handleFabClick}
             className="absolute bottom-8 right-8 bg-accent text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-3xl hover:bg-red-700 transition-transform transform hover:scale-110"
-            title="Registrar Incidencia"
+            title={getFabTitle()}
         >
             +
         </button>

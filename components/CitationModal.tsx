@@ -58,13 +58,19 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
   };
 
   const handleSelectAll = () => {
-    const allFilteredSelected = filteredStudents.length > 0 && filteredStudents.every(s => selectedStudentIds.has(s.id));
-    if (allFilteredSelected) {
-      setSelectedStudentIds(new Set());
-    } else {
-      const allFilteredIds = new Set(filteredStudents.map(s => s.id));
-      setSelectedStudentIds(allFilteredIds);
-    }
+    const allFilteredInListAreSelected = filteredStudents.length > 0 && filteredStudents.every(s => selectedStudentIds.has(s.id));
+
+    setSelectedStudentIds(prevSelectedIds => {
+        const newSelectedIds = new Set(prevSelectedIds);
+        if (allFilteredInListAreSelected) {
+            // If all visible students are already selected, deselect them
+            filteredStudents.forEach(student => newSelectedIds.delete(student.id));
+        } else {
+            // Otherwise, select all visible students (add them to the set)
+            filteredStudents.forEach(student => newSelectedIds.add(student.id));
+        }
+        return newSelectedIds;
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -128,14 +134,14 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
             <div className="flex-1 overflow-y-auto pr-2">
                 {citationType === 'individual' && (
                     <div className="space-y-4">
-                        <p className="text-sm text-gray-600">Busca y selecciona uno o más estudiantes para enviarles la misma citación.</p>
+                        <p className="text-sm text-gray-600">Busca y selecciona uno o más estudiantes para enviarles la misma citación. La selección se mantendrá aunque cambies de grupo.</p>
                          {MOCK_USER.role === 'Coordinador(a)' && (
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-2 bg-gray-100 rounded-md">
-                                <select value={individualGradeFilter} onChange={e => {setIndividualGradeFilter(e.target.value); setSelectedStudentIds(new Set())}} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
+                                <select value={individualGradeFilter} onChange={e => setIndividualGradeFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
                                     <option value="all">Todos los Grados</option>
                                     {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
-                                <select value={individualGroupFilter} onChange={e => {setIndividualGroupFilter(e.target.value); setSelectedStudentIds(new Set())}} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
+                                <select value={individualGroupFilter} onChange={e => setIndividualGroupFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
                                     <option value="all">Todos los Grupos</option>
                                     {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
@@ -177,6 +183,33 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
                                 {filteredStudents.length === 0 && <p className="text-center text-gray-500 p-4">No se encontraron estudiantes.</p>}
                             </ul>
                         </div>
+                        {selectedStudentIds.size > 0 && (
+                            <div className="mt-4 p-3 bg-gray-50 border rounded-lg">
+                                <h4 className="text-sm font-semibold mb-2 text-gray-700">
+                                    {selectedStudentIds.size} Estudiante(s) Seleccionado(s):
+                                </h4>
+                                <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">
+                                    {students
+                                        .filter(s => selectedStudentIds.has(s.id))
+                                        .map(s => (
+                                            <span key={s.id} className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full flex items-center">
+                                                {s.name} ({s.grade}-{s.group})
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleToggleStudent(s.id)}
+                                                    className="ml-1.5 -mr-0.5 p-0.5 rounded-full hover:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                    aria-label={`Quitar a ${s.name}`}
+                                                >
+                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                  </svg>
+                                                </button>
+                                            </span>
+                                        ))
+                                    }
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

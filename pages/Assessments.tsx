@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Assessment, Question } from '../types';
 import AssessmentCreator from '../components/AssessmentCreator';
 import { MOCK_ASSESSMENT_DATA } from '../constants';
-import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from 'recharts';
+import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar } from 'recharts';
 
 const AssessmentCard: React.FC<{ assessment: Assessment, onViewResults: () => void }> = ({ assessment, onViewResults }) => (
     <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center">
@@ -74,18 +74,22 @@ const Assessments: React.FC = () => {
             
             {selectedAssessment && (
                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={handleCloseResults}>
-                    <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-2xl mx-4" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-3xl mx-4" onClick={e => e.stopPropagation()}>
                         <h2 className="text-xl font-bold mb-4">Análisis de Desempeño: {selectedAssessment.title}</h2>
                          <div style={{ width: '100%', height: 400 }}>
                             <ResponsiveContainer>
-                                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={MOCK_ASSESSMENT_DATA}>
-                                    <PolarGrid />
-                                    <PolarAngleAxis dataKey="competency" />
-                                    <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                                    <Radar name="Promedio del Curso" dataKey="classAverage" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                                    <Radar name="Estudiante Destacado" dataKey="studentAverage" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
-                                    <Tooltip />
-                                </RadarChart>
+                                <BarChart data={MOCK_ASSESSMENT_DATA} margin={{ top: 5, right: 20, left: 0, bottom: 70 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="competency" angle={-45} textAnchor="end" interval={0} tick={{ fontSize: 12 }} />
+                                    <YAxis domain={[0, 100]} tick={{ fontSize: 12 }}/>
+                                    <Tooltip 
+                                        contentStyle={{ borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                                        cursor={{ fill: 'rgba(243, 244, 246, 0.5)' }}
+                                    />
+                                    <Legend wrapperStyle={{ paddingTop: '40px' }}/>
+                                    <Bar name="Promedio del Curso" dataKey="classAverage" fill="#8884d8" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                                    <Bar name="Estudiante Destacado" dataKey="studentAverage" fill="#82ca9d" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                                </BarChart>
                             </ResponsiveContainer>
                         </div>
                         <div className="text-right mt-4">

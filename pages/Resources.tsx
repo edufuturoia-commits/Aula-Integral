@@ -1,9 +1,15 @@
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { MOCK_RESOURCES, SUBJECT_AREAS, RESOURCE_TYPES } from '../constants';
+import React, { useState, useMemo } from 'react';
+import { SUBJECT_AREAS, RESOURCE_TYPES } from '../constants';
 import type { Resource, ResourceType } from '../types';
-import { getDownloadedResources, addResource, removeResource } from '../db';
+import { addResource, removeResource } from '../db';
 import ResourceCreator from '../components/ResourceCreator';
+
+interface ResourcesProps {
+    resources: Resource[];
+    downloadedIds: Set<string>;
+    onUpdate: () => void;
+}
 
 const ICONS: Record<ResourceType, JSX.Element> = {
     PDF: <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 11-2 0V4h-3v9a1 1 0 11-2 0V4H6v12a1 1 0 11-2 0V4zm4-2a1 1 0 00-1 1v1h2V3a1 1 0 00-1-1z" clipRule="evenodd" /></svg>,
@@ -84,57 +90,27 @@ const ResourceViewerModal: React.FC<{ resource: Resource; onClose: () => void }>
 );
 
 
-const Resources: React.FC = () => {
+const Resources: React.FC<ResourcesProps> = ({ resources, downloadedIds, onUpdate }) => {
     const [view, setView] = useState<'list' | 'create'>('list');
-    const [resources, setResources] = useState<Resource[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [areaFilter, setAreaFilter] = useState<string>('all');
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [showOnlyDownloaded, setShowOnlyDownloaded] = useState(false);
-    const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
     const [viewingResource, setViewingResource] = useState<Resource | null>(null);
-
-    const loadResources = useCallback(async () => {
-        const resourcesMap = new Map<string, Resource>(
-            MOCK_RESOURCES.map(res => [res.id, res])
-        );
-
-        const localResources = await getDownloadedResources();
-        
-        localResources.forEach(res => {
-            resourcesMap.set(res.id, res);
-        });
-
-        const sortedResources = Array.from(resourcesMap.values()).sort((a, b) => {
-            const aIsAi = !!a.content;
-            const bIsAi = !!b.content;
-            if (aIsAi && !bIsAi) return -1;
-            if (!aIsAi && bIsAi) return 1;
-            return a.title.localeCompare(b.title);
-        });
-
-        setResources(sortedResources);
-        setDownloadedIds(new Set(localResources.map(r => r.id)));
-    }, []);
-
-    useEffect(() => {
-        loadResources();
-    }, [loadResources]);
-
 
     const handleDownload = async (resource: Resource) => {
         await addResource(resource);
-        await loadResources();
+        onUpdate();
     };
 
     const handleDelete = async (resourceId: string) => {
         await removeResource(resourceId);
-        await loadResources();
+        onUpdate();
     };
     
     const handleSaveResource = async (newResource: Resource) => {
         await addResource(newResource);
-        await loadResources();
+        onUpdate();
         
         setView('list');
         setSearchQuery('');
@@ -148,7 +124,7 @@ const Resources: React.FC = () => {
             const matchesSearch = res.title.toLowerCase().includes(searchQuery.toLowerCase());
             const matchesArea = areaFilter === 'all' || res.subjectArea === areaFilter;
             const matchesType = typeFilter === 'all' || res.type === typeFilter;
-            const matchesDownloaded = !showOnlyDownloaded || downloadedIds.has(res.id);
+            const matchesDownloaded = !showOnlyDownloaded || downloadedIds.has(res.id) || !!res.content;
             return matchesSearch && matchesArea && matchesType && matchesDownloaded;
         });
     }, [searchQuery, areaFilter, typeFilter, showOnlyDownloaded, downloadedIds, resources]);

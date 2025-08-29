@@ -1,12 +1,15 @@
-import type { Incident, Resource, AttendanceRecord, Announcement } from './types';
+import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher } from './types';
 import { MOCK_ANNOUNCEMENTS } from './constants';
 
-const DB_NAME = 'AulaIntegralDB';
-const DB_VERSION = 5; // Incremented version to trigger onupgradeneeded
+const DB_NAME = 'AulaIntegralMayaDB';
+const DB_VERSION = 6; // Incremented version to add new stores
 const INCIDENTS_STORE_NAME = 'incidents';
 const RESOURCES_STORE_NAME = 'resources';
 const ATTENDANCE_STORE_NAME = 'attendance';
 const ANNOUNCEMENTS_STORE_NAME = 'announcements';
+const STUDENTS_STORE_NAME = 'students';
+const TEACHERS_STORE_NAME = 'teachers';
+
 
 let db: IDBDatabase;
 
@@ -59,6 +62,14 @@ export const initDB = (): Promise<boolean> => {
 
       if (!db.objectStoreNames.contains(ANNOUNCEMENTS_STORE_NAME)) {
         db.createObjectStore(ANNOUNCEMENTS_STORE_NAME, { keyPath: 'id' });
+      }
+
+      // Add new stores for students and teachers
+      if (!db.objectStoreNames.contains(STUDENTS_STORE_NAME)) {
+          db.createObjectStore(STUDENTS_STORE_NAME, { keyPath: 'id' });
+      }
+       if (!db.objectStoreNames.contains(TEACHERS_STORE_NAME)) {
+          db.createObjectStore(TEACHERS_STORE_NAME, { keyPath: 'id' });
       }
     };
   });
@@ -222,4 +233,57 @@ export const getAnnouncements = (): Promise<Announcement[]> => {
     };
     countRequest.onerror = () => reject(countRequest.error);
   });
+};
+
+
+// --- Student and Teacher Functions ---
+
+const bulkUpdate = <T>(storeName: string, data: T[]): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(storeName, 'readwrite');
+        const store = transaction.objectStore(storeName);
+        store.clear(); // Clear existing data
+        let completed = 0;
+        if (data.length === 0) {
+            resolve();
+            return;
+        }
+        data.forEach(item => {
+            const request = store.put(item);
+            request.onsuccess = () => {
+                completed++;
+                if (completed === data.length) {
+                    resolve();
+                }
+            };
+        });
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+    });
+};
+
+export const getStudents = (): Promise<Student[]> => {
+    return new Promise((resolve, reject) => {
+        const store = getStore(STUDENTS_STORE_NAME, 'readonly');
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result.sort((a,b) => a.name.localeCompare(b.name)));
+        request.onerror = () => reject(request.error);
+    });
+};
+
+export const addOrUpdateStudents = (students: Student[]): Promise<void> => {
+    return bulkUpdate(STUDENTS_STORE_NAME, students);
+};
+
+export const getTeachers = (): Promise<Teacher[]> => {
+    return new Promise((resolve, reject) => {
+        const store = getStore(TEACHERS_STORE_NAME, 'readonly');
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result.sort((a,b) => a.name.localeCompare(b.name)));
+        request.onerror = () => reject(request.error);
+    });
+};
+
+export const addOrUpdateTeachers = (teachers: Teacher[]): Promise<void> => {
+    return bulkUpdate(TEACHERS_STORE_NAME, teachers);
 };

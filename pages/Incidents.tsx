@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getIncidents, updateIncident, getAllAttendanceRecords, getAnnouncements, addAnnouncement } from '../db';
+import { getIncidents, updateIncident, getAllAttendanceRecords, getAnnouncements, addAnnouncement, addOrUpdateTeachers, addOrUpdateStudents, addIncident } from '../db';
 import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher } from '../types';
 import { IncidentType, AttendanceStatus, CitationStatus } from '../types';
-import { MOCK_STUDENTS, GRADES, GROUPS, MOCK_CITATIONS, MOCK_USER, MOCK_TEACHERS } from '../constants';
+import { GRADES, GROUPS, MOCK_CITATIONS, COORDINATOR_PROFILE } from '../constants';
 import CitationModal from '../components/CitationModal';
 import CancelCitationModal from '../components/CancelCitationModal';
 import ImportTeachersModal from '../components/ImportTeachersModal';
+import EditTeacherModal from '../components/EditTeacherModal';
+import StudentList from '../components/StudentList';
+import ImportStudentsModal from '../components/ImportStudentsModal';
+import IncidentModal from '../components/IncidentModal';
 
 
 type EnrichedAttendanceRecord = AttendanceRecord & { student: Student };
@@ -63,11 +67,16 @@ const generateAttendancePDFHTML = (title: string, records: EnrichedAttendanceRec
             <td>${rec.student.name}</td>
             <td>${rec.student.grade}</td>
             <td>${rec.student.group}</td>
-            <td><span class="${rec.status === AttendanceStatus.ABSENT ? 'status-absent' : rec.status === AttendanceStatus.TARDY ? 'status-tardy' : ''}">${rec.status}</span></td>
+             <td><span class="${
+                rec.status === AttendanceStatus.ABSENT ? 'status-absent' :
+                rec.status === AttendanceStatus.TARDY ? 'status-tardy' :
+                rec.status === AttendanceStatus.EXCUSED ? 'status-excused' :
+                rec.status === AttendanceStatus.SPECIAL_PERMIT ? 'status-permit' : ''
+            }">${rec.status}</span></td>
         </tr>
     `).join('');
     return `
-        <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${title}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;color:#333;margin:20px}h1{color:#005A9C;border-bottom:2px solid #005A9C;padding-bottom:10px;font-size:24px}p{font-size:12px;color:#555}table{width:100%;border-collapse:collapse;margin-top:20px;font-size:12px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background-color:#f2f2f2;color:#333;font-weight:bold}tr:nth-child(even){background-color:#f9f9f9}.status-absent{color:#DA291C;font-weight:bold;}.status-tardy{color:#FFCD00;font-weight:bold;}@media print{.no-print{display:none}}</style></head><body><p class="no-print" style="background-color:#fffae6;border:1px solid #ffecb3;padding:15px;border-radius:5px;"><strong>Instrucción:</strong> Para guardar como PDF, use la función de Imprimir de su navegador (Ctrl+P o Cmd+P) y seleccione "Guardar como PDF" como destino.</p><h1>${title}</h1><p>Generado el: ${new Date().toLocaleString('es-CO')}</p><table><thead><tr><th>Fecha</th><th>Estudiante</th><th>Grado</th><th>Grupo</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+        <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${title}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;color:#333;margin:20px}h1{color:#005A9C;border-bottom:2px solid #005A9C;padding-bottom:10px;font-size:24px}p{font-size:12px;color:#555}table{width:100%;border-collapse:collapse;margin-top:20px;font-size:12px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background-color:#f2f2f2;color:#333;font-weight:bold}tr:nth-child(even){background-color:#f9f9f9}.status-absent{color:#DA291C;font-weight:bold;}.status-tardy{color:#ff9900;font-weight:bold;}.status-excused{color:#2094f3;font-weight:bold;}.status-permit{color:#673AB7;font-weight:bold;}@media print{.no-print{display:none}}</style></head><body><p class="no-print" style="background-color:#fffae6;border:1px solid #ffecb3;padding:15px;border-radius:5px;"><strong>Instrucción:</strong> Para guardar como PDF, use la función de Imprimir de su navegador (Ctrl+P o Cmd+P) y seleccione "Guardar como PDF" como destino.</p><h1>${title}</h1><p>Generado el: ${new Date().toLocaleString('es-CO')}</p><table><thead><tr><th>Fecha</th><th>Estudiante</th><th>Grado</th><th>Grupo</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
 };
 
 
@@ -86,7 +95,7 @@ const downloadFile = (content: string, filename: string, mimeType: string) => {
 
 
 // --- Component ---
-type CoordinationTab = 'incidents' | 'attendance' | 'citations' | 'comunicados' | 'teacher_management';
+type CoordinationTab = 'incidents' | 'attendance' | 'citations' | 'comunicados' | 'teacher_management' | 'student_management';
 
 const TABS: { id: CoordinationTab; label: string }[] = [
     { id: 'incidents', label: 'Historial de Incidencias' },
@@ -94,10 +103,19 @@ const TABS: { id: CoordinationTab; label: string }[] = [
     { id: 'citations', label: 'Gestión de Citaciones' },
     { id: 'comunicados', label: 'Comunicados' },
     { id: 'teacher_management', label: 'Gestión de Docentes' },
+    { id: 'student_management', label: 'Gestión de Estudiantes' },
 ];
 
+interface IncidentsProps {
+    isOnline: boolean;
+    students: Student[];
+    setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
+    teachers: Teacher[];
+    setTeachers: React.Dispatch<React.SetStateAction<Teacher[]>>;
+}
 
-const Incidents: React.FC = () => {
+
+const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, teachers, setTeachers }) => {
     const [incidents, setIncidents] = useState<Incident[]>([]);
     const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
     const [allCitations, setAllCitations] = useState<Citation[]>([]);
@@ -138,10 +156,23 @@ const Incidents: React.FC = () => {
     });
     
     // Teacher state
-    const [teachers, setTeachers] = useState<Teacher[]>(MOCK_TEACHERS);
     const [isImportTeachersModalOpen, setIsImportTeachersModalOpen] = useState(false);
+    const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+    
+    // Student Management State
+    const [studentGradeFilter, setStudentGradeFilter] = useState<string>('all');
+    const [studentGroupFilter, setStudentGroupFilter] = useState<string>('all');
+    const [isImportStudentsModalOpen, setIsImportStudentsModalOpen] = useState(false);
+    const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
+    const [selectedStudentForIncident, setSelectedStudentForIncident] = useState<Student | null>(null);
+    const [showSnackbar, setShowSnackbar] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
 
-    const studentMap = useMemo(() => new Map<number, Student>(MOCK_STUDENTS.map(s => [s.id, s])), []);
+    const studentMap = useMemo(() => new Map<number, Student>(students.map(s => [s.id, s])), [students]);
+
+    const showSyncMessage = (message: string) => {
+        setShowSnackbar({ message, visible: true });
+        setTimeout(() => setShowSnackbar({ message: '', visible: false }), 4000);
+    }
 
     const loadData = async () => {
         setLoading(true);
@@ -152,9 +183,8 @@ const Incidents: React.FC = () => {
         ]);
         setIncidents(incidentsData);
         setAttendanceRecords(attendanceData);
-        setAllCitations(MOCK_CITATIONS);
+        setAllCitations(MOCK_CITATIONS); // This is still mock, should be moved to DB if needed
         setAnnouncements(announcementsData);
-        setTeachers(MOCK_TEACHERS);
         setLoading(false);
     };
 
@@ -205,10 +235,15 @@ const Incidents: React.FC = () => {
 
     const attendanceSummary = useMemo(() => {
         return displayedAttendance.reduce((acc, record) => {
-            if (record.status === AttendanceStatus.ABSENT) acc.absent++;
-            if (record.status === AttendanceStatus.TARDY) acc.tardy++;
+            acc[record.status] = (acc[record.status] || 0) + 1;
             return acc;
-        }, { absent: 0, tardy: 0 });
+        }, { 
+            [AttendanceStatus.PRESENT]: 0,
+            [AttendanceStatus.ABSENT]: 0,
+            [AttendanceStatus.TARDY]: 0,
+            [AttendanceStatus.EXCUSED]: 0,
+            [AttendanceStatus.SPECIAL_PERMIT]: 0,
+        } as Record<AttendanceStatus, number>);
     }, [displayedAttendance]);
 
     const handleToggleArchive = async (incident: Incident) => {
@@ -252,7 +287,7 @@ const Incidents: React.FC = () => {
             content: newAnnouncement.content,
             recipients: newAnnouncement.recipientType === 'all' ? 'all' : { grade: newAnnouncement.grade, group: newAnnouncement.group },
             timestamp: new Date().toISOString(),
-            sentBy: MOCK_USER.name,
+            sentBy: COORDINATOR_PROFILE.name,
         };
         
         try {
@@ -294,10 +329,96 @@ const Incidents: React.FC = () => {
         setCitationToCancel(null);
     };
     
-    const handleSaveTeachers = (newTeachers: Teacher[]) => {
-        setTeachers(prev => [...prev, ...newTeachers].sort((a, b) => a.name.localeCompare(b.name)));
-        setIsImportTeachersModalOpen(false);
+    const handleSaveTeachers = async (newTeachers: Teacher[]) => {
+        try {
+            const validTeachers: Teacher[] = [];
+            const seenIds = new Set<string>();
+    
+            for (const teacher of newTeachers) {
+                if (teacher.id && typeof teacher.id === 'string' && teacher.id.trim() !== '' && !seenIds.has(teacher.id)) {
+                    const teacherWithAuth: Teacher = {
+                        ...teacher,
+                        password: teacher.id, // Set password to ID
+                        passwordChanged: false, // Set flag for first login
+                    };
+                    validTeachers.push(teacherWithAuth);
+                    seenIds.add(teacher.id);
+                } else {
+                    console.warn(`Skipping teacher with invalid or duplicate ID: ${teacher.name}`);
+                }
+            }
+            
+            if (validTeachers.length !== newTeachers.length) {
+                const skippedCount = newTeachers.length - validTeachers.length;
+                alert(`${skippedCount} docente(s) fue(ron) omitido(s) debido a datos duplicados o inválidos (Cédula). Por favor, revise el archivo de origen.`);
+            }
+    
+            if (validTeachers.length > 0) {
+                await addOrUpdateTeachers(validTeachers);
+                setTeachers(validTeachers.sort((a, b) => a.name.localeCompare(b.name)));
+            } else if (newTeachers.length > 0) {
+                 alert("No se pudo importar ningún docente. Asegúrese de que cada docente en el archivo tenga una Cédula única y válida.");
+            }
+            
+            setIsImportTeachersModalOpen(false);
+        } catch (error) {
+            console.error("Error al guardar docentes:", error);
+            alert("Ocurrió un error inesperado al guardar los datos de los docentes. Por favor, intente de nuevo.");
+        }
     };
+    
+    const handleUpdateTeacher = async (updatedTeacher: Teacher) => {
+        const updatedTeachers = teachers.map(t => t.id === updatedTeacher.id ? updatedTeacher : t);
+        await addOrUpdateTeachers(updatedTeachers);
+        setTeachers(updatedTeachers);
+        setEditingTeacher(null);
+    };
+    
+    const handleDeleteTeacher = async (teacherId: string) => {
+        if (window.confirm('¿Estás seguro de que quieres eliminar a este docente? Esta acción no se puede deshacer.')) {
+            const updatedTeachers = teachers.filter(t => t.id !== teacherId);
+            await addOrUpdateTeachers(updatedTeachers);
+            setTeachers(updatedTeachers);
+        }
+    };
+
+     const handleImportStudents = async (studentNames: string[], grade: string, group: string) => {
+        const newStudents: Student[] = studentNames.map((name, index) => ({
+            id: Date.now() + index,
+            name,
+            avatarUrl: `https://picsum.photos/seed/${Date.now() + index}/100/100`,
+            grade: grade,
+            group: group,
+        }));
+        await addOrUpdateStudents([...students, ...newStudents]);
+        setStudents(prev => [...prev, ...newStudents].sort((a, b) => a.name.localeCompare(b.name)));
+        setIsImportStudentsModalOpen(false);
+        // showSyncMessage(`${newStudents.length} estudiante(s) añadido(s) a ${grade} - Grupo ${group} exitosamente.`);
+        setStudentGradeFilter(grade);
+        setStudentGroupFilter(group);
+    };
+
+    const handleSelectStudentForIncident = (student: Student) => {
+        setSelectedStudentForIncident(student);
+        setIsIncidentModalOpen(true);
+    };
+    
+    const handleSaveIncident = async (incident: Incident) => {
+        const newIncident: Incident = { ...incident, synced: isOnline };
+        await addIncident(newIncident);
+        await loadData();
+        setIsIncidentModalOpen(false);
+        setSelectedStudentForIncident(null);
+        showSyncMessage("El acudiente y el estudiante han sido notificados.");
+    };
+
+    const filteredStudentsForList = useMemo(() => {
+      return students.filter(student => {
+          const matchesGrade = studentGradeFilter === 'all' || student.grade === studentGradeFilter;
+          const matchesGroup = studentGroupFilter === 'all' || student.group === studentGroupFilter;
+          return matchesGrade && matchesGroup;
+      });
+    }, [students, studentGradeFilter, studentGroupFilter]);
 
     const getStatusClass = (status: CitationStatus) => {
         switch (status) {
@@ -337,13 +458,26 @@ const Incidents: React.FC = () => {
                             {displayedIncidents.map(inc => (
                                 <div key={inc.id} className="p-4 rounded-md border bg-gray-50">
                                     <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="font-semibold text-primary">{inc.studentName} - <span className="font-normal text-gray-600">{inc.type}</span></p>
-                                            <p className="text-sm text-gray-500">{new Date(inc.timestamp).toLocaleString()}</p>
-                                        </div>
-                                        <button onClick={() => handleToggleArchive(inc)} className="text-sm font-semibold text-gray-600 hover:text-primary">{incidentView === 'active' ? 'Archivar' : 'Desarchivar'}</button>
+                                        <h4 className="font-semibold text-primary flex-1">{inc.studentName} - <span className="font-normal text-gray-600">{inc.type}{inc.otherTypeDescription ? ` (${inc.otherTypeDescription})` : ''}</span></h4>
+                                        <button onClick={() => handleToggleArchive(inc)} className="text-sm font-semibold text-gray-600 hover:text-primary flex-shrink-0 ml-4">{incidentView === 'active' ? 'Archivar' : 'Desarchivar'}</button>
                                     </div>
-                                    <p className="mt-2 text-gray-700">{inc.notes}</p>
+                                    <p className="text-xs text-gray-500 mb-3">{new Date(inc.timestamp).toLocaleString('es-CO', { dateStyle: 'full', timeStyle: 'short' })}</p>
+                                    
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 text-sm mb-3">
+                                        <div>
+                                            <p className="font-medium text-gray-500">Reportado por:</p>
+                                            <p className="text-gray-800">{inc.teacherName}</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-gray-500">Lugar del Suceso:</p>
+                                            <p className="text-gray-800">{inc.location}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="mt-2 pt-2 border-t border-gray-200">
+                                        <p className="font-medium text-gray-500 text-sm">Descripción:</p>
+                                        <p className="text-gray-700 whitespace-pre-wrap text-sm">{inc.notes}</p>
+                                    </div>
                                 </div>
                             ))}
                             {displayedIncidents.length === 0 && <p className="text-center text-gray-500 py-8">No se encontraron incidencias.</p>}
@@ -375,204 +509,4 @@ const Incidents: React.FC = () => {
                             <div className="flex items-center gap-2 w-full md:w-auto flex-wrap justify-end">
                                 <input type="text" placeholder="Buscar estudiante..." value={attendanceSearch} onChange={e => setAttendanceSearch(e.target.value)} className="w-full sm:w-auto p-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500" />
                                 <button onClick={() => handleDownloadAttendance('csv')} className="p-2 border rounded-md hover:bg-gray-100" title="Descargar CSV"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg></button>
-                                <button onClick={() => handleDownloadAttendance('pdf')} className="p-2 border rounded-md hover:bg-gray-100" title="Descargar PDF"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg></button>
-                            </div>
-                        </div>
-                        <div className="flex justify-center gap-6 mb-4 text-center p-4 bg-gray-50 rounded-lg">
-                            <div><p className="text-2xl font-bold">{displayedAttendance.length}</p><p className="text-sm font-medium text-gray-500">Registros Totales</p></div>
-                            <div><p className="text-2xl font-bold text-red-600">{attendanceSummary.absent}</p><p className="text-sm font-medium text-gray-500">Ausencias</p></div>
-                            <div><p className="text-2xl font-bold text-yellow-600">{attendanceSummary.tardy}</p><p className="text-sm font-medium text-gray-500">Tardanzas</p></div>
-                        </div>
-                        <div className="overflow-x-auto max-h-[50vh]">
-                            <table className="min-w-full text-sm divide-y divide-gray-200">
-                                <thead className="bg-gray-100 sticky top-0"><tr>
-                                    <th className="px-4 py-2 text-left font-semibold text-gray-600">Fecha</th>
-                                    <th className="px-4 py-2 text-left font-semibold text-gray-600">Estudiante</th>
-                                    <th className="px-4 py-2 text-left font-semibold text-gray-600">Estado</th>
-                                </tr></thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {displayedAttendance.map(rec => (
-                                        <tr key={rec.id}>
-                                            <td className="px-4 py-2">{rec.date}</td>
-                                            <td className="px-4 py-2 font-medium">{rec.student.name} <span className="text-xs text-gray-500">({rec.student.grade} - {rec.student.group})</span></td>
-                                            <td className="px-4 py-2"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${rec.status === AttendanceStatus.ABSENT ? 'bg-red-100 text-red-800' : rec.status === AttendanceStatus.TARDY ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>{rec.status}</span></td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                             {displayedAttendance.length === 0 && <p className="text-center text-gray-500 py-8">No se encontraron registros de asistencia con los filtros seleccionados.</p>}
-                        </div>
-                    </div>
-                );
-            case 'citations':
-                return (
-                    <div className="bg-white p-6 rounded-xl shadow-md">
-                        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                           <h2 className="text-xl font-bold text-gray-800">Gestión de Citaciones</h2>
-                           <div className="flex items-center gap-2 flex-wrap">
-                               <select value={citationStatusFilter} onChange={e => setCitationStatusFilter(e.target.value)} className="w-full sm:w-auto p-2 border border-gray-300 rounded-md bg-white text-gray-900">
-                                   <option value="all">Todos los Estados</option>
-                                   {Object.values(CitationStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                               </select>
-                               <input type="text" placeholder="Buscar por estudiante o motivo..." value={citationSearch} onChange={e => setCitationSearch(e.target.value)} className="w-full sm:w-auto p-2 border border-gray-300 rounded-md bg-white text-gray-900" />
-                               <button onClick={() => setIsCitationModalOpen(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors">Nueva Citación</button>
-                           </div>
-                        </div>
-                        <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-                             {displayedCitations.map(cit => (
-                                <div key={cit.id} className={`p-3 rounded-md border ${cit.status === CitationStatus.CANCELLED ? 'bg-gray-200 border-gray-300' : 'bg-gray-50 border-gray-200'}`}>
-                                    <div className="flex items-start gap-3">
-                                        <img src={cit.studentAvatar} alt={cit.studentName} className="w-10 h-10 rounded-full" />
-                                        <div className="flex-1">
-                                            <div className="flex justify-between items-center text-sm">
-                                                <p className="font-semibold">{cit.studentName}</p>
-                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(cit.status)}`}>{cit.status}</span>
-                                            </div>
-                                            <p className="text-sm text-gray-600">{cit.reason}</p>
-                                            <p className="text-xs text-gray-500 mt-1">{new Date(cit.date).toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} - {cit.time}</p>
-                                        </div>
-                                    </div>
-                                    {cit.status === CitationStatus.CANCELLED && cit.cancellationReason && (
-                                        <div className="mt-2 p-2 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm">
-                                            <p><strong className="font-semibold">Cancelada:</strong> {cit.cancellationReason}</p>
-                                        </div>
-                                    )}
-                                    {[CitationStatus.PENDING, CitationStatus.CONFIRMED].includes(cit.status) && (
-                                        <div className="mt-3 text-right">
-                                            <button onClick={() => handleOpenCancelModal(cit)} className="text-xs font-semibold text-red-600 hover:text-red-800">
-                                                Cancelar
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                            {displayedCitations.length === 0 && <p className="text-center text-gray-500 py-8">No se encontraron citaciones.</p>}
-                        </div>
-                    </div>
-                );
-            case 'comunicados':
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="md:col-span-1 bg-white p-6 rounded-xl shadow-md">
-                            <h3 className="text-lg font-bold mb-4">Nuevo Comunicado</h3>
-                            <form onSubmit={(e) => { e.preventDefault(); handleSendAnnouncement(); }} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Destinatarios</label>
-                                    <select value={newAnnouncement.recipientType} onChange={e => setNewAnnouncement(p => ({ ...p, recipientType: e.target.value }))} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
-                                        <option value="all">Todos los Acudientes</option>
-                                        <option value="group">Grupo Específico</option>
-                                    </select>
-                                </div>
-                                {newAnnouncement.recipientType === 'group' && (
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <select value={newAnnouncement.grade} onChange={e => setNewAnnouncement(p => ({ ...p, grade: e.target.value }))} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
-                                            {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
-                                        </select>
-                                        <select value={newAnnouncement.group} onChange={e => setNewAnnouncement(p => ({ ...p, group: e.target.value }))} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
-                                            {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
-                                        </select>
-                                    </div>
-                                )}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                                    <input type="text" value={newAnnouncement.title} onChange={e => setNewAnnouncement(p => ({ ...p, title: e.target.value }))} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900" required />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Contenido</label>
-                                    <textarea rows={5} value={newAnnouncement.content} onChange={e => setNewAnnouncement(p => ({ ...p, content: e.target.value }))} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900" required></textarea>
-                                </div>
-                                <button type="submit" className="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors">
-                                    Enviar Comunicado
-                                </button>
-                            </form>
-                        </div>
-                        <div className="md:col-span-2 bg-white p-6 rounded-xl shadow-md">
-                            <h3 className="text-lg font-bold mb-4">Historial de Comunicados</h3>
-                            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                                {announcements.length > 0 ? announcements.map(ann => (
-                                    <div key={ann.id} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-                                         <div className="flex justify-between items-start">
-                                             <h4 className="font-semibold text-primary">{ann.title}</h4>
-                                             <span className="text-xs text-gray-500">{new Date(ann.timestamp).toLocaleDateString('es-CO')}</span>
-                                         </div>
-                                         <p className="text-sm text-gray-600 mt-2">{ann.content}</p>
-                                         <p className="text-xs text-gray-400 mt-3 text-right">Enviado por: {ann.sentBy}</p>
-                                    </div>
-                                )) : (
-                                    <p className="text-center text-gray-500 py-8">No hay comunicados enviados.</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                );
-            case 'teacher_management':
-                return (
-                    <div className="bg-white p-6 rounded-xl shadow-md">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-gray-800">Plantel Docente ({teachers.length})</h2>
-                            <button onClick={() => setIsImportTeachersModalOpen(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors flex items-center space-x-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                                <span>Importar Docentes</span>
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[60vh] overflow-y-auto pr-2">
-                            {teachers.map(teacher => (
-                                <div key={teacher.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex flex-col items-center text-center">
-                                    <img src={teacher.avatarUrl} alt={teacher.name} className="w-20 h-20 rounded-full object-cover mb-3"/>
-                                    <h3 className="font-bold text-gray-800">{teacher.name}</h3>
-                                    <p className="text-sm text-gray-600">{teacher.subject}</p>
-                                    {teacher.isHomeroomTeacher && teacher.assignedGroup && (
-                                        <span className="mt-2 text-xs font-bold text-primary bg-blue-100 px-3 py-1 rounded-full">
-                                            Director de Grupo: {teacher.assignedGroup.grade} - {teacher.assignedGroup.group}
-                                        </span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-        }
-    };
-
-    return (
-        <div className="space-y-6">
-            <div className="border-b border-gray-200">
-                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-                    {TABS.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </nav>
-            </div>
-            <div className="mt-4">
-                {renderContent()}
-            </div>
-            {isCitationModalOpen && (
-                <CitationModal 
-                    students={MOCK_STUDENTS}
-                    onClose={() => setIsCitationModalOpen(false)}
-                    onSave={handleSaveCitations}
-                />
-            )}
-            {isCancelModalOpen && citationToCancel && (
-                <CancelCitationModal 
-                    onClose={() => setIsCancelModalOpen(false)}
-                    onConfirm={handleConfirmCancelCitation}
-                />
-            )}
-            {isImportTeachersModalOpen && (
-                <ImportTeachersModal 
-                    onClose={() => setIsImportTeachersModalOpen(false)}
-                    onSave={handleSaveTeachers}
-                />
-            )}
-        </div>
-    );
-};
-
-export default Incidents;
+                                <button onClick={() => handleDownloadAttendance('pdf')} className="p-2 border rounded-md hover:bg-gray-100" title="Descargar PDF"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2

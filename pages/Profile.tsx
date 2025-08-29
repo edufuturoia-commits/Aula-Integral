@@ -1,19 +1,10 @@
+import React, { useState, useRef, useEffect } from 'react';
+import type { Teacher, NotificationSettings } from '../types';
 
-import React, { useState, useRef } from 'react';
-import type { User, NotificationSettings } from '../types';
-
-const initialUser: User = {
-    name: 'Prof. Carmen',
-    avatarUrl: 'https://picsum.photos/seed/user/100/100',
-    role: 'Docente',
-    email: 'carmen.d@colegiointegral.edu.co',
-    phone: '+57 300 123 4567',
-    notifications: {
-        newIncident: true,
-        weeklySummary: true,
-        assessmentReminders: false,
-    }
-};
+interface ProfileProps {
+    currentUser: Teacher;
+    onUpdateUser: (user: Teacher) => Promise<void>;
+}
 
 const ProfileSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div className="bg-white p-6 rounded-xl shadow-md">
@@ -40,12 +31,15 @@ const CameraIcon: React.FC<{className?: string}> = ({className}) => (
     </svg>
 );
 
-
-const Profile: React.FC = () => {
-  const [user, setUser] = useState<User>(initialUser);
+const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
+  const [user, setUser] = useState<Teacher>(currentUser);
   const [isEditing, setIsEditing] = useState(false);
-  const [originalUser, setOriginalUser] = useState<User>(initialUser);
+  const [originalUser, setOriginalUser] = useState<Teacher>(currentUser);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  useEffect(() => {
+    setUser(currentUser);
+  }, [currentUser]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -53,13 +47,8 @@ const Profile: React.FC = () => {
   };
 
   const handleToggleChange = (setting: keyof NotificationSettings) => {
-    setUser(prev => ({
-        ...prev,
-        notifications: {
-            ...(prev.notifications || { newIncident: false, weeklySummary: false, assessmentReminders: false }),
-            [setting]: !prev.notifications?.[setting]
-        }
-    }));
+    // This part is currently not in the Teacher model, but keeping the UI logic
+    console.log(`Toggled ${setting}`);
   };
   
   const handleEdit = () => {
@@ -72,9 +61,9 @@ const Profile: React.FC = () => {
     setIsEditing(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+      await onUpdateUser(user);
       setIsEditing(false);
-      // Here you would typically make an API call
       alert("Perfil guardado exitosamente.");
   }
   
@@ -83,11 +72,6 @@ const Profile: React.FC = () => {
       // Simulate password change
       alert("Contraseña actualizada exitosamente.");
       e.currentTarget.reset();
-  }
-  
-  const handleLogout = () => {
-      // Simulate logout
-      alert("Has cerrado sesión.");
   }
 
   const handleAvatarClick = () => {
@@ -128,7 +112,7 @@ const Profile: React.FC = () => {
          </div>
          <div>
             <h1 className="text-3xl font-bold text-gray-800">{user.name}</h1>
-            <p className="text-gray-500">{user.role}</p>
+            <p className="text-gray-500">Docente</p>
          </div>
       </div>
 
@@ -179,6 +163,7 @@ const Profile: React.FC = () => {
         </form>
       </ProfileSection>
       
+      {/*
       <ProfileSection title="Ajustes de Notificaciones">
         <div className="divide-y divide-gray-200">
             <ToggleSwitch label="Alertas de nuevas incidencias" enabled={user.notifications?.newIncident ?? false} onChange={() => handleToggleChange('newIncident')} />
@@ -186,11 +171,7 @@ const Profile: React.FC = () => {
             <ToggleSwitch label="Recordatorios de evaluaciones" enabled={user.notifications?.assessmentReminders ?? false} onChange={() => handleToggleChange('assessmentReminders')} />
         </div>
       </ProfileSection>
-
-      <div className="flex justify-end">
-          <button onClick={handleLogout} className="px-6 py-2 rounded-md text-white bg-accent hover:bg-red-700 transition-colors">Cerrar Sesión</button>
-      </div>
-
+      */}
     </div>
   );
 };

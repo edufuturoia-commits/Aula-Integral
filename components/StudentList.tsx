@@ -4,7 +4,8 @@ import type { Student } from '../types';
 interface StudentListProps {
   students: Student[];
   onSelectStudent: (student: Student) => void;
-  onImportClick: () => void;
+  onImportClick?: () => void;
+  onAddStudentClick?: () => void;
   grades: string[];
   selectedGrade: string;
   onGradeChange: (grade: string) => void;
@@ -27,7 +28,7 @@ const StudentCard: React.FC<{student: Student, onSelect: () => void}> = ({ stude
     </div>
 );
 
-const StudentList: React.FC<StudentListProps> = ({ students, onSelectStudent, onImportClick, grades, selectedGrade, onGradeChange, groups, selectedGroup, onGroupChange }) => {
+const StudentList: React.FC<StudentListProps> = ({ students, onSelectStudent, onImportClick, onAddStudentClick, grades, selectedGrade, onGradeChange, groups, selectedGroup, onGroupChange }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredStudents = students.filter(student =>
@@ -64,13 +65,24 @@ const StudentList: React.FC<StudentListProps> = ({ students, onSelectStudent, on
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
                     />
-                    <button 
-                        onClick={onImportClick}
-                        className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors flex items-center space-x-2 flex-shrink-0"
-                    >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                        <span className="hidden sm:inline">Importar</span>
-                    </button>
+                    {onImportClick && (
+                         <button 
+                            onClick={onImportClick}
+                            className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors flex items-center space-x-2 flex-shrink-0"
+                        >
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                            <span className="hidden sm:inline">Importar</span>
+                        </button>
+                    )}
+                    {onAddStudentClick && (
+                        <button 
+                            onClick={onAddStudentClick}
+                            className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors flex items-center space-x-2 flex-shrink-0"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                            <span className="hidden sm:inline">Añadir Estudiante</span>
+                        </button>
+                    )}
                  </div>
             </div>
            
