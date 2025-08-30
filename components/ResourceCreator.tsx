@@ -1,7 +1,6 @@
 
 
 import React, { useState } from 'react';
-// FIX: Import Question type to use for type assertion.
 import type { Resource, SubjectArea, Question } from '../types';
 import { ResourceType } from '../types';
 import { GoogleGenAI, Type } from "@google/genai";

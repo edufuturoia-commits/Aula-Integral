@@ -6,7 +6,7 @@ import CitationModal from '../components/CitationModal';
 import GroupMessageModal from '../components/GroupMessageModal';
 import CancelCitationModal from '../components/CancelCitationModal';
 import AddStudentModal from '../components/AddStudentModal'; // Import new modal
-import type { Student, Incident, ParentMessage, Citation, CoordinationMessage } from '../types';
+import type { Student, Incident, ParentMessage, Citation, CoordinationMessage, Teacher } from '../types';
 import { CitationStatus } from '../types';
 import { addIncident, getIncidents, getUnsyncedIncidents, updateIncident, deleteIncident, addOrUpdateStudents } from '../db';
 import { GRADES, GROUPS, MOCK_PARENT_MESSAGES, MOCK_CITATIONS, MOCK_COORDINATION_MESSAGES, MOCK_USER } from '../constants';
@@ -19,6 +19,7 @@ interface ClassroomProps {
   isOnline: boolean;
   students: Student[];
   setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
+  currentUser: Teacher;
 }
 
 const SyncingIcon: React.FC<{className?: string}> = ({className}) => (
@@ -38,7 +39,8 @@ const ChatModal: React.FC<{
   chat: ParentMessage;
   onClose: () => void;
   onUpdateConversation: (studentId: number, newConversation: ParentMessage['conversation']) => void;
-}> = ({ chat, onClose, onUpdateConversation }) => {
+  currentUser: Teacher;
+}> = ({ chat, onClose, onUpdateConversation, currentUser }) => {
     const [newMessage, setNewMessage] = useState('');
     const [currentConversation, setCurrentConversation] = useState(chat.conversation);
     const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -83,7 +85,7 @@ const ChatModal: React.FC<{
                                 <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                                 <p className="text-xs opacity-70 mt-1 text-right">{msg.timestamp}</p>
                             </div>
-                            {msg.sender === 'teacher' && <img src="https://picsum.photos/seed/user/100/100" className="w-8 h-8 rounded-full" alt="teacher" />}
+                            {msg.sender === 'teacher' && <img src={currentUser.avatarUrl} className="w-8 h-8 rounded-full" alt="teacher" />}
                         </div>
                     ))}
                 </div>
@@ -106,7 +108,7 @@ const ChatModal: React.FC<{
 };
 
 
-const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents }) => {
+const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, currentUser }) => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
@@ -560,7 +562,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents }
                                             <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                                             <p className="text-xs opacity-70 mt-1 text-right">{msg.timestamp}</p>
                                         </div>
-                                        {msg.sender === 'teacher' && <img src="https://picsum.photos/seed/profesor/100/100" className="w-8 h-8 rounded-full" alt="teacher" />}
+                                        {msg.sender === 'teacher' && <img src={currentUser.avatarUrl} className="w-8 h-8 rounded-full" alt="teacher" />}
                                     </div>
                                 ))}
                             </div>
@@ -603,7 +605,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents }
           students={students}
           onClose={handleCloseModal}
           onSave={handleSaveIncident}
-          reporterName="Prof. Carmen"
+          reporterName={currentUser.name}
         />
       )}
 
@@ -641,6 +643,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents }
             chat={activeChat}
             onClose={() => setActiveChat(null)}
             onUpdateConversation={handleUpdateConversation}
+            currentUser={currentUser}
         />
       )}
 

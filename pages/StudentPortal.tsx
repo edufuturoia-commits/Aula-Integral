@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar } from 'recharts';
 import { MOCK_ASSESSMENT_DATA } from '../constants';
@@ -408,7 +409,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({ students, resources, setS
                                     {isEditingProfile ? (
                                         <input type="date" name="dateOfBirth" value={profileData.dateOfBirth || ''} onChange={handleProfileInputChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"/>
                                     ) : (
-                                        <p className="mt-1 text-gray-800 font-semibold">{profileData.dateOfBirth || 'No especificado'}</p>
+                                        <p className="mt-1 text-gray-800 font-semibold">{profileData.dateOfBirth ? new Date(profileData.dateOfBirth + 'T00:00:00').toLocaleDateString('es-CO') : 'No especificado'}</p>
                                     )}
                                 </div>
                                  {/* Document Type */}

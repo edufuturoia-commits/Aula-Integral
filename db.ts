@@ -2,7 +2,7 @@ import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teach
 import { MOCK_ANNOUNCEMENTS } from './constants';
 
 const DB_NAME = 'AulaIntegralMayaDB';
-const DB_VERSION = 6; // Incremented version to add new stores
+const DB_VERSION = 7; // Incremented version to fix unique index issue
 const INCIDENTS_STORE_NAME = 'incidents';
 const RESOURCES_STORE_NAME = 'resources';
 const ATTENDANCE_STORE_NAME = 'attendance';
@@ -68,8 +68,21 @@ export const initDB = (): Promise<boolean> => {
       if (!db.objectStoreNames.contains(STUDENTS_STORE_NAME)) {
           db.createObjectStore(STUDENTS_STORE_NAME, { keyPath: 'id' });
       }
-       if (!db.objectStoreNames.contains(TEACHERS_STORE_NAME)) {
-          db.createObjectStore(TEACHERS_STORE_NAME, { keyPath: 'id' });
+       
+      // FIX: Ensure teachers store and email index exist
+      let teachersStore: IDBObjectStore;
+      if (!db.objectStoreNames.contains(TEACHERS_STORE_NAME)) {
+          teachersStore = db.createObjectStore(TEACHERS_STORE_NAME, { keyPath: 'id' });
+      } else if (transaction) {
+          teachersStore = transaction.objectStore(TEACHERS_STORE_NAME);
+      } else {
+          return;
+      }
+      if (!teachersStore.indexNames.contains('email')) {
+          // The `unique` constraint is set to false. A unique index will throw an error if multiple
+          // teachers have an undefined or null email. The application logic in `handleSaveTeachers`
+          // is now responsible for enforcing email uniqueness for non-empty emails.
+          teachersStore.createIndex('email', 'email', { unique: false });
       }
     };
   });
@@ -191,6 +204,35 @@ export const getAllAttendanceRecords = (): Promise<AttendanceRecord[]> => {
         request.onsuccess = () => resolve(request.result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
         request.onerror = () => reject(request.error);
     });
+};
+
+// --- Teacher Functions ---
+
+// FIX: Add getTeacherByEmail function
+export const getTeacherByEmail = (email: string): Promise<Teacher | undefined> => {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+        return reject("DB not initialized");
+    }
+    const store = getStore(TEACHERS_STORE_NAME, 'readonly');
+    const index = store.index('email');
+    const request = index.get(email);
+    request.onsuccess = () => {
+      resolve(request.result as Teacher | undefined);
+    };
+    request.onerror = () => {
+      reject(request.error);
+    };
+  });
+};
+
+export const updateTeacher = (teacher: Teacher): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const store = getStore(TEACHERS_STORE_NAME, 'readwrite');
+    const request = store.put(teacher);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
 };
 
 // --- Announcement Functions ---

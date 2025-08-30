@@ -16,7 +16,7 @@ import Login from './pages/Login';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import { Page, Student, Teacher, Resource, InstitutionProfileData } from './types';
 import { initDB, getStudents, getTeachers, getDownloadedResources, getTeacherByEmail, addOrUpdateTeachers } from './db';
-import { SIDEBAR_ITEMS, MOCK_RESOURCES, MOCK_INSTITUTION_PROFILE } from './constants';
+import { SIDEBAR_ITEMS, MOCK_RESOURCES, MOCK_INSTITUTION_PROFILE, MOCK_ADMIN_USER } from './constants';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('Dashboard');
@@ -60,6 +60,11 @@ const App: React.FC = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
+  }, []);
+
+  useEffect(() => {
+    // Temporary automatic admin login for testing purposes
+    setCurrentUser(MOCK_ADMIN_USER);
   }, []);
 
   const loadResources = useCallback(async () => {
@@ -186,7 +191,7 @@ const App: React.FC = () => {
       default:
         return <Dashboard students={students} teachers={teachers} />;
     }
-  }, [currentPage, isOnline, isLoading, students, teachers, resources, loadResources, institutionProfile, currentUser, handleUpdateUser]);
+  }, [currentPage, isOnline, isLoading, students, teachers, resources, loadResources, institutionProfile, currentUser, handleUpdateUser, setTeachers]);
   
   if (!dbReady) {
        return (

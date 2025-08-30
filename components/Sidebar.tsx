@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { Page, Teacher } from '../types';
 import { SIDEBAR_ITEMS, LogoutIcon } from '../constants';
@@ -13,10 +14,16 @@ const TEACHER_PAGES: Page[] = ['Dashboard', 'Classroom', 'Assessments', 'Resourc
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser, onLogout }) => {
   const visibleItems = SIDEBAR_ITEMS.filter(item => {
+    // Admin user gets to see all pages for testing/design purposes
+    if (currentUser.id === 'admin') {
+      return true;
+    }
+    
     // For now, only teachers can log in. This can be expanded with more roles.
     if (currentUser) {
       return TEACHER_PAGES.includes(item.name);
     }
+    
     // Fallback for non-logged-in views if any (currently none)
     return true; 
   });

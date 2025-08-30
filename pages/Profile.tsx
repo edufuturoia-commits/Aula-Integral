@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { Teacher, NotificationSettings } from '../types';
 
@@ -119,13 +120,19 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
       <ProfileSection title="Información Personal">
         {isEditing ? (
             <div className="space-y-4">
-                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
-                    <input type="email" name="email" value={user.email} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
-                </div>
-                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Teléfono</label>
-                    <input type="tel" name="phone" value={user.phone} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                        <input type="email" name="email" value={user.email} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Teléfono</label>
+                        <input type="tel" name="phone" value={user.phone} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
+                        <input type="date" name="dateOfBirth" value={user.dateOfBirth || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                    </div>
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
                     <button onClick={handleCancel} className="px-4 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300">Cancelar</button>
@@ -134,8 +141,11 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
             </div>
         ) : (
             <div className="space-y-4">
-                <p><strong className="font-medium text-gray-600">Correo Electrónico:</strong> {user.email}</p>
-                <p><strong className="font-medium text-gray-600">Teléfono:</strong> {user.phone}</p>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <p><strong className="font-medium text-gray-600">Correo Electrónico:</strong> {user.email || 'No especificado'}</p>
+                    <p><strong className="font-medium text-gray-600">Teléfono:</strong> {user.phone || 'No especificado'}</p>
+                    <p><strong className="font-medium text-gray-600">Fecha de Nacimiento:</strong> {user.dateOfBirth ? new Date(user.dateOfBirth + 'T00:00:00').toLocaleDateString('es-CO') : 'No especificado'}</p>
+                 </div>
                  <div className="text-right pt-4">
                     <button onClick={handleEdit} className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Editar Perfil</button>
                 </div>
