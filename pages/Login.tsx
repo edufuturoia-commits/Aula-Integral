@@ -1,10 +1,12 @@
+
 import React, { useState } from 'react';
 
 interface LoginProps {
   onLogin: (email: string, pass: string) => Promise<{success: boolean, message: string}>;
+  onBackToHome: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +34,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     <div className="min-h-screen bg-neutral flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-base-100 rounded-2xl shadow-xl p-8 animate-zoom-in">
+           <a href="#" onClick={(e) => { e.preventDefault(); onBackToHome(); }} className="inline-flex items-center text-sm font-medium text-primary hover:text-primary-focus mb-4">
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            Volver al inicio
+          </a>
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-primary">AULA INTEGRAL MAYA</h1>
             <p className="text-gray-500 mt-2">Bienvenido al panel de administración</p>

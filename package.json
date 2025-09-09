@@ -1,22 +1,13 @@
 {
   "name": "aula-integral-maya",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "A web-based admin panel for managing students, incidents, and assessments, inspired by the AULA INTEGRAL MAYA technical specification. This application provides a modern, responsive interface for educators to track student progress, log classroom incidents, and analyze evaluation data.",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "start": "node server.js"
   },
   "dependencies": {
-    "react-dom": "^19.1.1",
-    "recharts": "^3.1.2",
-    "react": "^19.1.1",
-    "@google/genai": "^1.15.0"
-  },
-  "devDependencies": {
-    "@types/node": "^22.14.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "express": "^4.19.2"
   }
 }

@@ -1,10 +1,10 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import type { Teacher, NotificationSettings } from '../types';
+import type { Teacher, Student, NotificationSettings } from '../types';
+import { Role } from '../types';
 
 interface ProfileProps {
-    currentUser: Teacher;
-    onUpdateUser: (user: Teacher) => Promise<void>;
+    currentUser: Teacher | Student;
+    onUpdateUser: (user: Teacher | Student) => Promise<void>;
 }
 
 const ProfileSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -33,9 +33,9 @@ const CameraIcon: React.FC<{className?: string}> = ({className}) => (
 );
 
 const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
-  const [user, setUser] = useState<Teacher>(currentUser);
+  const [user, setUser] = useState(currentUser);
   const [isEditing, setIsEditing] = useState(false);
-  const [originalUser, setOriginalUser] = useState<Teacher>(currentUser);
+  const [originalUser, setOriginalUser] = useState(currentUser);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   useEffect(() => {
@@ -45,11 +45,6 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setUser(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleToggleChange = (setting: keyof NotificationSettings) => {
-    // This part is currently not in the Teacher model, but keeping the UI logic
-    console.log(`Toggled ${setting}`);
   };
   
   const handleEdit = () => {
@@ -89,6 +84,8 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
       }
   };
 
+  const isTeacher = user.role !== Role.STUDENT;
+
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
         <input 
@@ -113,7 +110,7 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
          </div>
          <div>
             <h1 className="text-3xl font-bold text-gray-800">{user.name}</h1>
-            <p className="text-gray-500">Docente</p>
+            <p className="text-gray-500">{user.role}</p>
          </div>
       </div>
 
@@ -125,10 +122,12 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
                         <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
                         <input type="email" name="email" value={user.email} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Teléfono</label>
-                        <input type="tel" name="phone" value={user.phone} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
-                    </div>
+                    {isTeacher && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Teléfono</label>
+                            <input type="tel" name="phone" value={(user as Teacher).phone} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                        </div>
+                    )}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
                         <input type="date" name="dateOfBirth" value={user.dateOfBirth || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
@@ -143,7 +142,7 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
             <div className="space-y-4">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <p><strong className="font-medium text-gray-600">Correo Electrónico:</strong> {user.email || 'No especificado'}</p>
-                    <p><strong className="font-medium text-gray-600">Teléfono:</strong> {user.phone || 'No especificado'}</p>
+                    {isTeacher && <p><strong className="font-medium text-gray-600">Teléfono:</strong> {(user as Teacher).phone || 'No especificado'}</p>}
                     <p><strong className="font-medium text-gray-600">Fecha de Nacimiento:</strong> {user.dateOfBirth ? new Date(user.dateOfBirth + 'T00:00:00').toLocaleDateString('es-CO') : 'No especificado'}</p>
                  </div>
                  <div className="text-right pt-4">
@@ -172,16 +171,6 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
             </div>
         </form>
       </ProfileSection>
-      
-      {/*
-      <ProfileSection title="Ajustes de Notificaciones">
-        <div className="divide-y divide-gray-200">
-            <ToggleSwitch label="Alertas de nuevas incidencias" enabled={user.notifications?.newIncident ?? false} onChange={() => handleToggleChange('newIncident')} />
-            <ToggleSwitch label="Resúmenes semanales por correo" enabled={user.notifications?.weeklySummary ?? false} onChange={() => handleToggleChange('weeklySummary')} />
-            <ToggleSwitch label="Recordatorios de evaluaciones" enabled={user.notifications?.assessmentReminders ?? false} onChange={() => handleToggleChange('assessmentReminders')} />
-        </div>
-      </ProfileSection>
-      */}
     </div>
   );
 };

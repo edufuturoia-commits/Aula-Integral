@@ -1,14 +1,17 @@
-import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher } from './types';
-import { MOCK_ANNOUNCEMENTS } from './constants';
+import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades } from './types';
+import { MOCK_ANNOUNCEMENTS, MOCK_SUBJECT_GRADES } from './constants';
 
 const DB_NAME = 'AulaIntegralMayaDB';
-const DB_VERSION = 7; // Incremented version to fix unique index issue
+const DB_VERSION = 10; // Incremented version for new stores
 const INCIDENTS_STORE_NAME = 'incidents';
 const RESOURCES_STORE_NAME = 'resources';
 const ATTENDANCE_STORE_NAME = 'attendance';
 const ANNOUNCEMENTS_STORE_NAME = 'announcements';
 const STUDENTS_STORE_NAME = 'students';
 const TEACHERS_STORE_NAME = 'teachers';
+const ASSESSMENTS_STORE_NAME = 'assessments';
+const RESULTS_STORE_NAME = 'studentAssessmentResults';
+const SUBJECT_GRADES_STORE_NAME = 'subjectGrades';
 
 
 let db: IDBDatabase;
@@ -64,12 +67,18 @@ export const initDB = (): Promise<boolean> => {
         db.createObjectStore(ANNOUNCEMENTS_STORE_NAME, { keyPath: 'id' });
       }
 
-      // Add new stores for students and teachers
+      let studentsStore: IDBObjectStore;
       if (!db.objectStoreNames.contains(STUDENTS_STORE_NAME)) {
-          db.createObjectStore(STUDENTS_STORE_NAME, { keyPath: 'id' });
+          studentsStore = db.createObjectStore(STUDENTS_STORE_NAME, { keyPath: 'id' });
+      } else if (transaction) {
+          studentsStore = transaction.objectStore(STUDENTS_STORE_NAME);
+      } else {
+          return;
+      }
+      if (!studentsStore.indexNames.contains('email')) {
+          studentsStore.createIndex('email', 'email', { unique: true });
       }
        
-      // FIX: Ensure teachers store and email index exist
       let teachersStore: IDBObjectStore;
       if (!db.objectStoreNames.contains(TEACHERS_STORE_NAME)) {
           teachersStore = db.createObjectStore(TEACHERS_STORE_NAME, { keyPath: 'id' });
@@ -79,10 +88,19 @@ export const initDB = (): Promise<boolean> => {
           return;
       }
       if (!teachersStore.indexNames.contains('email')) {
-          // The `unique` constraint is set to false. A unique index will throw an error if multiple
-          // teachers have an undefined or null email. The application logic in `handleSaveTeachers`
-          // is now responsible for enforcing email uniqueness for non-empty emails.
-          teachersStore.createIndex('email', 'email', { unique: false });
+          teachersStore.createIndex('email', 'email', { unique: true });
+      }
+
+      if (!db.objectStoreNames.contains(ASSESSMENTS_STORE_NAME)) {
+        db.createObjectStore(ASSESSMENTS_STORE_NAME, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(RESULTS_STORE_NAME)) {
+        const resultsStore = db.createObjectStore(RESULTS_STORE_NAME, { keyPath: 'id' });
+        resultsStore.createIndex('assessmentId', 'assessmentId', { unique: false });
+        resultsStore.createIndex('studentId', 'studentId', { unique: false });
+      }
+      if (!db.objectStoreNames.contains(SUBJECT_GRADES_STORE_NAME)) {
+        db.createObjectStore(SUBJECT_GRADES_STORE_NAME, { keyPath: 'id' });
       }
     };
   });
@@ -136,11 +154,9 @@ export const getUnsyncedIncidents = (): Promise<Incident[]> => {
   return new Promise((resolve, reject) => {
     const store = getStore(INCIDENTS_STORE_NAME, 'readonly');
     const index = store.index('synced');
-    const request = index.getAll(IDBKeyRange.only('false')); // This is how you query a boolean index
+    const request = index.getAll(IDBKeyRange.only(false));
     request.onsuccess = () => {
-        // Since IndexedDB stores booleans, but we might have stored them as strings or booleans, let's be safe
-        const results = request.result.filter(item => item.synced === false || item.synced === 'false');
-        resolve(results);
+        resolve(request.result);
     };
     request.onerror = () => reject(request.error);
   });
@@ -187,6 +203,19 @@ export const addOrUpdateAttendanceRecord = (record: AttendanceRecord): Promise<v
     });
 };
 
+export const addOrUpdateAttendanceRecords = (records: AttendanceRecord[]): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        if (records.length === 0) return resolve();
+        const transaction = db.transaction(ATTENDANCE_STORE_NAME, 'readwrite');
+        const store = transaction.objectStore(ATTENDANCE_STORE_NAME);
+        records.forEach(record => {
+            store.put(record);
+        });
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+    });
+};
+
 export const getAttendanceForDate = (date: string): Promise<AttendanceRecord[]> => {
     return new Promise((resolve, reject) => {
         const store = getStore(ATTENDANCE_STORE_NAME, 'readonly');
@@ -208,7 +237,6 @@ export const getAllAttendanceRecords = (): Promise<AttendanceRecord[]> => {
 
 // --- Teacher Functions ---
 
-// FIX: Add getTeacherByEmail function
 export const getTeacherByEmail = (email: string): Promise<Teacher | undefined> => {
   return new Promise((resolve, reject) => {
     if (!db) {
@@ -235,6 +263,27 @@ export const updateTeacher = (teacher: Teacher): Promise<void> => {
   });
 };
 
+// --- Student Functions ---
+export const getStudentByEmail = (email: string): Promise<Student | undefined> => {
+  return new Promise((resolve, reject) => {
+    if (!db) return reject("DB not initialized");
+    const store = getStore(STUDENTS_STORE_NAME, 'readonly');
+    const index = store.index('email');
+    const request = index.get(email);
+    request.onsuccess = () => resolve(request.result as Student | undefined);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+export const updateStudent = (student: Student): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const store = getStore(STUDENTS_STORE_NAME, 'readwrite');
+    const request = store.put(student);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+};
+
 // --- Announcement Functions ---
 export const addAnnouncement = (announcement: Announcement): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -253,21 +302,18 @@ export const getAnnouncements = (): Promise<Announcement[]> => {
 
     countRequest.onsuccess = () => {
       if (countRequest.result === 0) {
-        // Store is empty, seed it with mock data
         let completed = 0;
         MOCK_ANNOUNCEMENTS.forEach(ann => {
           const addReq = store.add(ann);
           addReq.onsuccess = () => {
             completed++;
             if (completed === MOCK_ANNOUNCEMENTS.length) {
-              // After all are added, resolve with the mock data
               resolve([...MOCK_ANNOUNCEMENTS].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
             }
           };
           addReq.onerror = () => reject(addReq.error);
         });
       } else {
-        // Store has data, just get all
         const getAllRequest = store.getAll();
         getAllRequest.onsuccess = () => resolve(getAllRequest.result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
         getAllRequest.onerror = () => reject(getAllRequest.error);
@@ -284,7 +330,7 @@ const bulkUpdate = <T>(storeName: string, data: T[]): Promise<void> => {
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(storeName, 'readwrite');
         const store = transaction.objectStore(storeName);
-        store.clear(); // Clear existing data
+        store.clear();
         let completed = 0;
         if (data.length === 0) {
             resolve();
@@ -328,4 +374,77 @@ export const getTeachers = (): Promise<Teacher[]> => {
 
 export const addOrUpdateTeachers = (teachers: Teacher[]): Promise<void> => {
     return bulkUpdate(TEACHERS_STORE_NAME, teachers);
+};
+
+// --- Assessment and Result Functions ---
+
+export const getAssessments = (): Promise<Assessment[]> => {
+    return new Promise((resolve, reject) => {
+        const store = getStore(ASSESSMENTS_STORE_NAME, 'readonly');
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        request.onerror = () => reject(request.error);
+    });
+};
+
+export const addOrUpdateAssessments = (assessments: Assessment[]): Promise<void> => {
+    return bulkUpdate(ASSESSMENTS_STORE_NAME, assessments);
+};
+
+export const getStudentResults = (): Promise<StudentAssessmentResult[]> => {
+    return new Promise((resolve, reject) => {
+        const store = getStore(RESULTS_STORE_NAME, 'readonly');
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+};
+
+export const addOrUpdateStudentResult = (result: StudentAssessmentResult): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        const store = getStore(RESULTS_STORE_NAME, 'readwrite');
+        const request = store.put(result);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+};
+
+
+// --- Subject Grades Functions ---
+
+export const getSubjectGrades = (): Promise<SubjectGrades[]> => {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(SUBJECT_GRADES_STORE_NAME, 'readwrite');
+        const store = transaction.objectStore(SUBJECT_GRADES_STORE_NAME);
+        const countRequest = store.count();
+
+        countRequest.onsuccess = () => {
+            if (countRequest.result === 0) {
+                // Seed if empty
+                if (MOCK_SUBJECT_GRADES.length === 0) {
+                    return resolve([]);
+                }
+                let completed = 0;
+                MOCK_SUBJECT_GRADES.forEach(sg => {
+                    const addReq = store.add(sg);
+                    addReq.onsuccess = () => {
+                        completed++;
+                        if (completed === MOCK_SUBJECT_GRADES.length) {
+                            resolve([...MOCK_SUBJECT_GRADES]);
+                        }
+                    };
+                    addReq.onerror = () => reject(addReq.error);
+                });
+            } else {
+                const getAllRequest = store.getAll();
+                getAllRequest.onsuccess = () => resolve(getAllRequest.result);
+                getAllRequest.onerror = () => reject(getAllRequest.error);
+            }
+        };
+        countRequest.onerror = () => reject(countRequest.error);
+    });
+};
+
+export const addOrUpdateSubjectGrades = (grades: SubjectGrades[]): Promise<void> => {
+    return bulkUpdate(SUBJECT_GRADES_STORE_NAME, grades);
 };

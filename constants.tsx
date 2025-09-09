@@ -1,157 +1,381 @@
-
 import React from 'react';
-import type { Page, Student, AssessmentData, Question, SubjectArea, Competency, Resource, StudentAssessmentResult, ParentMessage, Citation, User, Announcement, Teacher, CoordinationMessage, InstitutionProfileData, EventPoster } from './types';
-import { ResourceType, CitationStatus, IncidentType, AttendanceStatus, DocumentType } from './types';
+import type { Page, Student, AssessmentData, Question, SubjectArea, Competency, Resource, StudentAssessmentResult, ParentMessage, Citation, User, Announcement, Teacher, CoordinationMessage, InstitutionProfileData, EventPoster, SubjectGrades } from './types';
+import { ResourceType, CitationStatus, IncidentType, AttendanceStatus, DocumentType, Role, AcademicPeriod } from './types';
 
 // --- ICONS ---
 
-export const HomeIcon: React.FC<{className?: string}> = ({ className }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 19v-4a2 2 0 012-2h10a2 2 0 012 2v4M5 19h14" /></svg>
-);
-export const ClassroomIcon: React.FC<{className?: string}> = ({ className }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-);
-export const AssessmentsIcon: React.FC<{className?: string}> = ({ className }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
-);
-export const ResourcesIcon: React.FC<{className?: string}> = ({ className }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" /></svg>
-);
-export const ProfileIcon: React.FC<{className?: string}> = ({ className }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-);
-export const IncidentsIcon: React.FC<{className?: string}> = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-);
-export const ParentPortalIcon: React.FC<{className?: string}> = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-);
-export const StudentPortalIcon: React.FC<{className?: string}> = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a4 4 0 11-8 0 4 4 0 018 0zM9 17v-1a4 4 0 014-4h2a4 4 0 014 4v1m-6 4H9a2 2 0 01-2-2v-1a2 2 0 012-2h6a2 2 0 012 2v1a2 2 0 01-2 2z" /></svg>
-);
-export const RectoryIcon: React.FC<{className?: string}> = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m-1 4h1m5-4h1m-1 4h1m-1-8h1" /></svg>
-);
-export const InstitutionProfileIcon: React.FC<{className?: string}> = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21v-1a6 6 0 00-1.781-4.121M12 11c-3.333 0-6 2.686-6 6v1h12v-1c0-3.314-2.667-6-6-6z" /></svg>
-);
-export const LogoutIcon: React.FC<{className?: string}> = ({ className }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+export const DashboardIcon: React.FC<{className?: string}> = ({ className }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+  </svg>
 );
 
+export const ClassroomIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+);
+
+export const AssessmentsIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+    </svg>
+);
+
+export const GradesIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+    </svg>
+);
+
+
+export const ResourcesIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+    </svg>
+);
+
+export const ProfileIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+);
+
+export const SettingsIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
+
+export const IncidentsIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+);
+
+export const ParentPortalIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+    </svg>
+);
+
+export const StudentPortalIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0l-2.172 1.959a59.902 59.902 0 0010.399 5.841 59.902 59.902 0 0010.399-5.841l-2.172-1.959" />
+    </svg>
+);
+
+export const RectoryIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+    </svg>
+);
+
+export const InstitutionProfileIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+    </svg>
+);
+
+export const LogoutIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+    </svg>
+);
 
 // --- SIDEBAR ---
 
 export const SIDEBAR_ITEMS: { name: Page; label: string; icon: React.FC<{className?: string}> }[] = [
-  { name: 'Dashboard', label: 'Panel de Control', icon: HomeIcon },
-  { name: 'Classroom', label: 'Mi Aula', icon: ClassroomIcon },
-  { name: 'Assessments', label: 'Evaluaciones', icon: AssessmentsIcon },
-  { name: 'Resources', label: 'Recursos', icon: ResourcesIcon },
-  { name: 'Profile', label: 'Mi Perfil', icon: ProfileIcon },
-  { name: 'Incidents', label: 'Coordinación', icon: IncidentsIcon },
-  { name: 'ParentPortal', label: 'Portal Acudientes', icon: ParentPortalIcon },
-  { name: 'StudentPortal', label: 'Portal Estudiantes', icon: StudentPortalIcon },
-  { name: 'Rectory', label: 'Rectoría', icon: RectoryIcon },
-  { name: 'InstitutionProfile', label: 'Perfil Institucional', icon: InstitutionProfileIcon },
+    { name: 'Dashboard', label: 'Panel de Control', icon: DashboardIcon },
+    { name: 'Classroom', label: 'Mi Salón de Clases', icon: ClassroomIcon },
+    { name: 'Incidents', label: 'Coordinación', icon: IncidentsIcon },
+    { name: 'Assessments', label: 'Evaluaciones', icon: AssessmentsIcon },
+    { name: 'Calificaciones', label: 'Calificaciones', icon: GradesIcon },
+    { name: 'Resources', label: 'Biblioteca', icon: ResourcesIcon },
+    { name: 'Profile', label: 'Mi Perfil', icon: ProfileIcon },
+    { name: 'Settings', label: 'Ajustes', icon: SettingsIcon },
+    { name: 'Rectory', label: 'Rectoría', icon: RectoryIcon },
+    { name: 'InstitutionProfile', label: 'Perfil Institucional', icon: InstitutionProfileIcon },
+    { name: 'ParentPortal', label: 'Portal de Acudientes', icon: ParentPortalIcon },
+    { name: 'StudentPortal', label: 'Portal del Estudiante', icon: StudentPortalIcon },
 ];
 
-// --- STATIC ARRAYS ---
-export const GRADES = ['Prejardín', 'Jardín', 'Transición', '1º', '2º', '3º', '4º', '5º', '6º', '7º', '8º', '9º', '10º', '11º'];
-export const GROUPS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'A', 'B', 'C', 'D', 'F'];
-export const SUBJECT_AREAS: SubjectArea[] = ['Matemáticas', 'Lengua Castellana', 'Inglés', 'Biología', 'Química', 'Física', 'Historia', 'Geografía', 'Constitución Política y Democracia', 'Educación Artística', 'Música', 'Educación Ética y en Valores Humanos', 'Filosofía', 'Educación Física', 'Educación Religiosa', 'Tecnología e Informática'];
+// --- MOCK DATA & CONSTANTS ---
+
+const preschoolAndPrimaryGroups = ["A", "B", "C", "D"];
+const secondaryGroups = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
+const highSchoolGroups = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "A", "B", "C", "D", "F", "H"];
+
+export const GRADE_GROUP_MAP: Record<string, string[]> = {
+  "Prejardín": preschoolAndPrimaryGroups,
+  "Jardín": preschoolAndPrimaryGroups,
+  "Transición": preschoolAndPrimaryGroups,
+  "1º": preschoolAndPrimaryGroups,
+  "2º": preschoolAndPrimaryGroups,
+  "3º": preschoolAndPrimaryGroups,
+  "4º": preschoolAndPrimaryGroups,
+  "5º": preschoolAndPrimaryGroups,
+  "6º": secondaryGroups,
+  "7º": secondaryGroups,
+  "8º": secondaryGroups,
+  "9º": secondaryGroups,
+  "10º": highSchoolGroups,
+  "11º": highSchoolGroups,
+};
+
+export const GRADES = Object.keys(GRADE_GROUP_MAP);
+export const GROUPS = [...new Set(Object.values(GRADE_GROUP_MAP).flat())];
+
+export const SUBJECT_AREAS: SubjectArea[] = ['Matemáticas', 'Lengua Castellana', 'Inglés', 'Biología', 'Química', 'Física', 'Historia', 'Geografía', 'Constitución Política y Democracia', 'Educación Artística', 'Música', 'Educación Ética y en Valores Humanos', 'Filosofía', 'Educación Física', 'Educación Religiosa', 'Tecnología e Informática', 'Convivencia', 'Administración'];
 export const COMPETENCIES: Competency[] = ['Comprensión Lectora', 'Resolución de Problemas', 'Pensamiento Crítico', 'Competencias Ciudadanas', 'Comunicación Escrita', 'Análisis Científico', 'Expresión Artística', 'Competencia Digital', 'Pensamiento Histórico', 'Bilingüismo', 'Competencia Motriz'];
 export const RESOURCE_TYPES: ResourceType[] = [ResourceType.PDF, ResourceType.Video, ResourceType.Image, ResourceType.Document];
-export const SCHOOL_LOCATIONS = ['Salón de clases', 'Patio de recreo', 'Cafetería', 'Biblioteca', 'Laboratorio', 'Sala de informática', 'Cancha', 'Baños', 'Pasillos', 'Otro'];
-
-// --- MOCK DATA ---
-
-export const MOCK_STUDENTS: Student[] = [
-  { id: 1, name: 'Ana María Rojas', avatarUrl: 'https://picsum.photos/seed/1/100/100', grade: '8º', group: 'A', lastIncident: 'Uso inapropiado del uniforme' },
-  { id: 2, name: 'Juan David Pérez', avatarUrl: 'https://picsum.photos/seed/2/100/100', grade: '8º', group: 'A' },
-  { id: 3, name: 'Sofía Castro', avatarUrl: 'https://picsum.photos/seed/3/100/100', grade: '8º', group: 'A' },
-  { id: 4, name: 'Carlos Andrés Vélez', avatarUrl: 'https://picsum.photos/seed/4/100/100', grade: '8º', group: 'B', lastIncident: 'Faltas Académicas' },
-  { id: 5, name: 'Valentina Restrepo', avatarUrl: 'https://picsum.photos/seed/5/100/100', grade: '8º', group: 'B' },
-  { id: 6, name: 'Mateo González', avatarUrl: 'https://picsum.photos/seed/6/100/100', grade: '9º', group: 'A' },
-  { id: 7, name: 'Isabella Gómez', avatarUrl: 'https://picsum.photos/seed/7/100/100', grade: '9º', group: 'A' },
-  { id: 8, name: 'Santiago Rodríguez', avatarUrl: 'https://picsum.photos/seed/8/100/100', grade: '9º', group: 'B' },
-  { id: 9, name: 'Mariana López', avatarUrl: 'https://picsum.photos/seed/9/100/100', grade: '9º', group: 'B', lastIncident: 'Convivencia Escolar' },
-  { id: 10, name: 'Sebastián Díaz', avatarUrl: 'https://picsum.photos/seed/10/100/100', grade: '10º', group: 'C' },
-];
-
-export const MOCK_TEACHERS: Teacher[] = [
-    { id: '1037612345', name: 'Carlos Zapata', avatarUrl: 'https://picsum.photos/seed/teacher1/100/100', subject: 'Matemáticas', email: 'carlos.zapata@institucion.edu.co', phone: '3101234567', isHomeroomTeacher: true, assignedGroup: {grade: '8º', group: 'A'} },
-    { id: '43567890', name: 'Lucía Fernández', avatarUrl: 'https://picsum.photos/seed/teacher2/100/100', subject: 'Lengua Castellana', email: 'lucia.fernandez@institucion.edu.co', phone: '3119876543' },
-    { id: '79812345', name: 'Andrés Morales', avatarUrl: 'https://picsum.photos/seed/teacher3/100/100', subject: 'Biología', email: 'andres.morales@institucion.edu.co', phone: '3205558899' },
-    { id: '12345678', name: 'Profesor de Prueba', avatarUrl: 'https://picsum.photos/seed/teacher4/100/100', subject: 'Tecnología e Informática', email: 'profe@test.com', phone: '3001112233', password: '123456', passwordChanged: false },
-];
-
-export const MOCK_ADMIN_USER: Teacher = {
-  id: 'admin',
-  name: 'Admin User',
-  avatarUrl: 'https://picsum.photos/seed/admin/100/100',
-  subject: 'Tecnología e Informática',
-  email: 'admin@test.com',
-  phone: '3000000000',
-  password: 'admin',
-  passwordChanged: true,
-};
+export const SCHOOL_LOCATIONS = ['Salón de Clases', 'Patio de Recreo', 'Baños', 'Pasillos', 'Comedor Escolar', 'Biblioteca', 'Sala de Informática', 'Laboratorio', 'Afueras de la Institución', 'Otro'];
+export const ACADEMIC_PERIODS: AcademicPeriod[] = [AcademicPeriod.PRIMERO, AcademicPeriod.SEGUNDO, AcademicPeriod.TERCERO, AcademicPeriod.CUARTO];
 
 
 export const MOCK_ASSESSMENT_DATA: AssessmentData[] = [
-    { competency: 'Comprensión Lectora', classAverage: 78, studentAverage: 85 },
-    { competency: 'Resolución de Problemas', classAverage: 82, studentAverage: 90 },
-    { competency: 'Pensamiento Crítico', classAverage: 75, studentAverage: 72 },
-    { competency: 'Competencias Ciudadanas', classAverage: 88, studentAverage: 92 },
-    { competency: 'Comunicación Escrita', classAverage: 70, studentAverage: 78 },
-    { competency: 'Análisis Científico', classAverage: 81, studentAverage: 83 },
+    { competency: 'Comprensión Lectora', classAverage: 82, studentAverage: 88 },
+    { competency: 'Resolución de Problemas', classAverage: 75, studentAverage: 72 },
+    { competency: 'Pensamiento Crítico', classAverage: 85, studentAverage: 91 },
+    { competency: 'Competencias Ciudadanas', classAverage: 78, studentAverage: 85 },
+    { competency: 'Análisis Científico', classAverage: 70, studentAverage: 78 },
 ];
 
-export const MOCK_QUESTIONS: Question[] = [];
-export const MOCK_STUDENT_ASSESSMENT_RESULTS: StudentAssessmentResult[] = [
-    { studentId: 1, assessmentId: 'asm_hist_1', assessmentTitle: 'Evaluación de Historia Universal', score: 88, completedAt: '2024-05-10T10:00:00Z'},
-    { studentId: 1, assessmentId: 'asm_math_1', assessmentTitle: 'Examen de Álgebra', score: 76, completedAt: '2024-05-12T14:30:00Z'},
-];
 export const MOCK_RESOURCES: Resource[] = [
-    { id: 'res1', title: 'Guía de Laboratorio: Célula', description: 'Práctica para identificar las partes de la célula.', type: ResourceType.PDF, subjectArea: 'Biología', url: '#'},
-    { id: 'res2', title: 'Video: La Revolución Francesa', description: 'Documental de 20 minutos sobre las causas y consecuencias.', type: ResourceType.Video, subjectArea: 'Historia', url: '#'},
-    { id: 'res3', title: 'Ejercicios de Fracciones', description: 'Taller práctico con 20 ejercicios de suma, resta, multiplicación y división de fracciones.', type: ResourceType.PDF, subjectArea: 'Matemáticas', url: '#'},
+    { id: '1', title: 'Guía de Álgebra', description: 'Ejercicios resueltos de ecuaciones lineales.', type: ResourceType.PDF, subjectArea: 'Matemáticas', url: '#' },
+    { id: '2', title: 'Video: La Célula', description: 'Explicación animada de las partes de la célula.', type: ResourceType.Video, subjectArea: 'Biología', url: '#' },
+    { id: '3', title: 'Mapa Conceptual del Sistema Solar', description: 'Infografía con los planetas y sus características.', type: ResourceType.Image, subjectArea: 'Geografía', url: '#' },
+    { id: '4', title: 'Resumen de la Independencia', description: 'Documento con los hitos más importantes.', type: ResourceType.Document, subjectArea: 'Historia', url: '#' },
 ];
+
+// Fix: Export MOCK_COORDINATOR_USER so it can be imported in other files.
+export const MOCK_COORDINATOR_USER: Teacher = {
+    id: '987654321', // Cedula
+    name: 'Carlos Mendoza',
+    role: Role.COORDINATOR,
+    avatarUrl: 'https://picsum.photos/seed/coordinator/100/100',
+    subject: 'Convivencia',
+    email: 'coordinacion@institucion.edu.co',
+    phone: '3019876543',
+    dateOfBirth: '1980-02-20',
+    password: '987654321',
+    passwordChanged: true,
+    notifications: {
+        newIncident: true,
+        weeklySummary: true,
+        assessmentReminders: false,
+    }
+};
+
+const MOCK_ADMIN_USER: Teacher = {
+    id: 'admin',
+    name: 'Administrador del Sistema',
+    role: Role.ADMIN,
+    avatarUrl: 'https://picsum.photos/seed/admin/100/100',
+    subject: 'Administración',
+    email: 'admin@institucion.edu.co',
+    phone: '3001112233',
+    dateOfBirth: '1980-01-01',
+    password: 'admin',
+    passwordChanged: true,
+    notifications: {
+        newIncident: true,
+        weeklySummary: true,
+        assessmentReminders: true,
+    }
+};
+
+const MOCK_RECTOR_USER: Teacher = {
+    id: 'rector',
+    name: 'Armando Paredes',
+    role: Role.RECTOR,
+    avatarUrl: 'https://picsum.photos/seed/rector/100/100',
+    subject: 'Administración',
+    email: 'rector@institucion.edu.co',
+    phone: '3021112233',
+    dateOfBirth: '1975-11-10',
+    password: 'rector',
+    passwordChanged: true,
+    notifications: {
+        newIncident: true,
+        weeklySummary: true,
+        assessmentReminders: true,
+    }
+};
+
+export const MOCK_TEACHERS: Teacher[] = [
+    MOCK_ADMIN_USER,
+    MOCK_COORDINATOR_USER,
+    MOCK_RECTOR_USER,
+    {
+        id: '1037612345',
+        name: 'Ana María Rojas',
+        role: Role.TEACHER,
+        avatarUrl: 'https://picsum.photos/seed/teacher1/100/100',
+        subject: 'Matemáticas',
+        email: 'profe.ana@institucion.edu.co',
+        phone: '3101234567',
+        dateOfBirth: '1990-05-15',
+        isHomeroomTeacher: true,
+        assignedGroup: { grade: '11º', group: 'A' },
+        password: '1037612345',
+        passwordChanged: true,
+    },
+    {
+        id: '1037612346',
+        name: 'Carlos Pérez',
+        role: Role.TEACHER,
+        avatarUrl: 'https://picsum.photos/seed/teacher2/100/100',
+        subject: 'Lengua Castellana',
+        email: 'profe.carlos@institucion.edu.co',
+        phone: '3111234567',
+        dateOfBirth: '1985-04-10',
+        password: '1037612346',
+        passwordChanged: true,
+    },
+    {
+        id: '1037612347',
+        name: 'Lucia Gómez',
+        role: Role.TEACHER,
+        avatarUrl: 'https://picsum.photos/seed/teacher3/100/100',
+        subject: 'Inglés',
+        email: 'profe.lucia@institucion.edu.co',
+        phone: '3121234567',
+        dateOfBirth: '1992-08-25',
+        password: '1037612347',
+        passwordChanged: true,
+    },
+];
+
+export const MOCK_STUDENTS: Student[] = [
+     {
+        id: 1,
+        name: 'Juan David Pérez',
+        role: Role.STUDENT,
+        avatarUrl: 'https://picsum.photos/seed/student1/100/100',
+        grade: '11º',
+        group: 'A',
+        email: 'juan.perez@email.com',
+        dateOfBirth: '2007-03-20',
+        password: '1122334455',
+        passwordChanged: true,
+    },
+    { id: 2, name: 'Sofía López', role: Role.STUDENT, avatarUrl: 'https://picsum.photos/seed/student2/100/100', grade: '11º', group: 'A', dateOfBirth: '2007-01-10', },
+    { id: 3, name: 'Carlos Martínez', role: Role.STUDENT, avatarUrl: 'https://picsum.photos/seed/student3/100/100', grade: '11º', group: 'A', dateOfBirth: '2024-08-05', },
+];
+
 
 export const MOCK_PARENT_MESSAGES: ParentMessage[] = [
-  { studentId: 1, studentName: 'Ana María Rojas', studentAvatar: 'https://picsum.photos/seed/1/100/100', lastMessage: 'Entendido, profe. Gracias.', timestamp: 'Hace 2 horas', unread: false, conversation: [ {sender: 'parent', text: 'Buenas tardes profe, ¿cómo va Ana en el taller?', timestamp: 'Hace 3 horas'}, {sender: 'teacher', text: '¡Hola! Muy bien, ya casi lo termina.', timestamp: 'Hace 2 horas'}, {sender: 'parent', text: 'Entendido, profe. Gracias.', timestamp: 'Hace 2 horas'} ] },
-  { studentId: 4, studentName: 'Carlos Andrés Vélez', studentAvatar: 'https://picsum.photos/seed/4/100/100', lastMessage: 'Profe, buenas, una pregunta sobre la tarea...', timestamp: 'Ayer', unread: true, conversation: [ {sender: 'parent', text: 'Profe, buenas, una pregunta sobre la tarea...', timestamp: 'Ayer'} ] },
+    { studentId: 1, studentName: 'Ana Sofía García', studentAvatar: 'https://picsum.photos/seed/1/100/100', lastMessage: 'Profe, ¿me confirma la fecha del examen?', timestamp: '10:45 AM', unread: true, conversation: [{ sender: 'parent', text: 'Profe, ¿me confirma la fecha del examen?', timestamp: '10:45 AM' }] },
+    { studentId: 5, studentName: 'Carlos Andrés Ruiz', studentAvatar: 'https://picsum.photos/seed/5/100/100', lastMessage: 'Gracias por la retroalimentación.', timestamp: 'Ayer', unread: false, conversation: [{ sender: 'teacher', text: 'El trabajo de Carlos estuvo excelente.', timestamp: 'Ayer' }, { sender: 'parent', text: 'Gracias por la retroalimentación.', timestamp: 'Ayer' }] },
 ];
 
 export const MOCK_CITATIONS: Citation[] = [
-  { id: 'cit1', studentId: 9, studentName: 'Mariana López', studentAvatar: 'https://picsum.photos/seed/9/100/100', date: '2024-08-05', time: '08:00', location: 'Coordinación', reason: 'Seguimiento por incidencia de convivencia', status: CitationStatus.PENDING },
-  { id: 'cit2', studentId: 1, studentName: 'Ana María Rojas', studentAvatar: 'https://picsum.photos/seed/1/100/100', date: '2024-08-02', time: '10:30', location: 'Coordinación', reason: 'Revisión de desempeño académico', status: CitationStatus.CONFIRMED },
-  { id: 'cit3', studentId: 4, studentName: 'Carlos Andrés Vélez', studentAvatar: 'https://picsum.photos/seed/4/100/100', date: '2024-07-28', time: '09:00', location: 'Rectoría', reason: 'Faltas académicas recurrentes', status: CitationStatus.COMPLETED },
+    { id: 'cit1', studentId: 3, studentName: 'Camila Rodriguez', studentAvatar: 'https://picsum.photos/seed/3/100/100', date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '08:00', location: 'Coordinación', reason: 'Seguimiento académico', status: CitationStatus.PENDING },
+    { id: 'cit2', studentId: 10, studentName: 'Isabella Martínez', studentAvatar: 'https://picsum.photos/seed/10/100/100', date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '10:30', location: 'Coordinación', reason: 'Incidencia de convivencia', status: CitationStatus.CONFIRMED },
 ];
 
 export const MOCK_COORDINATION_MESSAGES: CoordinationMessage[] = [
-    { id: 'coord1', sender: 'coordination', text: 'Profe, por favor recordar a los estudiantes de 8A sobre la salida pedagógica de mañana.', timestamp: 'Hace 3 horas', readByTeacher: false },
-    { id: 'coord2', sender: 'teacher', text: 'Recibido. Ya les recordé y envié la autorización a los acudientes.', timestamp: 'Hace 1 hora', readByTeacher: true },
-];
-
-export const MOCK_USER: User = { name: 'Adriana Botero', avatarUrl: 'https://picsum.photos/seed/coordinator/100/100', role: 'Coordinador(a)' };
-export const COORDINATOR_PROFILE: User = { name: 'Adriana Botero', avatarUrl: 'https://picsum.photos/seed/coordinator/100/100', role: 'Coordinador(a)' };
-
-export const MOCK_ANNOUNCEMENTS: Announcement[] = [
-    { id: 'ann1', title: 'Reunión General de Padres', content: 'Se les recuerda a todos los padres de familia la reunión general que se llevará a cabo el próximo viernes a las 6:00 PM en el auditorio.', recipients: 'all', timestamp: '2024-07-28T10:00:00Z', sentBy: 'Rectoría' },
-    { id: 'ann2', title: 'Salida Pedagógica Grado 8', content: 'Recordamos a los estudiantes de grado 8 que la salida al parque explora es mañana. No olvidar el uniforme de educación física y el carnet.', recipients: { grade: '8º', group: 'A' }, timestamp: '2024-07-29T08:00:00Z', sentBy: 'Coordinación' },
+    { id: 'cm1', sender: 'coordination', text: 'Profe, por favor recordar a los estudiantes del 11-A la reunión de mañana.', timestamp: 'Hace 3 horas', readByTeacher: false }
 ];
 
 export const MOCK_INSTITUTION_PROFILE: InstitutionProfileData = {
-    name: "Institución Educativa Ficticia",
-    daneCode: "123456789012",
-    nit: "900.123.456-7",
-    rector: "Dr. Armando Casas",
-    address: "Calle Falsa 123, Ciudad Ejemplo, Colombia",
-    phone: "(+57) 604 123 4567",
-    email: "contacto@institucionficticia.edu.co",
-    logoUrl: "https://via.placeholder.com/150/005A9C/FFFFFF?text=Logo",
-    primaryColor: "#005A9C",
-    secondaryColor: "#FFCD00",
+    name: 'Institución Educativa Integral Maya',
+    daneCode: '123456789012',
+    nit: '900.123.456-7',
+    rector: 'Dr. Armando Paredes',
+    address: 'Calle Falsa 123, Ciudad Primavera',
+    phone: '(+57) 300 123 4567',
+    email: 'contacto@iemaya.edu.co',
+    logoUrl: 'https://picsum.photos/seed/logo/200/200',
+    primaryColor: '#005A9C',
+    secondaryColor: '#FFCD00',
 };
 
-export const MOCK_EVENT_POSTERS: EventPoster[] = [];
+export const MOCK_STUDENT_ASSESSMENT_RESULTS: StudentAssessmentResult[] = [
+    { id: 'asm_1_stud_1', studentId: 1, assessmentId: 'asm_1', assessmentTitle: 'Examen de Biología Celular', score: 85, completedAt: new Date().toISOString() },
+    { id: 'asm_2_stud_1', studentId: 1, assessmentId: 'asm_2', assessmentTitle: 'Quiz de Comprensión Lectora', score: 92, completedAt: new Date().toISOString() },
+];
+
+export const MOCK_ANNOUNCEMENTS: Announcement[] = [
+    {
+        id: 'ann_1',
+        title: 'Reunión General de Padres de Familia',
+        content: 'Se convoca a todos los padres de familia a la reunión general que se llevará a cabo el próximo viernes a las 7:00 AM en el auditorio.',
+        recipients: 'all',
+        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        sentBy: 'Rectoría',
+    },
+     {
+        id: 'ann_2',
+        title: 'Día Deportivo - Grado 11',
+        content: 'El próximo lunes se realizará el día deportivo para los estudiantes de grado 11. Recuerden traer uniforme de educación física e hidratación.',
+        recipients: { grade: '11º', group: 'A' },
+        timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        sentBy: 'Coordinación de Deportes',
+    }
+];
+
+export const MOCK_SUBJECT_GRADES: SubjectGrades[] = [
+    {
+        id: 'Matemáticas-11º-A-Primer Período',
+        subject: 'Matemáticas',
+        grade: '11º',
+        group: 'A',
+        period: AcademicPeriod.PRIMERO,
+        teacherId: '1037612345',
+        gradeItems: [
+            { id: 'mat-11a-p1-item1', name: 'Taller de Límites', weight: 0.25 },
+            { id: 'mat-11a-p1-item2', name: 'Quiz de Derivadas', weight: 0.25 },
+            { id: 'mat-11a-p1-item3', name: 'Examen Parcial', weight: 0.30 },
+            { id: 'mat-11a-p1-item4', name: 'Actitud y Participación', weight: 0.20 },
+        ],
+        scores: [
+            { studentId: 1, gradeItemId: 'mat-11a-p1-item1', score: 4.5 },
+            { studentId: 1, gradeItemId: 'mat-11a-p1-item2', score: 3.8 },
+            { studentId: 1, gradeItemId: 'mat-11a-p1-item3', score: 4.2 },
+            { studentId: 1, gradeItemId: 'mat-11a-p1-item4', score: 5.0 },
+            { studentId: 2, gradeItemId: 'mat-11a-p1-item1', score: 3.0 },
+            { studentId: 2, gradeItemId: 'mat-11a-p1-item2', score: 3.5 },
+            { studentId: 2, gradeItemId: 'mat-11a-p1-item3', score: 2.8 },
+            { studentId: 2, gradeItemId: 'mat-11a-p1-item4', score: 4.0 },
+            { studentId: 3, gradeItemId: 'mat-11a-p1-item1', score: 5.0 },
+            { studentId: 3, gradeItemId: 'mat-11a-p1-item2', score: null },
+            { studentId: 3, gradeItemId: 'mat-11a-p1-item3', score: 4.8 },
+            { studentId: 3, gradeItemId: 'mat-11a-p1-item4', score: 4.5 },
+        ],
+        observations: {
+            1: "Juan David ha demostrado un excelente dominio de los temas del período. Su participación es destacada. ¡Sigue así!",
+            2: "Sofía necesita reforzar los conceptos vistos para el examen parcial. Se recomienda estudiar los talleres en clase.",
+            3: "Carlos muestra gran potencial, pero debe asegurarse de presentar todas las evaluaciones para tener una nota completa.",
+        },
+        isLocked: false,
+    },
+    {
+        id: 'Lengua Castellana-11º-A-Primer Período',
+        subject: 'Lengua Castellana',
+        grade: '11º',
+        group: 'A',
+        period: AcademicPeriod.PRIMERO,
+        teacherId: '1037612346',
+        gradeItems: [
+            { id: 'len-11a-p1-item1', name: 'Ensayo', weight: 0.40 },
+            { id: 'len-11a-p1-item2', name: 'Exposición', weight: 0.40 },
+            { id: 'len-11a-p1-item3', name: 'Autoevaluación', weight: 0.20 },
+        ],
+        scores: [
+            { studentId: 1, gradeItemId: 'len-11a-p1-item1', score: 4.8 },
+            { studentId: 1, gradeItemId: 'len-11a-p1-item2', score: 4.0 },
+            { studentId: 1, gradeItemId: 'len-11a-p1-item3', score: 5.0 },
+            { studentId: 2, gradeItemId: 'len-11a-p1-item1', score: 3.2 },
+            { studentId: 2, gradeItemId: 'len-11a-p1-item2', score: 3.8 },
+            { studentId: 2, gradeItemId: 'len-11a-p1-item3', score: 4.0 },
+        ],
+        observations: {
+            1: "Excelente capacidad de argumentación en el ensayo.",
+            2: "Debe mejorar la fluidez y seguridad en las exposiciones orales."
+        },
+        isLocked: false,
+    },
+];

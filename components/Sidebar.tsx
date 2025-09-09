@@ -1,32 +1,30 @@
-
-import React from 'react';
-import type { Page, Teacher } from '../types';
+import React, { useMemo } from 'react';
+import type { Page, Teacher, Student } from '../types';
+import { Role } from '../types';
 import { SIDEBAR_ITEMS, LogoutIcon } from '../constants';
 
 interface SidebarProps {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
-  currentUser: Teacher;
+  currentUser: Teacher | Student;
   onLogout: () => void;
 }
 
-const TEACHER_PAGES: Page[] = ['Dashboard', 'Classroom', 'Assessments', 'Resources', 'Profile'];
+const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
+  [Role.ADMIN]: ['Dashboard', 'Classroom', 'Incidents', 'Assessments', 'Calificaciones', 'Resources', 'Profile', 'Settings', 'Rectory', 'InstitutionProfile', 'ParentPortal', 'StudentPortal'],
+  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Rectory', 'Resources', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal'],
+  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Resources', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal'],
+  [Role.TEACHER]: ['Dashboard', 'Classroom', 'Assessments', 'Calificaciones', 'Resources', 'Profile', 'Settings'],
+  [Role.STUDENT]: ['Dashboard', 'StudentPortal', 'Resources', 'Profile'],
+};
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser, onLogout }) => {
-  const visibleItems = SIDEBAR_ITEMS.filter(item => {
-    // Admin user gets to see all pages for testing/design purposes
-    if (currentUser.id === 'admin') {
-      return true;
-    }
-    
-    // For now, only teachers can log in. This can be expanded with more roles.
-    if (currentUser) {
-      return TEACHER_PAGES.includes(item.name);
-    }
-    
-    // Fallback for non-logged-in views if any (currently none)
-    return true; 
-  });
+  const visibleItems = useMemo(() => {
+    if (!currentUser) return [];
+    const allowedPages = PAGE_ACCESS[currentUser.role] || [];
+    return SIDEBAR_ITEMS.filter(item => allowedPages.includes(item.name));
+  }, [currentUser]);
+
 
   return (
     <div className="w-20 lg:w-64 bg-primary text-white flex flex-col">
@@ -34,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentU
         <h1 className="text-xl font-bold hidden lg:block">AULA INTEGRAL MAYA</h1>
         <h1 className="text-xl font-bold lg:hidden">AIM</h1>
       </div>
-      <nav className="flex-1 px-2 py-4 space-y-2">
+      <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
         {visibleItems.map((item) => (
           <a
             key={item.name}
@@ -54,6 +52,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentU
           </a>
         ))}
       </nav>
+      <div className="p-4 text-center text-xs text-gray-400 hidden lg:block">
+        <p>Copyright - EduFuturo</p>
+        <p>Educadores que Trascienden</p>
+      </div>
       <div className="p-2 border-t border-primary-focus">
          <a
             href="#"

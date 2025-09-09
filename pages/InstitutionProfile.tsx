@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import type { InstitutionProfileData } from '../types';
 import PEISummary from '../components/PEISummary';
 import EventPosterManager from '../components/EventPosterManager';
+import GenerateLogoModal from '../components/GenerateLogoModal';
 
 interface InstitutionProfileProps {
     profile: InstitutionProfileData;
@@ -50,6 +51,7 @@ const InstitutionProfile: React.FC<InstitutionProfileProps> = ({ profile, setPro
     const [formData, setFormData] = useState<InstitutionProfileData>(profile);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState<'info' | 'pei' | 'posters'>('info');
+    const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
 
 
     const handleEditToggle = () => {
@@ -84,6 +86,14 @@ const InstitutionProfile: React.FC<InstitutionProfileProps> = ({ profile, setPro
         setIsEditing(false);
     };
 
+    const handleLogoGenerated = (logoUrl: string) => {
+        const updatedProfile = { ...formData, logoUrl };
+        setFormData(updatedProfile);
+        setProfile(updatedProfile);
+        localStorage.setItem('institutionProfile', JSON.stringify(updatedProfile));
+        setIsLogoModalOpen(false);
+    };
+
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
              <input type="file" ref={fileInputRef} onChange={handleLogoChange} className="hidden" accept="image/*" />
@@ -110,12 +120,16 @@ const InstitutionProfile: React.FC<InstitutionProfileProps> = ({ profile, setPro
                 </nav>
             </div>
             
-            {activeTab === 'info' && (
+            <div className={activeTab === 'info' ? '' : 'hidden'}>
                 <ProfileSection 
                     title="Información de la Institución"
                     action={
                         isEditing ? (
-                            <div className="flex space-x-3">
+                            <div className="flex items-center space-x-3">
+                                 <button onClick={() => setIsLogoModalOpen(true)} className="px-4 py-2 rounded-md text-primary bg-primary/10 hover:bg-primary/20 text-sm font-semibold flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                                    Generar Logo con IA
+                                </button>
                                 <button onClick={handleCancel} className="px-4 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 text-sm font-semibold">Cancelar</button>
                                 <button onClick={handleSave} className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus text-sm font-semibold">Guardar Cambios</button>
                             </div>
@@ -195,12 +209,23 @@ const InstitutionProfile: React.FC<InstitutionProfileProps> = ({ profile, setPro
                         </div>
                     </div>
                 </ProfileSection>
-            )}
-            {activeTab === 'pei' && (
+            </div>
+
+            <div className={activeTab === 'pei' ? '' : 'hidden'}>
                 <PEISummary />
-            )}
-             {activeTab === 'posters' && (
+            </div>
+
+            <div className={activeTab === 'posters' ? '' : 'hidden'}>
                 <EventPosterManager />
+            </div>
+
+            {isLogoModalOpen && (
+                <GenerateLogoModal 
+                    onClose={() => setIsLogoModalOpen(false)}
+                    onLogoGenerated={handleLogoGenerated}
+                    primaryColor={profile.primaryColor}
+                    secondaryColor={profile.secondaryColor}
+                />
             )}
         </div>
     );

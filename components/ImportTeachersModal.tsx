@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { GRADES, GROUPS, SUBJECT_AREAS } from '../constants';
 import type { SubjectArea, Teacher } from '../types';
+import { Role } from '../types';
 
 interface ImportTeachersModalProps {
   onClose: () => void;
@@ -172,6 +174,8 @@ const ImportTeachersModal: React.FC<ImportTeachersModalProps> = ({ onClose, onSa
             id: t.id,
             name: t.name,
             avatarUrl: `https://picsum.photos/seed/teacher${Date.now() + index}/100/100`,
+            // Fix: Added missing role property
+            role: Role.TEACHER,
             subject: t.subject,
             dateOfBirth: t.dateOfBirth,
             address: t.address,

@@ -30,11 +30,21 @@
               zoomIn: {
                 '0%': { transform: 'scale(0.95)', opacity: '0' },
                 '100%': { transform: 'scale(1)', opacity: '1' },
+              },
+              marquee: {
+                '0%': { transform: 'translateX(0%)' },
+                '100%': { transform: 'translateX(-100%)' },
+              },
+              marquee2: {
+                '0%': { transform: 'translateX(100%)' },
+                '100%': { transform: 'translateX(0%)' },
               }
             },
             animation: {
               'fade-in': 'fadeIn 0.3s ease-out forwards',
               'zoom-in': 'zoomIn 0.3s ease-out forwards',
+              'marquee': 'marquee 80s linear infinite',
+              'marquee2': 'marquee2 80s linear infinite',
             }
           },
         },
@@ -47,7 +57,10 @@
     "recharts": "https://aistudiocdn.com/recharts@^3.1.2",
     "react/": "https://aistudiocdn.com/react@^19.1.1/",
     "react": "https://aistudiocdn.com/react@^19.1.1",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.15.0"
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.15.0",
+    "express": "https://aistudiocdn.com/express@^5.1.0",
+    "path": "https://aistudiocdn.com/path@^0.12.7",
+    "url": "https://aistudiocdn.com/url@^0.11.4"
   }
 }
 </script>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Student, AttendanceRecord } from '../types';
 import { AttendanceStatus } from '../types';
-import { addOrUpdateAttendanceRecord, getAttendanceForDate } from '../db';
 
 // Icons
 const CheckCircleIcon = ({ className = '' }: { className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${className}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>;
@@ -13,6 +12,9 @@ const ShieldCheckIcon = ({ className = '' }: { className?: string }) => <svg xml
 interface AttendanceTakerProps {
   students: Student[];
   isOnline: boolean;
+  allAttendanceRecords: AttendanceRecord[];
+  onUpdateRecord: (record: AttendanceRecord) => Promise<void>;
+  onBulkUpdateRecords: (records: AttendanceRecord[]) => Promise<void>;
 }
 
 const getStatusClass = (status: AttendanceStatus) => {
@@ -26,31 +28,19 @@ const getStatusClass = (status: AttendanceStatus) => {
     }
 }
 
-const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, isOnline }) => {
+const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, isOnline, allAttendanceRecords, onUpdateRecord, onBulkUpdateRecords }) => {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [attendance, setAttendance] = useState<Map<number, AttendanceStatus>>(new Map());
-    const [loading, setLoading] = useState(true);
-
-    const loadAttendance = useCallback(async () => {
-        setLoading(true);
-        const records = await getAttendanceForDate(selectedDate);
+    
+    const attendance = useMemo(() => {
+        const recordsForDate = allAttendanceRecords.filter(rec => rec.date === selectedDate);
         const attendanceMap = new Map<number, AttendanceStatus>();
-        records.forEach(rec => {
+        recordsForDate.forEach(rec => {
             attendanceMap.set(rec.studentId, rec.status);
         });
-        setAttendance(attendanceMap);
-        setLoading(false);
-    }, [selectedDate]);
+        return attendanceMap;
+    }, [allAttendanceRecords, selectedDate]);
 
-    useEffect(() => {
-        loadAttendance();
-    }, [loadAttendance]);
-    
     const handleStatusChange = async (studentId: number, status: AttendanceStatus) => {
-        const newAttendance = new Map(attendance);
-        newAttendance.set(studentId, status);
-        setAttendance(newAttendance);
-
         const newRecord: AttendanceRecord = {
             id: `${studentId}-${selectedDate}`,
             studentId,
@@ -58,45 +48,32 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, isOnline })
             status,
             synced: isOnline,
         };
-        await addOrUpdateAttendanceRecord(newRecord);
+        await onUpdateRecord(newRecord);
     };
 
     const markAllAs = async (status: AttendanceStatus) => {
-        setLoading(true);
-        const newAttendance = new Map(attendance);
-        const promises: Promise<void>[] = [];
-
-        students.forEach(student => {
-            newAttendance.set(student.id, status);
-            const newRecord: AttendanceRecord = {
-                id: `${student.id}-${selectedDate}`,
-                studentId: student.id,
-                date: selectedDate,
-                status,
-                synced: isOnline,
-            };
-            promises.push(addOrUpdateAttendanceRecord(newRecord));
-        });
-        
-        await Promise.all(promises);
-        setAttendance(newAttendance);
-        setLoading(false);
+        const recordsToUpdate: AttendanceRecord[] = students.map(student => ({
+            id: `${student.id}-${selectedDate}`,
+            studentId: student.id,
+            date: selectedDate,
+            status,
+            synced: isOnline,
+        }));
+        await onBulkUpdateRecords(recordsToUpdate);
     };
 
     const summary = useMemo(() => {
         const counts = {
-            [AttendanceStatus.PRESENT]: students.length,
+            [AttendanceStatus.PRESENT]: 0,
             [AttendanceStatus.ABSENT]: 0,
             [AttendanceStatus.TARDY]: 0,
             [AttendanceStatus.EXCUSED]: 0,
             [AttendanceStatus.SPECIAL_PERMIT]: 0,
         };
         
-        attendance.forEach(status => {
-            if (status !== AttendanceStatus.PRESENT) {
-               counts[status]++;
-               counts[AttendanceStatus.PRESENT]--;
-            }
+        students.forEach(student => {
+            const status = attendance.get(student.id) || AttendanceStatus.PRESENT;
+            counts[status]++;
         });
 
         return counts;
@@ -144,39 +121,37 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, isOnline })
             </div>
 
             <div className="space-y-3 max-h-[55vh] overflow-y-auto pr-2">
-                {loading ? <p className="text-center text-gray-500 py-8">Cargando asistencias...</p> : 
-                    students.map(student => {
-                        const currentStatus = attendance.get(student.id) || AttendanceStatus.PRESENT;
-                        const statusClasses = getStatusClass(currentStatus);
+                {students.map(student => {
+                    const currentStatus = attendance.get(student.id) || AttendanceStatus.PRESENT;
+                    const statusClasses = getStatusClass(currentStatus);
 
-                        return (
-                            <div key={student.id} className={`p-3 rounded-lg flex items-center justify-between border-l-4 ${statusClasses.border} ${statusClasses.bg}`}>
-                                <div className="flex items-center gap-4">
-                                    <img src={student.avatarUrl} alt={student.name} className="w-12 h-12 rounded-full object-cover" />
-                                    <div>
-                                        <p className="font-bold text-gray-800">{student.name}</p>
-                                        <p className="text-sm text-gray-500">{student.grade} - Grupo {student.group}</p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-1">
-                                    {[AttendanceStatus.PRESENT, AttendanceStatus.ABSENT, AttendanceStatus.TARDY, AttendanceStatus.EXCUSED, AttendanceStatus.SPECIAL_PERMIT].map(status => {
-                                        const isActive = currentStatus === status;
-                                        const classes = getStatusClass(status);
-                                        return (
-                                            <button key={status} onClick={() => handleStatusChange(student.id, status)} className={`p-2 rounded-full transition-colors ${isActive ? `${classes.bg} ${classes.text} ring-2 ring-offset-2 ${classes.border}` : 'text-gray-400 hover:bg-gray-200'}`} title={status}>
-                                                {status === AttendanceStatus.PRESENT && <CheckCircleIcon className={isActive ? 'text-green-600' : ''} />}
-                                                {status === AttendanceStatus.ABSENT && <XCircleIcon className={isActive ? 'text-red-600' : ''} />}
-                                                {status === AttendanceStatus.TARDY && <ClockIcon className={isActive ? 'text-yellow-600' : ''} />}
-                                                {status === AttendanceStatus.EXCUSED && <DocumentTextIcon className={isActive ? 'text-blue-600' : ''} />}
-                                                {status === AttendanceStatus.SPECIAL_PERMIT && <ShieldCheckIcon className={isActive ? 'text-purple-600' : ''} />}
-                                            </button>
-                                        )
-                                    })}
+                    return (
+                        <div key={student.id} className={`p-3 rounded-lg flex items-center justify-between border-l-4 ${statusClasses.border} ${statusClasses.bg}`}>
+                            <div className="flex items-center gap-4">
+                                <img src={student.avatarUrl} alt={student.name} className="w-12 h-12 rounded-full object-cover" />
+                                <div>
+                                    <p className="font-bold text-gray-800">{student.name}</p>
+                                    <p className="text-sm text-gray-500">{student.grade} - Grupo {student.group}</p>
                                 </div>
                             </div>
-                        )
-                    })
-                }
+                            <div className="flex gap-1">
+                                {[AttendanceStatus.PRESENT, AttendanceStatus.ABSENT, AttendanceStatus.TARDY, AttendanceStatus.EXCUSED, AttendanceStatus.SPECIAL_PERMIT].map(status => {
+                                    const isActive = currentStatus === status;
+                                    const classes = getStatusClass(status);
+                                    return (
+                                        <button key={status} onClick={() => handleStatusChange(student.id, status)} className={`p-2 rounded-full transition-colors ${isActive ? `${classes.bg} ${classes.text} ring-2 ring-offset-2 ${classes.border}` : 'text-gray-400 hover:bg-gray-200'}`} title={status}>
+                                            {status === AttendanceStatus.PRESENT && <CheckCircleIcon className={isActive ? 'text-green-600' : ''} />}
+                                            {status === AttendanceStatus.ABSENT && <XCircleIcon className={isActive ? 'text-red-600' : ''} />}
+                                            {status === AttendanceStatus.TARDY && <ClockIcon className={isActive ? 'text-yellow-600' : ''} />}
+                                            {status === AttendanceStatus.EXCUSED && <DocumentTextIcon className={isActive ? 'text-blue-600' : ''} />}
+                                            {status === AttendanceStatus.SPECIAL_PERMIT && <ShieldCheckIcon className={isActive ? 'text-purple-600' : ''} />}
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    )
+                })}
                  {students.length === 0 && (
                     <p className="text-center text-gray-500 py-8">No hay estudiantes en el grado/grupo seleccionado.</p>
                 )}

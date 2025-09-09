@@ -1,10 +1,10 @@
 import React from 'react';
-import type { Teacher } from '../types';
+import type { Teacher, Student } from '../types';
 
 interface HeaderProps {
   currentPage: string;
   isOnline: boolean;
-  currentUser: Teacher;
+  currentUser: Teacher | Student;
 }
 
 const StatusIndicator: React.FC<{isOnline: boolean}> = ({ isOnline }) => (
@@ -21,16 +21,16 @@ const StatusIndicator: React.FC<{isOnline: boolean}> = ({ isOnline }) => (
 
 const Header: React.FC<HeaderProps> = ({ currentPage, isOnline, currentUser }) => {
   return (
-    <header className="h-20 bg-base-100 shadow-md flex items-center justify-between px-6">
-      <h1 className="text-2xl font-bold text-gray-800">{currentPage}</h1>
-      <div className="flex items-center space-x-6">
+    <header className="h-20 bg-base-100 shadow-md flex items-center justify-between px-4 md:px-6">
+      <h1 className="text-xl md:text-2xl font-bold text-gray-800 truncate pr-4">{currentPage}</h1>
+      <div className="flex items-center space-x-4 md:space-x-6">
         <StatusIndicator isOnline={isOnline} />
-        <div className="w-px h-8 bg-gray-200"></div>
+        <div className="w-px h-8 bg-gray-200 hidden sm:block"></div>
         <div className="flex items-center space-x-3">
           <img src={currentUser.avatarUrl} alt={currentUser.name} className="h-10 w-10 rounded-full object-cover" />
-          <div className="hidden md:block">
-            <p className="font-semibold text-gray-700">{currentUser.name}</p>
-            <p className="text-xs text-gray-500">Docente</p>
+          <div className="hidden sm:block">
+            <p className="font-semibold text-gray-700 truncate">{currentUser.name}</p>
+            <p className="text-xs text-gray-500 hidden md:block">{currentUser.role}</p>
           </div>
         </div>
       </div>

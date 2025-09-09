@@ -1,15 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import type { Student, Citation } from '../types';
-import { CitationStatus } from '../types';
-import { GRADES, GROUPS, MOCK_USER } from '../constants';
+import type { Student, Citation, Teacher } from '../types';
+import { CitationStatus, Role } from '../types';
+import { GRADES, GROUPS, GRADE_GROUP_MAP } from '../constants';
 
 interface CitationModalProps {
   students: Student[];
   onClose: () => void;
   onSave: (citations: Citation[]) => void;
+  currentUser: Teacher;
 }
 
-const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave }) => {
+const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave, currentUser }) => {
   const [citationType, setCitationType] = useState<'individual' | 'group'>('individual');
   
   // Common fields
@@ -26,14 +27,36 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
 
   // Group state
   const [selectedGrade, setSelectedGrade] = useState(GRADES[0]);
-  const [selectedGroup, setSelectedGroup] = useState(GROUPS[0]);
+  const [selectedGroup, setSelectedGroup] = useState(GRADE_GROUP_MAP[GRADES[0]][0]);
+
+  const handleIndividualGradeChange = (grade: string) => {
+    setIndividualGradeFilter(grade);
+    setIndividualGroupFilter('all');
+  };
+
+  const availableGroupsForIndividual = useMemo(() => {
+    if (individualGradeFilter === 'all' || !GRADE_GROUP_MAP[individualGradeFilter]) {
+        return ['all', ...GROUPS];
+    }
+    return ['all', ...GRADE_GROUP_MAP[individualGradeFilter]];
+  }, [individualGradeFilter]);
+
+  const handleGroupCitationGradeChange = (grade: string) => {
+    setSelectedGrade(grade);
+    setSelectedGroup(GRADE_GROUP_MAP[grade]?.[0] || '');
+  };
+
+  const availableGroupsForGroupCitation = useMemo(() => {
+    return GRADE_GROUP_MAP[selectedGrade] || [];
+  }, [selectedGrade]);
+
 
   const filteredStudents = useMemo(() => {
     return students.filter(student => {
       if (citationType === 'individual') {
         const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase());
         
-        if (MOCK_USER.role === 'Coordinador(a)') {
+        if (currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR) {
             const matchesGrade = individualGradeFilter === 'all' || student.grade === individualGradeFilter;
             const matchesGroup = individualGroupFilter === 'all' || student.group === individualGroupFilter;
             return matchesSearch && matchesGrade && matchesGroup;
@@ -42,7 +65,7 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
       }
       return true; // No filter needed for group mode list
     });
-  }, [students, searchTerm, citationType, individualGradeFilter, individualGroupFilter]);
+  }, [students, searchTerm, citationType, individualGradeFilter, individualGroupFilter, currentUser]);
 
 
   const handleToggleStudent = (studentId: number) => {
@@ -135,15 +158,14 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
                 {citationType === 'individual' && (
                     <div className="space-y-4">
                         <p className="text-sm text-gray-600">Busca y selecciona uno o más estudiantes para enviarles la misma citación. La selección se mantendrá aunque cambies de grupo.</p>
-                         {MOCK_USER.role === 'Coordinador(a)' && (
+                         {(currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR) && (
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-2 bg-gray-100 rounded-md">
-                                <select value={individualGradeFilter} onChange={e => setIndividualGradeFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
+                                <select value={individualGradeFilter} onChange={e => handleIndividualGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
                                     <option value="all">Todos los Grados</option>
                                     {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
                                 <select value={individualGroupFilter} onChange={e => setIndividualGroupFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
-                                    <option value="all">Todos los Grupos</option>
-                                    {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                                    {availableGroupsForIndividual.map(g => <option key={g} value={g}>{g === 'all' ? 'Todos los Grupos' : g}</option>)}
                                 </select>
                                 <input
                                     type="text"
@@ -154,7 +176,7 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
                                 />
                             </div>
                         )}
-                         {MOCK_USER.role !== 'Coordinador(a)' && (
+                         {currentUser.role === Role.TEACHER && (
                              <input
                                 type="text"
                                 placeholder="Buscar por nombre..."
@@ -219,14 +241,14 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Grado</label>
-                                <select value={selectedGrade} onChange={e => setSelectedGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
+                                <select value={selectedGrade} onChange={e => handleGroupCitationGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
                                     {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
                             </div>
                              <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Grupo</label>
                                 <select value={selectedGroup} onChange={e => setSelectedGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
-                                    {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                                    {availableGroupsForGroupCitation.map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
                             </div>
                         </div>

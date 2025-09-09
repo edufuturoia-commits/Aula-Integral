@@ -1,15 +1,11 @@
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
-import { GRADES, GROUPS } from '../constants';
+import { GRADES, GRADE_GROUP_MAP } from '../constants';
 
 interface ImportStudentsModalProps {
   onClose: () => void;
   onSave: (studentNames: string[], grade: string, group: string) => void;
-}
-
-interface ExtractedName {
-    name: string;
-    checked: boolean;
 }
 
 const Spinner: React.FC = () => (
@@ -19,21 +15,17 @@ const Spinner: React.FC = () => (
     </svg>
 );
 
+// Helper functions for file processing
 const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = () => {
             const result = reader.result as string;
-            if (!result) {
-                return reject(new Error("File could not be read."));
-            }
+            if (!result) return reject(new Error("File could not be read."));
             const parts = result.split(',');
-            if (parts.length === 2) {
-                resolve(parts[1]);
-            } else {
-                reject(new Error("Invalid file format for base64 conversion."));
-            }
+            if (parts.length === 2) resolve(parts[1]);
+            else reject(new Error("Invalid file format for base64 conversion."));
         };
         reader.onerror = error => reject(error);
     });
@@ -42,36 +34,42 @@ const fileToBase64 = (file: File): Promise<string> => {
 const fileToGenerativePart = async (file: File) => {
     const base64Data = await fileToBase64(file);
     return {
-        inlineData: { data: base64Data, mimeType: 'application/pdf' },
+        inlineData: { data: base64Data, mimeType: file.type },
     };
 };
 
 
 const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onSave }) => {
     const [step, setStep] = useState(1);
+    const [grade, setGrade] = useState(GRADES[5]);
+    const [group, setGroup] = useState(GRADE_GROUP_MAP[GRADES[5]][0]);
     const [file, setFile] = useState<File | null>(null);
     const [isExtracting, setIsExtracting] = useState(false);
-    const [extractedNames, setExtractedNames] = useState<ExtractedName[]>([]);
+    const [extractedNames, setExtractedNames] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [grade, setGrade] = useState(GRADES[0]);
-    const [group, setGroup] = useState(GROUPS[0]);
-    const [showConfirmation, setShowConfirmation] = useState(false);
 
+    const availableGroups = useMemo(() => GRADE_GROUP_MAP[grade] || [], [grade]);
+
+    const handleGradeChange = (newGrade: string) => {
+        setGrade(newGrade);
+        setGroup(GRADE_GROUP_MAP[newGrade]?.[0] || '');
+    };
+    
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const selectedFile = e.target.files[0];
-            const allowedExtensions = /(\.pdf)$/i;
+            const allowedExtensions = /(\.pdf|\.xls|\.xlsx)$/i;
             if (!allowedExtensions.exec(selectedFile.name)) {
-                setError('Formato no soportado. Sube un archivo PDF (.pdf).');
+                setError('Formato no soportado. Sube un archivo PDF o Excel (.pdf, .xls, .xlsx).');
                 setFile(null);
-                if(e.target) e.target.value = '';
+                if (e.target) e.target.value = '';
                 return;
             }
             setFile(selectedFile);
             setError(null);
         }
     };
-    
+
     const handleExtract = async () => {
         if (!file) {
             setError("Por favor, selecciona un archivo.");
@@ -82,143 +80,105 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onSa
 
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-            const responseSchema = { type: Type.ARRAY, items: { type: Type.STRING } };
+            const prompt = `De la siguiente lista de un documento (PDF o Excel), extrae únicamente los nombres completos de los estudiantes. Ignora números de lista, encabezados de columna, o cualquier otro texto que no sea un nombre. Devuelve el resultado como un array JSON de strings. Documento:`;
 
+            const responseSchema = {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+            };
+            
             const filePart = await fileToGenerativePart(file);
-            const prompt = `Has recibido un documento (${file.name}) que contiene una lista de nombres de estudiantes. Extrae únicamente los nombres completos de los estudiantes de este documento. Devuelve el resultado como un array JSON de strings. Por ejemplo: ["Mariana Garcia Lopez", "Samuel Rodriguez Martinez"].`;
             const contents = { parts: [{ text: prompt }, filePart] };
 
             const response = await ai.models.generateContent({
                 model: "gemini-2.5-flash",
-                contents: contents,
+                contents,
                 config: {
                     responseMimeType: "application/json",
                     responseSchema,
                 },
             });
-            
-            const namesText = response.text?.trim();
-            if (!namesText) {
-                throw new Error("La respuesta de la IA estaba vacía. Esto puede ocurrir si el archivo es muy grande o tiene un formato complejo. Intente simplificar el archivo o usar formato PDF.");
-            }
-            const names = JSON.parse(namesText) as string[];
 
-            if (!names || names.length === 0) {
-                setError("No se pudieron extraer nombres del archivo. Por favor, asegúrate de que el archivo contenga una lista clara de estudiantes.");
-                setIsExtracting(false);
-                return;
+            const results = JSON.parse(response.text) as string[];
+            if (!results || results.length === 0) {
+                 setError("No se pudieron extraer nombres. Por favor, revisa el formato del archivo. Asegúrate que la lista de nombres sea clara.");
+                 setIsExtracting(false);
+                 return;
             }
-
-            setExtractedNames(names.map(name => ({ name, checked: true })));
+            setExtractedNames(results);
             setStep(2);
-
         } catch (e: any) {
             console.error("Error extracting names:", e);
-            const errorMessage = e.message || JSON.stringify(e);
-            setError(`Error al procesar el archivo: ${errorMessage}`);
+            setError(`Error al procesar el archivo: ${e.message}`);
         } finally {
             setIsExtracting(false);
         }
     };
-
-    const handleToggleName = (index: number) => {
-        setExtractedNames(prev => 
-            prev.map((item, i) => i === index ? { ...item, checked: !item.checked } : item)
-        );
-    };
-
-    const handleSave = () => {
-        setShowConfirmation(true);
-    };
-
-    const confirmAndSave = () => {
-        const selectedNames = extractedNames.filter(item => item.checked).map(item => item.name);
-        if (selectedNames.length > 0) {
-            onSave(selectedNames, grade, group);
-        }
-    };
     
-    const selectedCount = extractedNames.filter(i => i.checked).length;
+    const handleSave = () => {
+        onSave(extractedNames, grade, group);
+    };
 
     return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-lg mx-4 relative">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Importar Lista de Estudiantes</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800">&times;</button>
-        </div>
-        
-        {step === 1 && (
-            <div>
-              <p className="text-gray-600 mb-4">Sube un archivo PDF con la lista de nombres de tus estudiantes (hasta 4000). La IA los extraerá automáticamente.</p>
-              <div className="mb-4">
-                <label className="block w-full px-4 py-6 border-2 border-dashed border-gray-300 rounded-md text-center cursor-pointer hover:border-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <span className="mt-2 block text-sm font-medium text-gray-600">
-                       {file ? file.name : 'Arrastra y suelta un archivo o haz clic para seleccionar'}
-                    </span>
-                    <input type="file" className="hidden" onChange={handleFileChange} accept=".pdf"/>
-                </label>
-              </div>
-               {error && <p className="text-red-600 text-sm text-center mb-4">{error}</p>}
-               <div className="flex justify-end space-x-4">
-                 <button type="button" onClick={onClose} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors">Cancelar</button>
-                 <button onClick={handleExtract} disabled={isExtracting || !file} className="px-6 py-2 rounded-md text-white bg-primary hover:bg-primary-focus transition-colors flex items-center disabled:bg-gray-400">
-                    {isExtracting && <Spinner />}
-                    {isExtracting ? 'Extrayendo...' : 'Extraer Nombres'}
-                 </button>
-               </div>
-            </div>
-        )}
-
-        {step === 2 && (
-            <div>
-              <p className="text-gray-600 mb-2">Se encontraron {extractedNames.length} estudiantes. Revisa la lista, asigna un grado y grupo, y luego guarda.</p>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                  <select value={grade} onChange={e => setGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
-                      {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
-                  </select>
-                   <select value={group} onChange={e => setGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
-                      {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
-                  </select>
-              </div>
-              <div className="space-y-2 max-h-60 overflow-y-auto p-2 border rounded-md">
-                {extractedNames.map((item, index) => (
-                   <label key={index} className="flex items-center p-2 bg-gray-50 rounded-md cursor-pointer">
-                     <input type="checkbox" checked={item.checked} onChange={() => handleToggleName(index)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
-                     <span className="ml-3 text-sm text-gray-800">{item.name}</span>
-                   </label>
-                ))}
-              </div>
-               <div className="flex justify-between items-center mt-6">
-                 <button type="button" onClick={() => setStep(1)} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors">Atrás</button>
-                 <button onClick={handleSave} disabled={selectedCount === 0} className="px-6 py-2 rounded-md text-white bg-primary hover:bg-primary-focus transition-colors disabled:bg-gray-400">
-                    Añadir {selectedCount} Estudiantes
-                 </button>
-               </div>
-            </div>
-        )}
-
-        {showConfirmation && (
-            <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10 rounded-lg">
-                <div className="bg-white p-8 rounded-lg shadow-xl border w-11/12">
-                    <h3 className="text-lg font-bold text-gray-800">Confirmar Importación</h3>
-                    <p className="mt-2 text-gray-600">
-                        Estás a punto de añadir <strong className="text-primary">{selectedCount}</strong> estudiantes al <strong className="text-primary">{grade} - Grupo {group}</strong>.
-                    </p>
-                    <p className="mt-1 text-gray-600">¿Estás seguro de que esta información es correcta?</p>
-                    <div className="mt-6 flex justify-end space-x-4">
-                        <button onClick={() => setShowConfirmation(false)} className="px-4 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300">Cancelar</button>
-                        <button onClick={confirmAndSave} className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Confirmar y Añadir</button>
-                    </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
+                <div className="flex justify-between items-center mb-6 flex-shrink-0">
+                    <h2 className="text-2xl font-bold text-gray-800">Importar Estudiantes por Grupo</h2>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
                 </div>
+                
+                {step === 1 && (
+                    <div className="flex-1">
+                        <p className="text-gray-600 mb-4">Selecciona el grado y grupo, luego sube un archivo PDF o Excel con el listado de estudiantes. La IA se encargará de extraer los nombres.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <select value={grade} onChange={e => handleGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                                {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+                            </select>
+                            <select value={group} onChange={e => setGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                                {availableGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                            </select>
+                        </div>
+                        <div className="mb-4">
+                            <label className="block w-full px-4 py-6 border-2 border-dashed border-gray-300 rounded-md text-center cursor-pointer hover:border-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                                <span className="mt-2 block text-sm font-medium text-gray-600">{file ? file.name : 'Arrastra y suelta un archivo o haz clic para seleccionar'}</span>
+                                <input type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.xls,.xlsx"/>
+                            </label>
+                        </div>
+                        {error && <p className="text-red-600 text-sm text-center mt-4">{error}</p>}
+                        <div className="flex justify-end space-x-4 mt-8">
+                            <button type="button" onClick={onClose} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300">Cancelar</button>
+                            <button onClick={handleExtract} disabled={isExtracting || !file} className="px-6 py-2 rounded-md text-white bg-primary hover:bg-primary-focus flex items-center disabled:bg-gray-400">
+                                {isExtracting && <Spinner />}
+                                {isExtracting ? 'Extrayendo...' : 'Extraer Nombres'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {step === 2 && (
+                    <>
+                        <div className="mb-4 flex-shrink-0">
+                            <p className="text-gray-600">Se encontraron <span className="font-bold">{extractedNames.length}</span> estudiantes para añadir a <span className="font-bold">{grade} - Grupo {group}</span>. Revisa la lista y confirma.</p>
+                        </div>
+                        <div className="flex-1 overflow-y-auto pr-2 border rounded-lg p-2 bg-gray-50">
+                            <ul className="divide-y divide-gray-200">
+                                {extractedNames.map((name, index) => (
+                                    <li key={index} className="p-2">{index + 1}. {name}</li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div className="flex justify-between items-center mt-6 pt-6 border-t flex-shrink-0">
+                            <button type="button" onClick={() => setStep(1)} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300">Atrás</button>
+                            <button onClick={handleSave} className="px-6 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">
+                                Añadir {extractedNames.length} Estudiantes
+                            </button>
+                        </div>
+                    </>
+                )}
             </div>
-        )}
-      </div>
-    </div>
-  );
+        </div>
+    );
 };
 
 export default ImportStudentsModal;

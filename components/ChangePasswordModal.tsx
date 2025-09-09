@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import type { Teacher } from '../types';
-import { updateTeacher } from '../db';
+import type { Teacher, Student } from '../types';
+import { updateTeacher, updateStudent } from '../db';
 
 interface ChangePasswordModalProps {
-  user: Teacher;
-  onPasswordChanged: (user: Teacher) => void;
+  user: Teacher | Student;
+  onPasswordChanged: (user: Teacher | Student) => void;
 }
 
 const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ user, onPasswordChanged }) => {
@@ -28,8 +28,12 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ user, onPassw
     setError('');
 
     try {
-        const updatedUser: Teacher = { ...user, password: newPassword, passwordChanged: true };
-        await updateTeacher(updatedUser);
+        const updatedUser = { ...user, password: newPassword, passwordChanged: true };
+        if ('subject' in updatedUser) { // It's a teacher
+            await updateTeacher(updatedUser);
+        } else { // It's a student
+            await updateStudent(updatedUser);
+        }
         onPasswordChanged(updatedUser);
     } catch (dbError) {
         console.error("Error updating password:", dbError);

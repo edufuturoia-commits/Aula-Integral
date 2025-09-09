@@ -1,8 +1,16 @@
-export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile';
+export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones';
 
 export enum DocumentType {
   REGISTRO_CIVIL = 'Registro Civil',
   TARJETA_IDENTIDAD = 'Tarjeta de Identidad',
+}
+
+export enum Role {
+  STUDENT = 'Estudiante',
+  TEACHER = 'Docente',
+  COORDINATOR = 'Coordinador',
+  RECTOR = 'Rector',
+  ADMIN = 'Administrador',
 }
 
 export interface Student {
@@ -11,11 +19,14 @@ export interface Student {
   avatarUrl: string;
   grade: string;
   group: string;
+  role: Role;
   lastIncident?: string;
   email?: string;
   dateOfBirth?: string; // YYYY-MM-DD
   documentType?: DocumentType;
   documentNumber?: string;
+  password?: string;
+  passwordChanged?: boolean;
 }
 
 export enum IncidentType {
@@ -64,7 +75,7 @@ export interface AssessmentData {
     studentAverage: number;
 }
 
-export type SubjectArea = 'Matemáticas' | 'Lengua Castellana' | 'Inglés' | 'Biología' | 'Química' | 'Física' | 'Historia' | 'Geografía' | 'Constitución Política y Democracia' | 'Educación Artística' | 'Música' | 'Educación Ética y en Valores Humanos' | 'Filosofía' | 'Educación Física' | 'Educación Religiosa' | 'Tecnología e Informática';
+export type SubjectArea = 'Matemáticas' | 'Lengua Castellana' | 'Inglés' | 'Biología' | 'Química' | 'Física' | 'Historia' | 'Geografía' | 'Constitución Política y Democracia' | 'Educación Artística' | 'Música' | 'Educación Ética y en Valores Humanos' | 'Filosofía' | 'Educación Física' | 'Educación Religiosa' | 'Tecnología e Informática' | 'Convivencia' | 'Administración';
 export type Competency = 'Comprensión Lectora' | 'Resolución de Problemas' | 'Pensamiento Crítico' | 'Competencias Ciudadanas' | 'Comunicación Escrita' | 'Análisis Científico' | 'Expresión Artística' | 'Competencia Digital' | 'Pensamiento Histórico' | 'Bilingüismo' | 'Competencia Motriz';
 
 export interface Question {
@@ -82,6 +93,8 @@ export interface Assessment {
     title: string;
     createdAt: string;
     questions: Question[];
+    assignedGroups?: { grade: string; group: string }[];
+    assignedStudentIds?: number[];
 }
 
 export enum ResourceType {
@@ -118,6 +131,7 @@ export interface AttendanceRecord {
 }
 
 export interface StudentAssessmentResult {
+    id: string; // Composite key: `${assessmentId}_${studentId}`
     studentId: number;
     assessmentId: string;
     assessmentTitle: string;
@@ -176,6 +190,7 @@ export interface Teacher {
   id: string; // Cédula
   name: string;
   avatarUrl: string;
+  role: Role;
   subject: SubjectArea;
   dateOfBirth?: string;
   address?: string;
@@ -188,6 +203,9 @@ export interface Teacher {
   };
   password?: string;
   passwordChanged?: boolean;
+  notifications?: NotificationSettings;
+  isDemo?: boolean;
+  demoStartDate?: string;
 }
 
 export interface InstitutionProfileData {
@@ -209,4 +227,56 @@ export interface EventPoster {
   imageUrl: string; // base64 data URL
   eventDate: string; // YYYY-MM-DD
   createdAt: string; // ISO string
+}
+
+// --- Grade Management System Types ---
+
+export enum AcademicPeriod {
+  PRIMERO = 'Primer Período',
+  SEGUNDO = 'Segundo Período',
+  TERCERO = 'Tercer Período',
+  CUARTO = 'Cuarto Período',
+}
+
+export enum Desempeno {
+    SUPERIOR = 'Superior',
+    ALTO = 'Alto',
+    BASICO = 'Básico',
+    BAJO = 'Bajo',
+}
+
+
+export interface GradeItem {
+  id: string; // e.g., 'quiz1-math-p1'
+  name: string; // e.g., 'Quiz de Fracciones'
+  weight: number; // e.g., 0.20 for 20%
+}
+
+export interface StudentScore {
+  studentId: number;
+  gradeItemId: string;
+  score: number | null; // null if not graded yet. Score is out of 5.0
+}
+
+// This represents the entire grade setup for a subject in a period for a specific class group
+export interface SubjectGrades {
+  id: string; // composite key e.g., 'Matemáticas-11-A-PRIMERO'
+  subject: SubjectArea;
+  grade: string;
+  group: string;
+  period: AcademicPeriod;
+  gradeItems: GradeItem[];
+  scores: StudentScore[];
+  teacherId: string; // The teacher who manages this gradebook
+  observations: Record<number, string>; // studentId -> observation text
+  isLocked: boolean;
+}
+
+export interface UserRegistrationData {
+    institutionName: string;
+    rectorName: string;
+    email: string;
+    phone: string;
+    password?: string;
+    isDemo?: boolean;
 }
