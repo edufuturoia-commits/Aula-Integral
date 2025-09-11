@@ -1,10 +1,13 @@
 
+
+
+
 import React, { useState, useEffect, useMemo } from 'react';
-// FIX: Import `getAnnouncements` from `../db`.
-import { getIncidents, updateIncident, addAnnouncement, addOrUpdateTeachers, addOrUpdateStudents, addIncident, getTeachers, getAnnouncements } from '../db';
 import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades } from '../types';
-import { IncidentType, AttendanceStatus, CitationStatus, DocumentType, Role } from '../types';
-import { GRADES, GROUPS, MOCK_CITATIONS, GRADE_GROUP_MAP } from '../constants';
+import { IncidentType, AttendanceStatus, CitationStatus, Role } from '../types';
+// FIX: Import 'getAnnouncements' and 'getTeachers' to resolve undefined function errors.
+import { addAnnouncement, addOrUpdateTeachers, addOrUpdateStudents, getAnnouncements, getTeachers } from '../db';
+import { GRADES, GROUPS, GRADE_GROUP_MAP } from '../constants';
 import CitationModal from '../components/CitationModal';
 import CancelCitationModal from '../components/CancelCitationModal';
 import ImportTeachersModal from '../components/ImportTeachersModal';
@@ -14,6 +17,7 @@ import ImportStudentsModal from '../components/ImportStudentsModal';
 import IncidentModal from '../components/IncidentModal';
 import EditStudentModal from '../components/EditStudentModal';
 import Calificaciones from './Calificaciones';
+import EditCitationModal from '../components/EditCitationModal';
 
 
 type EnrichedAttendanceRecord = AttendanceRecord & { student: Student };
@@ -121,6 +125,10 @@ interface IncidentsProps {
     subjectGradesData: SubjectGrades[];
     setSubjectGradesData: React.Dispatch<React.SetStateAction<SubjectGrades[]>>;
     allAttendanceRecords: AttendanceRecord[];
+    citations: Citation[];
+    onUpdateCitations: React.Dispatch<React.SetStateAction<Citation[]>>;
+    incidents: Incident[];
+    onUpdateIncidents: (action: 'add' | 'update' | 'delete', data: Incident | string) => Promise<void>;
 }
 
 const getAttendanceStatusTextColor = (status: AttendanceStatus): string => {
@@ -140,14 +148,13 @@ const getCitationStatusClass = (status: CitationStatus) => {
         case CitationStatus.PENDING: return 'bg-yellow-100 text-yellow-800';
         case CitationStatus.COMPLETED: return 'bg-blue-100 text-blue-800';
         case CitationStatus.CANCELLED: return 'bg-red-100 text-red-800';
+        case CitationStatus.RESCHEDULE_REQUESTED: return 'bg-purple-100 text-purple-800';
         default: return 'bg-gray-100 text-gray-800';
     }
 };
 
 
-const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, teachers, setTeachers, currentUser, subjectGradesData, setSubjectGradesData, allAttendanceRecords }) => {
-    const [incidents, setIncidents] = useState<Incident[]>([]);
-    const [allCitations, setAllCitations] = useState<Citation[]>([]);
+const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, teachers, setTeachers, currentUser, subjectGradesData, setSubjectGradesData, allAttendanceRecords, citations, onUpdateCitations, incidents, onUpdateIncidents }) => {
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<CoordinationTab>('incidents');
@@ -174,6 +181,7 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
     const [isCitationModalOpen, setIsCitationModalOpen] = useState(false);
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [citationToCancel, setCitationToCancel] = useState<Citation | null>(null);
+    const [editingCitation, setEditingCitation] = useState<Citation | null>(null);
 
     // Announcement state
     const [commRecipientType, setCommRecipientType] = useState<'all' | 'group' | 'individual'>('all');
@@ -206,12 +214,7 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
 
     const loadData = async () => {
         setLoading(true);
-        const [incidentsData, announcementsData] = await Promise.all([
-            getIncidents(), 
-            getAnnouncements()
-        ]);
-        setIncidents(incidentsData);
-        setAllCitations(MOCK_CITATIONS); // This is still mock, should be moved to DB if needed
+        const announcementsData = await getAnnouncements();
         setAnnouncements(announcementsData);
         setLoading(false);
     };
@@ -273,7 +276,7 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
     };
 
     const displayedCitations = useMemo(() => {
-        return allCitations.filter(cit => {
+        return citations.filter(cit => {
             const student = studentMap.get(cit.studentId);
             
             const matchesStatus = citationStatusFilter === 'all' || cit.status === citationStatusFilter;
@@ -283,7 +286,7 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
 
             return matchesStatus && matchesSearch && matchesGrade && matchesGroup;
         }).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [allCitations, citationSearch, citationStatusFilter, citationGradeFilter, citationGroupFilter, studentMap]);
+    }, [citations, citationSearch, citationStatusFilter, citationGradeFilter, citationGroupFilter, studentMap]);
 
     const attendanceSummary = useMemo(() => {
         return displayedAttendance.reduce((acc, record) => {
@@ -298,9 +301,19 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
         } as Record<AttendanceStatus, number>);
     }, [displayedAttendance]);
 
-    const handleToggleArchive = async (incident: Incident) => {
-        await updateIncident({ ...incident, archived: !incident.archived });
-        await loadData();
+    const handleIncidentAction = async (action: 'archive' | 'delete' | 'attend', incident: Incident) => {
+        if (action === 'delete') {
+            if (window.confirm("¿Estás seguro de que quieres eliminar esta incidencia permanentemente?")) {
+                await onUpdateIncidents('delete', incident.id);
+                showSyncMessage("Incidencia eliminada.");
+            }
+        } else if (action === 'archive') {
+            await onUpdateIncidents('update', { ...incident, archived: !incident.archived });
+            showSyncMessage(incident.archived ? "Incidencia desarchivada." : "Incidencia archivada.");
+        } else if (action === 'attend') {
+            await onUpdateIncidents('update', { ...incident, attended: true });
+            showSyncMessage("Incidencia marcada como atendida.");
+        }
     };
 
     const handleDownloadIncidents = (format: 'csv' | 'pdf') => {
@@ -377,7 +390,7 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
     };
 
     const handleSaveCitations = (newCitations: Citation[]) => {
-        setAllCitations(prev => [...prev, ...newCitations]);
+        onUpdateCitations(prev => [...prev, ...newCitations]);
         setIsCitationModalOpen(false);
     };
 
@@ -388,13 +401,29 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
 
     const handleConfirmCancelCitation = (reason: string) => {
         if (!citationToCancel) return;
-        setAllCitations(prev => prev.map(c => 
+        onUpdateCitations(prev => prev.map(c => 
             c.id === citationToCancel.id 
             ? { ...c, status: CitationStatus.CANCELLED, cancellationReason: reason }
             : c
         ));
         setIsCancelModalOpen(false);
         setCitationToCancel(null);
+    };
+
+    const handleDeleteCitation = (citationId: string) => {
+        if (window.confirm("¿Estás seguro de que quieres eliminar esta citación? Esta acción no se puede deshacer y requerirá crear una nueva.")) {
+            onUpdateCitations(prev => prev.filter(c => c.id !== citationId));
+            showSyncMessage("Citación eliminada.");
+        }
+    };
+    
+    const handleSaveEditedCitation = (updatedCitation: Citation) => {
+        // When a citation is edited after a reschedule request, it should go back to PENDING
+        // so the parent has to confirm the new details.
+        const citationToSave = { ...updatedCitation, status: CitationStatus.PENDING };
+        onUpdateCitations(prev => prev.map(c => (c.id === citationToSave.id ? citationToSave : c)));
+        setEditingCitation(null);
+        showSyncMessage("Citación actualizada. El acudiente debe confirmar los nuevos detalles.");
     };
     
     const handleSaveTeachers = async (newTeachers: Teacher[]) => {
@@ -429,22 +458,25 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                 }
             }
             
-            if (validTeachers.length !== newTeachers.length) {
+            if (newTeachers.length > 0 && validTeachers.length !== newTeachers.length) {
                 const skippedCount = newTeachers.length - validTeachers.length;
                 showSyncMessage(`${skippedCount} docente(s) omitido(s) por datos duplicados o inválidos (Cédula/Email).`);
             }
     
             if (validTeachers.length > 0) {
                 const existingTeachers = await getTeachers();
-                const combinedTeachers = [...existingTeachers, ...validTeachers];
-                await addOrUpdateTeachers(combinedTeachers);
-                setTeachers(combinedTeachers.sort((a,b) => a.name.localeCompare(b.name)));
-                showSyncMessage(`${validTeachers.length} docente(s) importado(s) exitosamente.`);
+                const teacherMap = new Map(existingTeachers.map(t => [t.id, t]));
+                validTeachers.forEach(t => teacherMap.set(t.id, t)); // Upsert logic
+                
+                const updatedTeachersList = Array.from(teacherMap.values());
+
+                await addOrUpdateTeachers(updatedTeachersList);
+                setTeachers(updatedTeachersList.sort((a,b) => a.name.localeCompare(b.name)));
+                showSyncMessage(`${validTeachers.length} docente(s) importado(s) y/o actualizado(s) exitosamente.`);
             } else if (newTeachers.length > 0) {
                  alert("No se pudo importar ningún docente. Asegúrese de que cada docente en el archivo tenga una Cédula y Email únicos y válidos.");
-            } else {
-                 alert("No se proporcionaron nuevos docentes para importar.");
             }
+            
         } catch (error) {
             console.error("Failed to save teachers:", error);
             alert("Ocurrió un error al guardar los docentes.");
@@ -484,8 +516,7 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
     };
     
     const handleSaveIncident = async (incident: Incident) => {
-        await addIncident({ ...incident, synced: isOnline });
-        await loadData();
+        await onUpdateIncidents('add', { ...incident, synced: isOnline });
         setIsIncidentModalOpen(false);
         setSelectedStudentForIncident(null);
         showSyncMessage("Incidencia guardada exitosamente.");
@@ -543,9 +574,9 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
             <div className={activeTab === 'incidents' ? '' : 'hidden'}>
                 <div className="bg-white p-6 rounded-xl shadow-md">
                     <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                        <input type="text" placeholder="Buscar por estudiante, docente o nota..." value={incidentSearch} onChange={e => setIncidentSearch(e.target.value)} className="flex-grow p-2 border border-gray-300 rounded-md w-full md:w-auto bg-white text-gray-900" />
+                        <input type="text" placeholder="Buscar por estudiante, docente o nota..." value={incidentSearch} onChange={e => setIncidentSearch(e.target.value)} className="flex-grow p-2 border border-gray-300 rounded-md w-full md:w-auto bg-gray-50 text-gray-900" />
                         <div className="flex items-center gap-4 w-full md:w-auto">
-                            <select value={incidentTypeFilter} onChange={e => setIncidentTypeFilter(e.target.value)} className="w-full md:w-auto p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                            <select value={incidentTypeFilter} onChange={e => setIncidentTypeFilter(e.target.value)} className="w-full md:w-auto p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                                 <option value="all">Todos los Tipos</option>
                                 {Object.values(IncidentType).map(t => <option key={t} value={t}>{t}</option>)}
                             </select>
@@ -561,14 +592,26 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                         {displayedIncidents.map(inc => (
                             <div key={inc.id} className="p-4 border rounded-lg bg-gray-50">
                                 <div className="flex justify-between items-start">
-                                    <p className="font-semibold">{inc.studentName} - <span className="font-normal text-gray-600">{inc.type}</span></p>
-                                    <button onClick={() => handleToggleArchive(inc)} className="text-sm font-semibold text-primary hover:underline">{inc.archived ? 'Desarchivar' : 'Archivar'}</button>
+                                    <div>
+                                        <p className="font-semibold text-gray-900">{inc.studentName}</p>
+                                        <p className="text-sm text-gray-600">{inc.type}</p>
+                                    </div>
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${inc.attended ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                        {inc.attended ? 'Atendido' : 'Pendiente'}
+                                    </span>
                                 </div>
                                 <p className="text-sm text-gray-500 mt-1">{inc.notes}</p>
                                 <div className="text-xs text-gray-400 mt-2 flex justify-between">
                                     <span>Reportado por: {inc.teacherName} @ {inc.location}</span>
                                     <span>{new Date(inc.timestamp).toLocaleString()}</span>
                                 </div>
+                                {!inc.archived && (
+                                    <div className="flex items-center justify-end space-x-4 mt-3 pt-3 border-t">
+                                        <button onClick={() => handleIncidentAction('attend', inc)} disabled={inc.attended} className="text-sm font-semibold text-green-600 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed">Marcar como Atendido</button>
+                                        <button onClick={() => handleIncidentAction('archive', inc)} className="text-sm font-semibold text-primary hover:underline">{inc.archived ? 'Desarchivar' : 'Archivar'}</button>
+                                        <button onClick={() => handleIncidentAction('delete', inc)} className="text-sm font-semibold text-red-600 hover:underline">Eliminar</button>
+                                    </div>
+                                )}
                             </div>
                         ))}
                         {displayedIncidents.length === 0 && <p className="text-center text-gray-500 py-8">No se encontraron incidencias con los filtros actuales.</p>}
@@ -579,14 +622,14 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
             <div className={activeTab === 'attendance' ? '' : 'hidden'}>
                 <div className="bg-white p-6 rounded-xl shadow-md">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-end">
-                        <input type="text" placeholder="Buscar por estudiante..." value={attendanceSearch} onChange={e => setAttendanceSearch(e.target.value)} className="p-2 border border-gray-300 rounded-md w-full bg-white text-gray-900" />
+                        <input type="text" placeholder="Buscar por estudiante..." value={attendanceSearch} onChange={e => setAttendanceSearch(e.target.value)} className="p-2 border border-gray-300 rounded-md w-full bg-gray-50 text-gray-900" />
                         <div>
                             <label className="text-xs font-bold text-gray-500">Fecha Inicio</label>
-                            <input type="date" value={dateFilter.start} onChange={e => setDateFilter(prev => ({...prev, start: e.target.value}))} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900" />
+                            <input type="date" value={dateFilter.start} onChange={e => setDateFilter(prev => ({...prev, start: e.target.value}))} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" />
                         </div>
                             <div>
                             <label className="text-xs font-bold text-gray-500">Fecha Fin</label>
-                            <input type="date" value={dateFilter.end} onChange={e => setDateFilter(prev => ({...prev, end: e.target.value}))} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900" />
+                            <input type="date" value={dateFilter.end} onChange={e => setDateFilter(prev => ({...prev, end: e.target.value}))} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" />
                         </div>
                             <div className="flex items-center gap-4">
                             <button onClick={() => handleDownloadAttendance('pdf')} className="flex-1 p-2 bg-primary text-white rounded-lg hover:bg-primary-focus">PDF</button>
@@ -594,11 +637,11 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <select value={gradeFilter} onChange={e => handleAttendanceGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                            <select value={gradeFilter} onChange={e => handleAttendanceGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                             <option value="all">Todos los Grados</option>
                             {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                         </select>
-                        <select value={groupFilter} onChange={e => setGroupFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                        <select value={groupFilter} onChange={e => setGroupFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                             {availableGroupsForAttendance.map(g => <option key={g} value={g}>{g === 'all' ? 'Todos los Grupos' : g}</option>)}
                         </select>
                     </div>
@@ -637,8 +680,8 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                         <button onClick={() => setIsCitationModalOpen(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus">Crear Citación</button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                        <input type="text" placeholder="Buscar por estudiante o motivo..." value={citationSearch} onChange={e => setCitationSearch(e.target.value)} className="md:col-span-2 p-2 border border-gray-300 rounded-md w-full bg-white text-gray-900" />
-                        <select value={citationStatusFilter} onChange={e => setCitationStatusFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                        <input type="text" placeholder="Buscar por estudiante o motivo..." value={citationSearch} onChange={e => setCitationSearch(e.target.value)} className="md:col-span-2 p-2 border border-gray-300 rounded-md w-full bg-gray-50 text-gray-900" />
+                        <select value={citationStatusFilter} onChange={e => setCitationStatusFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                             <option value="all">Todos los Estados</option>
                             {Object.values(CitationStatus).map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
@@ -652,9 +695,25 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                                 </div>
                                 <p className="text-sm text-gray-500 mt-1">{new Date(cit.date).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })} - {cit.time}</p>
                                 {cit.status === CitationStatus.PENDING && (
-                                        <div className="mt-3 text-right">
+                                    <div className="mt-3 text-right">
                                         <button onClick={() => handleOpenCancelModal(cit)} className="text-xs font-semibold text-red-600 hover:text-red-800">
                                             Cancelar
+                                        </button>
+                                    </div>
+                                )}
+                                {cit.status === CitationStatus.RESCHEDULE_REQUESTED && (
+                                    <div className="mt-4 flex items-center justify-end space-x-3">
+                                        <button 
+                                            onClick={() => handleDeleteCitation(cit.id)}
+                                            className="text-sm font-semibold text-red-600 hover:underline"
+                                        >
+                                            Eliminar
+                                        </button>
+                                        <button 
+                                            onClick={() => setEditingCitation(cit)}
+                                            className="bg-primary text-white font-semibold py-1 px-3 rounded-lg hover:bg-primary-focus transition-colors text-sm"
+                                        >
+                                            Editar Cita
                                         </button>
                                     </div>
                                 )}
@@ -670,7 +729,7 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                     <form onSubmit={handleSendAnnouncement} className="space-y-4">
                             <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Destinatarios</label>
-                            <select value={commRecipientType} onChange={e => setCommRecipientType(e.target.value as any)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                            <select value={commRecipientType} onChange={e => setCommRecipientType(e.target.value as any)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                                 <option value="all">Toda la comunidad (Docentes y Acudientes)</option>
                                 <option value="group">Grupo Específico</option>
                                 <option value="individual">Docente Individual</option>
@@ -678,21 +737,21 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                         </div>
                         {commRecipientType === 'group' && (
                             <div className="grid grid-cols-2 gap-2">
-                                <select value={commGrade} onChange={e => setCommGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                                <select value={commGrade} onChange={e => setCommGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                                     {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
-                                <select value={commGroup} onChange={e => setCommGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                                <select value={commGroup} onChange={e => setCommGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                                     {(GRADE_GROUP_MAP[commGrade] || []).map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
                             </div>
                         )}
                             <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                            <input type="text" value={commTitle} onChange={e => setCommTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900" required />
+                            <input type="text" value={commTitle} onChange={e => setCommTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" required />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Contenido</label>
-                            <textarea rows={5} value={commContent} onChange={e => setCommContent(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900" required></textarea>
+                            <textarea rows={5} value={commContent} onChange={e => setCommContent(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" required></textarea>
                         </div>
                         <button type="submit" className="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus">Enviar Comunicado</button>
                     </form>
@@ -793,6 +852,13 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                     student={studentToEdit}
                     onClose={() => setIsEditStudentModalOpen(false)}
                     onSave={handleSaveStudentEdit}
+                />
+            )}
+            {editingCitation && (
+                <EditCitationModal
+                    citation={editingCitation}
+                    onClose={() => setEditingCitation(null)}
+                    onSave={handleSaveEditedCitation}
                 />
             )}
             {showSnackbar.visible && (

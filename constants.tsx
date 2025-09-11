@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Page, Student, AssessmentData, Question, SubjectArea, Competency, Resource, StudentAssessmentResult, ParentMessage, Citation, User, Announcement, Teacher, CoordinationMessage, InstitutionProfileData, EventPoster, SubjectGrades } from './types';
+import type { Page, Student, AssessmentData, Question, SubjectArea, Competency, Resource, StudentAssessmentResult, ParentMessage, Citation, User, Announcement, Teacher, CoordinationMessage, InstitutionProfileData, EventPoster, SubjectGrades, InboxConversation } from './types';
 import { ResourceType, CitationStatus, IncidentType, AttendanceStatus, DocumentType, Role, AcademicPeriod } from './types';
 
 // --- ICONS ---
@@ -54,6 +54,12 @@ export const IncidentsIcon: React.FC<{className?: string}> = ({ className }) => 
     </svg>
 );
 
+export const CommunicationIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    </svg>
+);
+
 export const ParentPortalIcon: React.FC<{className?: string}> = ({ className }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -89,7 +95,8 @@ export const LogoutIcon: React.FC<{className?: string}> = ({ className }) => (
 export const SIDEBAR_ITEMS: { name: Page; label: string; icon: React.FC<{className?: string}> }[] = [
     { name: 'Dashboard', label: 'Panel de Control', icon: DashboardIcon },
     { name: 'Classroom', label: 'Mi Salón de Clases', icon: ClassroomIcon },
-    { name: 'Incidents', label: 'Coordinación', icon: IncidentsIcon },
+    { name: 'Incidents', label: 'Coordinación Académica', icon: IncidentsIcon },
+    { name: 'Communication', label: 'Bandeja de Entrada', icon: CommunicationIcon },
     { name: 'Assessments', label: 'Evaluaciones', icon: AssessmentsIcon },
     { name: 'Calificaciones', label: 'Calificaciones', icon: GradesIcon },
     { name: 'Resources', label: 'Biblioteca', icon: ResourcesIcon },
@@ -276,9 +283,138 @@ export const MOCK_CITATIONS: Citation[] = [
     { id: 'cit2', studentId: 10, studentName: 'Isabella Martínez', studentAvatar: 'https://picsum.photos/seed/10/100/100', date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '10:30', location: 'Coordinación', reason: 'Incidencia de convivencia', status: CitationStatus.CONFIRMED },
 ];
 
-export const MOCK_COORDINATION_MESSAGES: CoordinationMessage[] = [
-    { id: 'cm1', sender: 'coordination', text: 'Profe, por favor recordar a los estudiantes del 11-A la reunión de mañana.', timestamp: 'Hace 3 horas', readByTeacher: false }
+export const MOCK_MESSAGE_HISTORY: CoordinationMessage[] = [
+    { id: 'cm1', sender: 'coordination', text: 'Profe, por favor recordar a los estudiantes del 11-A la reunión de mañana.', timestamp: 'Hace 3 horas', readByTeacher: false },
+    { id: 'cm2', sender: 'teacher', text: 'Entendido, Coordinación. Yo les informo ahora en la primera hora.', timestamp: 'Hace 3 horas', readByTeacher: true },
+    { id: 'cm3', sender: 'coordination', text: 'Perfecto, muchas gracias. Adicionalmente, necesitamos el listado de los estudiantes para la salida pedagógica.', timestamp: 'Hace 2 horas', readByTeacher: false },
+    { id: 'cm4', sender: 'teacher', text: 'Claro, se lo envío al final de la jornada. Ya lo tengo listo.', timestamp: 'Hace 1 hora', readByTeacher: true },
 ];
+
+export const MOCK_INBOX_CONVERSATIONS: InboxConversation[] = [
+  {
+    id: 'parent-1',
+    participantId: 1,
+    participantName: 'Acudiente de Juan David Pérez',
+    participantAvatar: 'https://picsum.photos/seed/student1/100/100',
+    participantRole: Role.STUDENT,
+    lastMessage: 'Perfecto, muchas gracias por la aclaración.',
+    timestamp: '10:30 AM',
+    unread: false,
+    conversation: [
+        { sender: 'participant', text: 'Buenos días, quisiera saber cómo va Juan David en Matemáticas.', timestamp: '9:15 AM'},
+        { sender: 'self', text: 'Buenos días. Juan David ha mejorado mucho, especialmente en cálculo. Su última nota fue 4.5.', timestamp: '9:20 AM'},
+        { sender: 'participant', text: 'Perfecto, muchas gracias por la aclaración.', timestamp: '10:30 AM'},
+    ]
+  },
+  {
+    id: 'teacher-1037612345',
+    participantId: '1037612345',
+    participantName: 'Ana María Rojas',
+    participantAvatar: 'https://picsum.photos/seed/teacher1/100/100',
+    participantRole: Role.TEACHER,
+    lastMessage: 'Listo, quedo atento. Gracias.',
+    timestamp: 'Ayer',
+    unread: true,
+    conversation: [
+        { sender: 'self', text: 'Hola Ana María, necesito por favor el reporte de notas del 11-A para el cierre de período. Plazo máximo mañana.', timestamp: 'Ayer'},
+        { sender: 'participant', text: 'Hola Coordinación. Claro que sí, ya casi lo termino. Se lo envío hoy en la tarde.', timestamp: 'Ayer'},
+        { sender: 'self', text: 'Listo, quedo atento. Gracias.', timestamp: 'Ayer'},
+    ]
+  },
+];
+
+export const MOCK_TEACHER_INBOX_CONVERSATIONS: InboxConversation[] = [
+  {
+    id: 'parent-1',
+    participantId: 1,
+    participantName: 'Acudiente de Juan David Pérez',
+    participantAvatar: 'https://picsum.photos/seed/student1/100/100',
+    participantRole: Role.STUDENT, 
+    lastMessage: 'Muchas gracias por la información, profe.',
+    timestamp: '11:00 AM',
+    unread: true,
+    conversation: [
+        { sender: 'participant', text: 'Buenos días profe Ana, ¿cómo está el rendimiento de Juan David en matemáticas?', timestamp: '10:50 AM'},
+        { sender: 'self', text: 'Hola, buenos días. Juan David va muy bien, ha mejorado bastante en los últimos temas. Su participación es excelente.', timestamp: '10:55 AM'},
+        { sender: 'participant', text: 'Muchas gracias por la información, profe.', timestamp: '11:00 AM'},
+    ]
+  },
+  {
+    id: 'parent-2',
+    participantId: 2,
+    participantName: 'Acudiente de Sofía López',
+    participantAvatar: 'https://picsum.photos/seed/student2/100/100',
+    participantRole: Role.STUDENT,
+    lastMessage: 'Entendido, estaré pendiente. Gracias.',
+    timestamp: 'Ayer',
+    unread: false,
+    conversation: [
+        { sender: 'self', text: 'Buenas tardes, le recuerdo que mañana es la entrega del taller de geometría para Sofía.', timestamp: 'Ayer'},
+        { sender: 'participant', text: 'Entendido, estaré pendiente. Gracias.', timestamp: 'Ayer'},
+    ]
+  },
+  {
+    id: 'coordination-987654321',
+    participantId: '987654321',
+    participantName: 'Carlos Mendoza',
+    participantAvatar: 'https://picsum.photos/seed/coordinator/100/100',
+    participantRole: Role.COORDINATOR,
+    lastMessage: 'Perfecto, gracias.',
+    timestamp: 'Hace 2 días',
+    unread: false,
+    conversation: [
+        { sender: 'participant', text: 'Profe Ana, por favor no olvide entregar las planillas de notas del 11-A mañana.', timestamp: 'Hace 2 días'},
+        { sender: 'self', text: 'Claro que sí, Coordinación. Mañana a primera hora las tiene en su oficina.', timestamp: 'Hace 2 días'},
+        { sender: 'participant', text: 'Perfecto, gracias.', timestamp: 'Hace 2 días'},
+    ]
+  }
+];
+
+export const MOCK_PARENT_PORTAL_CONVERSATIONS: InboxConversation[] = [
+  {
+    id: 'teacher-1037612345',
+    participantId: '1037612345',
+    participantName: 'Ana María Rojas (Matemáticas)',
+    participantAvatar: 'https://picsum.photos/seed/teacher1/100/100',
+    participantRole: Role.TEACHER,
+    lastMessage: 'Hola, buenos días. Juan David va muy bien...',
+    timestamp: '10:55 AM',
+    unread: false,
+    conversation: [
+        { sender: 'self', text: 'Buenos días profe Ana, ¿cómo está el rendimiento de Juan David en matemáticas?', timestamp: '10:50 AM'},
+        { sender: 'participant', text: 'Hola, buenos días. Juan David va muy bien, ha mejorado bastante en los últimos temas. Su participación es excelente.', timestamp: '10:55 AM'},
+    ]
+  },
+  {
+    id: 'teacher-1037612346',
+    participantId: '1037612346',
+    participantName: 'Carlos Pérez (Lengua Castellana)',
+    participantAvatar: 'https://picsum.photos/seed/teacher2/100/100',
+    participantRole: Role.TEACHER,
+    lastMessage: 'Sí, por supuesto. Puede pasar el viernes.',
+    timestamp: 'Ayer',
+    unread: true,
+    conversation: [
+        { sender: 'self', text: 'Profesor Carlos, ¿podríamos agendar una reunión para hablar sobre el ensayo de Juan David?', timestamp: 'Ayer'},
+        { sender: 'participant', text: 'Sí, por supuesto. Puede pasar el viernes.', timestamp: 'Ayer'},
+    ]
+  },
+  {
+    id: 'coordination-987654321',
+    participantId: '987654321',
+    participantName: 'Coordinación Académica',
+    participantAvatar: 'https://picsum.photos/seed/coordinator/100/100',
+    participantRole: Role.COORDINATOR,
+    lastMessage: 'Recibido, lo revisaremos y le daremos respuesta.',
+    timestamp: 'Hace 3 días',
+    unread: false,
+    conversation: [
+        { sender: 'self', text: 'Buenos días Coordinación, quisiera solicitar un permiso de salida temprano para Juan David el próximo lunes.', timestamp: 'Hace 3 días'},
+        { sender: 'participant', text: 'Recibido, lo revisaremos y le daremos respuesta.', timestamp: 'Hace 3 días'},
+    ]
+  },
+];
+
 
 export const MOCK_INSTITUTION_PROFILE: InstitutionProfileData = {
     name: 'Institución Educativa Integral Maya',

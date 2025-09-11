@@ -224,7 +224,7 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subj
                         <form onSubmit={handleSendCommunication} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Destinatarios</label>
-                                <select value={recipientType} onChange={e => setRecipientType(e.target.value as any)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                                <select value={recipientType} onChange={e => setRecipientType(e.target.value as any)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                                     <option value="all">Toda la comunidad</option>
                                     <option value="group">Grupo Específico</option>
                                     <option value="individual">Docente Individual</option>
@@ -232,10 +232,10 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subj
                             </div>
                             {recipientType === 'group' && (
                                 <div className="grid grid-cols-2 gap-2">
-                                    <select value={commGrade} onChange={e => setCommGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                                    <select value={commGrade} onChange={e => setCommGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                                         {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                                     </select>
-                                    <select value={commGroup} onChange={e => setCommGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                                    <select value={commGroup} onChange={e => setCommGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                                         {(GRADE_GROUP_MAP[commGrade] || []).map(g => <option key={g} value={g}>{g}</option>)}
                                     </select>
                                 </div>
@@ -246,7 +246,7 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subj
                                     <select 
                                         value={selectedTeacherId} 
                                         onChange={e => setSelectedTeacherId(e.target.value)}
-                                        className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"
+                                        className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"
                                         required={recipientType === 'individual'}
                                     >
                                         <option value="" disabled>-- Elige un docente --</option>
@@ -258,11 +258,11 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subj
                             )}
                              <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                                <input type="text" value={commTitle} onChange={e => setCommTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900" required />
+                                <input type="text" value={commTitle} onChange={e => setCommTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" required />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Contenido</label>
-                                <textarea rows={5} value={commContent} onChange={e => setCommContent(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900" required></textarea>
+                                <textarea rows={5} value={commContent} onChange={e => setCommContent(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" required></textarea>
                             </div>
                             <button type="submit" className="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus">Enviar</button>
                         </form>
@@ -310,7 +310,7 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subj
                     ) : (
                          <div>
                              <div className="flex flex-col md:flex-row gap-4 mb-4">
-                                <input type="text" placeholder="Buscar docente por nombre..." value={teacherSearch} onChange={e => setTeacherSearch(e.target.value)} className="flex-grow p-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500" />
+                                <input type="text" placeholder="Buscar docente por nombre..." value={teacherSearch} onChange={e => setTeacherSearch(e.target.value)} className="flex-grow p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 placeholder-gray-500" />
                             </div>
                             <div className="max-h-[60vh] overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {filteredTeachers.map(t => (

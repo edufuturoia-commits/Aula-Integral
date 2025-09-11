@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 interface LoginProps {
@@ -58,7 +57,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome }) => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-900 placeholder-gray-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary bg-gray-50 text-gray-900 placeholder-gray-500"
                   placeholder="su.correo@institucion.edu.co"
                 />
               </div>
@@ -88,7 +87,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome }) => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary bg-white text-gray-900 placeholder-gray-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary bg-gray-50 text-gray-900 placeholder-gray-500"
                   placeholder="••••••••"
                 />
               </div>

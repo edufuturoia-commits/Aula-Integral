@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import StudentList from '../components/StudentList';
 import IncidentModal from '../components/IncidentModal';
@@ -12,8 +8,8 @@ import CancelCitationModal from '../components/CancelCitationModal';
 import AddStudentModal from '../components/AddStudentModal'; // Import new modal
 import type { Student, Incident, ParentMessage, Citation, CoordinationMessage, Teacher, SubjectGrades, AttendanceRecord } from '../types';
 import { CitationStatus, Role } from '../types';
-import { addIncident, getIncidents, getUnsyncedIncidents, updateIncident, deleteIncident, addOrUpdateStudents } from '../db';
-import { GRADES, GROUPS, MOCK_PARENT_MESSAGES, MOCK_CITATIONS, MOCK_COORDINATION_MESSAGES, MOCK_COORDINATOR_USER, GRADE_GROUP_MAP } from '../constants';
+import { addOrUpdateStudents } from '../db';
+import { GRADES, GROUPS, MOCK_PARENT_MESSAGES, MOCK_CITATIONS, MOCK_MESSAGE_HISTORY, MOCK_COORDINATOR_USER, GRADE_GROUP_MAP } from '../constants';
 import AttendanceTaker from '../components/AttendanceTaker';
 import ManualViewer from '../components/ManualViewer';
 import EventPostersViewer from '../components/EventPostersViewer';
@@ -30,14 +26,9 @@ interface ClassroomProps {
   attendanceRecords: AttendanceRecord[];
   onUpdateAttendance: (record: AttendanceRecord) => Promise<void>;
   onBulkUpdateAttendance: (records: AttendanceRecord[]) => Promise<void>;
+  incidents: Incident[];
+  onUpdateIncidents: (action: 'add' | 'update' | 'delete', data: Incident | string) => Promise<void>;
 }
-
-const SyncingIcon: React.FC<{className?: string}> = ({className}) => (
-    <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
-);
 
 const MoreVertIcon: React.FC<{className?: string}> = ({className}) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${className}`} viewBox="0 0 20 20" fill="currentColor">
@@ -105,7 +96,7 @@ const ChatModal: React.FC<{
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); }}}
                         placeholder="Escribe una respuesta..."
-                        className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white text-gray-900 placeholder-gray-500"
+                        className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-gray-50 text-gray-900 placeholder-gray-500"
                         rows={1}
                     />
                     <button type="submit" className="bg-primary text-white rounded-full p-3 hover:bg-primary-focus transition-colors disabled:bg-gray-300" disabled={!newMessage.trim()}>
@@ -118,7 +109,7 @@ const ChatModal: React.FC<{
 };
 
 
-const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, currentUser, subjectGradesData, setSubjectGradesData, attendanceRecords, onUpdateAttendance, onBulkUpdateAttendance }) => {
+const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, currentUser, subjectGradesData, setSubjectGradesData, attendanceRecords, onUpdateAttendance, onBulkUpdateAttendance, incidents, onUpdateIncidents }) => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
@@ -126,24 +117,17 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   const [isGroupMessageModalOpen, setIsGroupMessageModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [citationToCancel, setCitationToCancel] = useState<Citation | null>(null);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [showSnackbar, setShowSnackbar] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
-  const [isSyncing, setIsSyncing] = useState(false);
   const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [groupFilter, setGroupFilter] = useState<string>('all');
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'manual' | 'events' | 'calificaciones'>('students');
   const [rightPanelTab, setRightPanelTab] = useState<'incidents' | 'messages' | 'citations' | 'coordination'>('incidents');
   const [parentMessages, setParentMessages] = useState<ParentMessage[]>(MOCK_PARENT_MESSAGES);
   const [activeChat, setActiveChat] = useState<ParentMessage | null>(null);
   const [citations, setCitations] = useState<Citation[]>(MOCK_CITATIONS);
-  const [coordinationConversation, setCoordinationConversation] = useState<CoordinationMessage[]>(MOCK_COORDINATION_MESSAGES);
+  const [coordinationConversation, setCoordinationConversation] = useState<CoordinationMessage[]>(MOCK_MESSAGE_HISTORY);
   const [newCoordinationMessage, setNewCoordinationMessage] = useState('');
   const coordinationChatRef = useRef<HTMLDivElement>(null);
-
-
-  
-  const isInitialMount = useRef(true);
 
   const availableGrades = useMemo(() => ['all', ...GRADES], []);
   const availableGroups = useMemo(() => {
@@ -166,19 +150,14 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
       });
   }, [students, gradeFilter, groupFilter]);
   
-  const activeIncidents = useMemo(() => incidents.filter(inc => !inc.archived), [incidents]);
+  const myReportedIncidents = useMemo(() => 
+    incidents
+      .filter(inc => inc.teacherName === currentUser.name && !inc.archived)
+      .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), 
+  [incidents, currentUser.name]);
   
   const sortedCitations = useMemo(() => citations.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()), [citations]);
 
-  const loadIncidents = useCallback(async () => {
-    const data = await getIncidents();
-    setIncidents(data);
-  }, []);
-
-  useEffect(() => {
-    loadIncidents();
-  }, [loadIncidents]);
-  
   useEffect(() => {
     if (coordinationChatRef.current) {
         coordinationChatRef.current.scrollTop = coordinationChatRef.current.scrollHeight;
@@ -202,11 +181,15 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   }
 
   const handleSaveIncident = async (incident: Incident) => {
-    const newIncident: Incident = { ...incident, synced: isOnline };
-    await addIncident(newIncident);
-    await loadIncidents();
-    handleCloseModal();
-    showSyncMessage("Incidencia guardada. Coordinación ha sido notificada.");
+    try {
+        await onUpdateIncidents('add', { ...incident, attended: false });
+        handleCloseModal();
+        showSyncMessage("Incidencia guardada. Coordinación ha sido notificada.");
+        setRightPanelTab('incidents');
+    } catch (error) {
+        console.error("Failed to save incident:", error);
+        showSyncMessage("Error: No se pudo guardar la incidencia. Revisa tu conexión.");
+    }
   };
   
   const handleSaveCitations = (newCitations: Citation[]) => {
@@ -252,25 +235,6 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
     setIsAddStudentModalOpen(false);
     showSyncMessage(`${newStudent.name} ha sido añadido exitosamente.`);
   };
-  
-    const handleArchiveIncident = async (id: string) => {
-        const incidentToUpdate = incidents.find(inc => inc.id === id);
-        if (incidentToUpdate) {
-            await updateIncident({ ...incidentToUpdate, archived: true });
-            await loadIncidents();
-            showSyncMessage("Incidencia archivada.");
-        }
-        setOpenMenuId(null);
-    };
-
-    const handleDeleteIncident = async (id: string) => {
-        if (confirm("¿Estás seguro de que quieres eliminar esta incidencia permanentemente? Esta acción no se puede deshacer.")) {
-            await deleteIncident(id);
-            await loadIncidents();
-            showSyncMessage("Incidencia eliminada.");
-        }
-        setOpenMenuId(null);
-    };
 
     const handleUpdateConversation = (studentId: number, newConversation: ParentMessage['conversation']) => {
         setParentMessages(prevMessages => 
@@ -314,39 +278,6 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
         }, 2000);
     };
 
-
-  const syncPendingIncidents = useCallback(async () => {
-    setIsSyncing(true);
-    const pendingIncidents = await getUnsyncedIncidents();
-    
-    if (pendingIncidents.length > 0) {
-      showSyncMessage(`Sincronizando ${pendingIncidents.length} incidencia(s)...`);
-      
-      const syncPromises = pendingIncidents.map(inc => {
-        return new Promise(resolve => setTimeout(resolve, 500)).then(() => 
-          updateIncident({ ...inc, synced: true })
-        );
-      });
-
-      await Promise.all(syncPromises);
-
-      await loadIncidents();
-      showSyncMessage("Sincronización completada.");
-    }
-    setIsSyncing(false);
-  }, [loadIncidents]);
-
-  useEffect(() => {
-    if (isInitialMount.current) {
-        isInitialMount.current = false;
-        return;
-    }
-
-    if (isOnline && !isSyncing) {
-      syncPendingIncidents();
-    }
-  }, [isOnline, isSyncing, syncPendingIncidents]);
-  
   const handleFabClick = () => {
     switch (rightPanelTab) {
         case 'incidents':
@@ -360,7 +291,6 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
             setIsGroupMessageModalOpen(true);
             break;
         default:
-            // No action for 'coordination' tab
             console.log("No default FAB action for this tab.");
     }
   };
@@ -378,8 +308,6 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
     }
   }
 
-
-  const pendingSyncCount = activeIncidents.filter(i => !i.synced).length;
   const unreadMessagesCount = parentMessages.filter(m => m.unread).length;
   const pendingCitationsCount = citations.filter(c => c.status === CitationStatus.PENDING).length;
   const unreadCoordinationMessagesCount = useMemo(() => coordinationConversation.filter(m => m.sender === 'coordination' && !m.readByTeacher).length, [coordinationConversation]);
@@ -455,8 +383,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
                     <div className="p-4 border-b border-gray-200">
                         <nav className="-mb-px flex space-x-4 overflow-x-auto px-4 sm:px-0" aria-label="Right Panel Tabs">
                              <button onClick={() => setRightPanelTab('incidents')} className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${rightPanelTab === 'incidents' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
-                                Incidencias
-                                {pendingSyncCount > 0 && <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{pendingSyncCount}</span>}
+                                Mis Reportes
                              </button>
                              <button onClick={() => setRightPanelTab('messages')} className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${rightPanelTab === 'messages' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
                                 Acudientes
@@ -476,34 +403,25 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
                     <div className="flex-1 flex flex-col overflow-hidden">
                         {rightPanelTab === 'incidents' && (
                              <ul className="space-y-3 h-full max-h-[60vh] overflow-y-auto p-4">
-                                {activeIncidents.map(incident => (
-                                    <li key={incident.id} className={`p-3 rounded-md border ${incident.synced ? 'bg-gray-50 border-gray-200' : 'bg-amber-50 border-amber-200'}`}>
+                                {myReportedIncidents.map(incident => (
+                                    <li key={incident.id} className="p-3 rounded-md border bg-gray-50 border-gray-200">
                                         <div className="flex justify-between items-start">
-                                        <div className="flex-1 pr-2">
-                                                <p className="font-semibold">{incident.studentName} - <span className="font-normal text-gray-600">{incident.type}</span></p>
-                                                <p className="text-sm text-gray-500 mt-1">{incident.notes}</p>
-                                        </div>
-                                        <div className="relative flex-shrink-0">
-                                                <button onClick={() => setOpenMenuId(openMenuId === incident.id ? null : incident.id)} className="p-1 rounded-full text-gray-500 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                                                    <MoreVertIcon />
-                                                </button>
-                                                {openMenuId === incident.id && (
-                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20 border border-gray-200" onMouseLeave={() => setOpenMenuId(null)}>
-                                                        <ul className="py-1">
-                                                            <li><button onClick={() => handleArchiveIncident(incident.id)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 001.414 0l2.414-2.414a1 1 0 01.707-.293H20" /></svg>Archivar</button></li>
-                                                            <li><button onClick={() => handleDeleteIncident(incident.id)} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>Eliminar</button></li>
-                                                        </ul>
-                                                    </div>
-                                                )}
+                                            <div className="flex-1 pr-2">
+                                                <p className="font-semibold text-gray-900">{incident.studentName}</p>
+                                                <p className="text-sm text-gray-600">{incident.type}</p>
+                                                <p className="text-sm text-gray-500 mt-2">{incident.notes}</p>
                                             </div>
+                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${incident.attended ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                                {incident.attended ? 'Revisado' : 'Pendiente'}
+                                            </span>
                                         </div>
                                         <div className="border-t mt-2 pt-2 flex justify-between items-center text-xs text-gray-500">
-                                            <span>{incident.teacherName} @ {incident.location}</span>
-                                            <span>{new Date(incident.timestamp).toLocaleString()}</span>
+                                            <span>{new Date(incident.timestamp).toLocaleDateString()}</span>
+                                            <span>@ {incident.location}</span>
                                         </div>
                                     </li>
                                 ))}
-                                {activeIncidents.length === 0 && <p className="text-gray-500 text-center py-8">No hay incidencias activas.</p>}
+                                {myReportedIncidents.length === 0 && <p className="text-gray-500 text-center py-8">No has reportado incidencias.</p>}
                             </ul>
                         )}
                         {rightPanelTab === 'messages' && (
@@ -587,7 +505,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
                                     ))}
                                 </div>
                                 <form onSubmit={handleSendToCoordination} className="p-4 border-t bg-white flex items-center gap-4">
-                                     <textarea value={newCoordinationMessage} onChange={e => setNewCoordinationMessage(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendToCoordination(e); }}} placeholder="Escribe un mensaje a coordinación..." className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary resize-none" rows={1}/>
+                                     <textarea value={newCoordinationMessage} onChange={e => setNewCoordinationMessage(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendToCoordination(e); }}} placeholder="Escribe un mensaje a coordinación..." className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary resize-none bg-gray-50" rows={1}/>
                                      <button type="submit" className="bg-primary text-white rounded-full p-3 hover:bg-primary-focus disabled:bg-gray-300" disabled={!newCoordinationMessage.trim()}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg></button>
                                 </form>
                              </div>

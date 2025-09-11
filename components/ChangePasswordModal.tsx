@@ -56,7 +56,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ user, onPassw
               id="newPassword"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-white text-gray-900"
+              className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 text-gray-900"
               required
             />
           </div>
@@ -67,7 +67,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ user, onPassw
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-white text-gray-900"
+              className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 text-gray-900"
               required
             />
           </div>

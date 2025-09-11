@@ -108,7 +108,12 @@ const OnlineAssessmentTaker: React.FC<OnlineAssessmentTakerProps> = ({ assessmen
                 },
             });
 
-            const report = JSON.parse(response.text);
+            const responseText = response.text.trim();
+            if (!responseText || responseText === 'undefined') {
+                throw new Error("AI returned an invalid or empty response.");
+            }
+
+            const report = JSON.parse(responseText);
             setAiReport(report);
 
         } catch (error) {

@@ -35,7 +35,7 @@ const InputField: React.FC<{ label: string; name: keyof InstitutionProfileData; 
             name={name}
             value={value}
             onChange={onChange}
-            className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900"
+            className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900"
         />
     </div>
 );

@@ -54,7 +54,7 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ teacher, onClose, o
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div>
                     <label className="block text-sm font-medium text-gray-700">Nombres y Apellidos</label>
-                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"/>
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
                 </div>
                  <div>
                     <label className="block text-sm font-medium text-gray-700">Cédula (ID)</label>
@@ -62,23 +62,23 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ teacher, onClose, o
                 </div>
                  <div>
                     <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" name="email" value={formData.email || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"/>
+                    <input type="email" name="email" value={formData.email || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
                 </div>
                  <div>
                     <label className="block text-sm font-medium text-gray-700">Móvil</label>
-                    <input type="tel" name="phone" value={formData.phone || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"/>
+                    <input type="tel" name="phone" value={formData.phone || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
                 </div>
                 <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700">Dirección</label>
-                    <input type="text" name="address" value={formData.address || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"/>
+                    <input type="text" name="address" value={formData.address || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
                 </div>
                  <div>
                     <label className="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
-                    <input type="date" name="dateOfBirth" value={formData.dateOfBirth || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"/>
+                    <input type="date" name="dateOfBirth" value={formData.dateOfBirth || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700">Área Educativa</label>
-                    <select name="subject" value={formData.subject} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                    <select name="subject" value={formData.subject} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                         {SUBJECT_AREAS.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
@@ -93,13 +93,13 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ teacher, onClose, o
                     <div className="grid grid-cols-2 gap-4 mt-4 pl-8">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Grado Asignado</label>
-                            <select name="grade" value={formData.assignedGroup?.grade || ''} onChange={handleGroupChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                            <select name="grade" value={formData.assignedGroup?.grade || ''} onChange={handleGroupChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                                 {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Grupo Asignado</label>
-                            <select name="group" value={formData.assignedGroup?.group || ''} onChange={handleGroupChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
+                            <select name="group" value={formData.assignedGroup?.group || ''} onChange={handleGroupChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
                                 {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
                             </select>
                         </div>

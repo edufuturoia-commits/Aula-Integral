@@ -76,7 +76,7 @@ const PEISummary: React.FC = () => {
     useEffect(() => {
         try {
             const savedSummary = localStorage.getItem('peiSummaryContent');
-            if (savedSummary) {
+            if (savedSummary && savedSummary !== 'undefined') {
                 setSummaryContent(JSON.parse(savedSummary));
             }
         } catch (error) {
@@ -164,7 +164,11 @@ const PEISummary: React.FC = () => {
                 },
             });
             
-            const result = JSON.parse(response.text);
+            const responseText = response.text?.trim();
+            if (!responseText || responseText === 'undefined') {
+                throw new Error("La IA no devolvió un resultado válido. Por favor, intenta de nuevo.");
+            }
+            const result = JSON.parse(responseText);
             setSummaryContent(result);
             // Save to localStorage for other portals to access
             localStorage.setItem('peiSummaryContent', JSON.stringify(result));

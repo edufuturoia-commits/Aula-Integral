@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { SUBJECT_AREAS, RESOURCE_TYPES } from '../constants';
 import type { Resource, ResourceType } from '../types';
@@ -153,13 +152,13 @@ const Resources: React.FC<ResourcesProps> = ({ resources, downloadedIds, onUpdat
                         placeholder="Buscar por título..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent md:col-span-1 bg-white text-gray-900 placeholder-gray-500"
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent md:col-span-1 bg-gray-50 text-gray-900 placeholder-gray-500"
                     />
-                    <select value={areaFilter} onChange={e => setAreaFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
+                    <select value={areaFilter} onChange={e => setAreaFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900">
                         <option value="all">Todas las Áreas</option>
                         {SUBJECT_AREAS.map(area => <option key={area} value={area}>{area}</option>)}
                     </select>
-                    <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
+                    <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900">
                         <option value="all">Todos los Tipos</option>
                         {RESOURCE_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
                     </select>

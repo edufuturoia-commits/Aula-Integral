@@ -132,8 +132,8 @@ const AssessmentManager: React.FC<{
                     <div>
                         <h3 className="text-lg font-semibold mb-4">Asignar a un nuevo grupo</h3>
                         <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                            <select value={selectedGrade} onChange={e => handleGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">{GRADES.map(g => <option key={g} value={g}>{g}</option>)}</select>
-                            <select value={selectedGroup} onChange={e => setSelectedGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">{availableGroups.map(g => <option key={g} value={g}>{g}</option>)}</select>
+                            <select value={selectedGrade} onChange={e => handleGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">{GRADES.map(g => <option key={g} value={g}>{g}</option>)}</select>
+                            <select value={selectedGroup} onChange={e => setSelectedGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">{availableGroups.map(g => <option key={g} value={g}>{g}</option>)}</select>
                             <button onClick={handleAssignGroup} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus flex-shrink-0">Asignar</button>
                         </div>
                     </div>
@@ -156,7 +156,7 @@ const AssessmentManager: React.FC<{
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                         <h3 className="text-lg font-semibold mb-4">Seleccionar Estudiantes</h3>
-                        <input type="text" placeholder="Buscar estudiante..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md mb-4 bg-white text-gray-900"/>
+                        <input type="text" placeholder="Buscar estudiante..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md mb-4 bg-gray-50 text-gray-900"/>
                         <div className="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-2">
                             {filteredStudents.map(student => (
                                 <label key={student.id} className="flex items-center p-2 bg-gray-50 rounded-md cursor-pointer hover:bg-gray-100">

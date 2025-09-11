@@ -120,17 +120,17 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
-                        <input type="email" name="email" value={user.email} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                        <input type="email" name="email" value={user.email} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
                     </div>
                     {isTeacher && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Teléfono</label>
-                            <input type="tel" name="phone" value={(user as Teacher).phone} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                            <input type="tel" name="phone" value={(user as Teacher).phone} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
                         </div>
                     )}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
-                        <input type="date" name="dateOfBirth" value={user.dateOfBirth || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                        <input type="date" name="dateOfBirth" value={user.dateOfBirth || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
                     </div>
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
@@ -156,15 +156,15 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
         <form className="space-y-4" onSubmit={handleChangePassword}>
             <div>
                 <label className="block text-sm font-medium text-gray-700">Contraseña Actual</label>
-                <input type="password" required className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
             </div>
              <div>
                 <label className="block text-sm font-medium text-gray-700">Nueva Contraseña</label>
-                <input type="password" required className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
             </div>
              <div>
                 <label className="block text-sm font-medium text-gray-700">Confirmar Nueva Contraseña</label>
-                <input type="password" required className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
             </div>
             <div className="text-right pt-2">
                 <button type="submit" className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Cambiar Contraseña</button>

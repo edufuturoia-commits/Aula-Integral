@@ -1,4 +1,4 @@
-export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones';
+export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones' | 'Communication';
 
 export enum DocumentType {
   REGISTRO_CIVIL = 'Registro Civil',
@@ -48,10 +48,12 @@ export interface Incident {
   isVictim: boolean;
   notes: string;
   timestamp: string;
-  synced: boolean;
   teacherName: string;
   location: string;
   archived?: boolean;
+  attended?: boolean;
+  // FIX: Added optional synced property to align with usage in IncidentModal and Incidents pages.
+  synced?: boolean;
 }
 
 export interface NotificationSettings {
@@ -127,7 +129,8 @@ export interface AttendanceRecord {
     studentId: number;
     date: string; // YYYY-MM-DD
     status: AttendanceStatus;
-    synced: boolean;
+    // FIX: Added optional synced property to align with usage in AttendanceTaker.
+    synced?: boolean;
 }
 
 export interface StudentAssessmentResult {
@@ -162,6 +165,7 @@ export enum CitationStatus {
     CONFIRMED = 'Confirmada',
     COMPLETED = 'Realizada',
     CANCELLED = 'Cancelada',
+    RESCHEDULE_REQUESTED = 'Reasignación Solicitada',
 }
 
 export interface Citation {
@@ -279,4 +283,20 @@ export interface UserRegistrationData {
     phone: string;
     password?: string;
     isDemo?: boolean;
+}
+
+export interface InboxConversation {
+  id: string; // e.g., 'teacher-1037612345' or 'parent-1'
+  participantId: string | number;
+  participantName: string;
+  participantAvatar: string;
+  participantRole: Role;
+  lastMessage: string;
+  timestamp: string;
+  unread: boolean;
+  conversation: {
+    sender: 'self' | 'participant';
+    text: string;
+    timestamp: string;
+  }[];
 }

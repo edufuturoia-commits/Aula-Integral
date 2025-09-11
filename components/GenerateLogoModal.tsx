@@ -69,7 +69,7 @@ const GenerateLogoModal: React.FC<GenerateLogoModalProps> = ({ onClose, onLogoGe
                             rows={4}
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-white text-gray-900"
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 text-gray-900"
                         />
                     </div>
                     

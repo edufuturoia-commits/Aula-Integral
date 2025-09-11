@@ -1,26 +1,30 @@
 import React, { useMemo } from 'react';
 import type { Page, Teacher, Student } from '../types';
 import { Role } from '../types';
-import { SIDEBAR_ITEMS, LogoutIcon } from '../constants';
+import { SIDEBAR_ITEMS } from '../constants';
 
 interface SidebarProps {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
   currentUser: Teacher | Student;
-  onLogout: () => void;
 }
 
 const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
-  [Role.ADMIN]: ['Dashboard', 'Classroom', 'Incidents', 'Assessments', 'Calificaciones', 'Resources', 'Profile', 'Settings', 'Rectory', 'InstitutionProfile', 'ParentPortal', 'StudentPortal'],
-  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Rectory', 'Resources', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal'],
-  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Resources', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal'],
-  [Role.TEACHER]: ['Dashboard', 'Classroom', 'Assessments', 'Calificaciones', 'Resources', 'Profile', 'Settings'],
+  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Communication', 'Rectory', 'Resources', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal'],
+  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Communication', 'Resources', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal'],
+  [Role.TEACHER]: ['Dashboard', 'Classroom', 'Communication', 'Assessments', 'Calificaciones', 'Resources', 'Profile', 'Settings'],
   [Role.STUDENT]: ['Dashboard', 'StudentPortal', 'Resources', 'Profile'],
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser }) => {
   const visibleItems = useMemo(() => {
     if (!currentUser) return [];
+    
+    // Admin sees all pages.
+    if (currentUser.role === Role.ADMIN) {
+        return SIDEBAR_ITEMS;
+    }
+
     const allowedPages = PAGE_ACCESS[currentUser.role] || [];
     return SIDEBAR_ITEMS.filter(item => allowedPages.includes(item.name));
   }, [currentUser]);
@@ -55,19 +59,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentU
       <div className="p-4 text-center text-xs text-gray-400 hidden lg:block">
         <p>Copyright - EduFuturo</p>
         <p>Educadores que Trascienden</p>
-      </div>
-      <div className="p-2 border-t border-primary-focus">
-         <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              onLogout();
-            }}
-            className="flex items-center p-3 rounded-lg transition-colors duration-200 text-gray-300 hover:bg-accent hover:text-white"
-          >
-            <LogoutIcon className="h-6 w-6" />
-            <span className="ml-4 font-medium hidden lg:block">Cerrar Sesión</span>
-          </a>
       </div>
     </div>
   );

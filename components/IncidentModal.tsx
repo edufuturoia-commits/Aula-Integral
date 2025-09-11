@@ -97,7 +97,7 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, 
                     onBlur={() => setTimeout(() => setIsDropdownVisible(false), 200)}
                     placeholder="Buscar y seleccionar..."
                     autoComplete="off"
-                    className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900"
+                    className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900"
                   />
                   {isDropdownVisible && filteredStudents.length > 0 && (
                      <ul className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-48 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
@@ -124,7 +124,7 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, 
                 id="incidentType"
                 value={incidentType}
                 onChange={(e) => setIncidentType(e.target.value as IncidentType)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900"
               >
                 {Object.values(IncidentType).map(type => (
                   <option key={type} value={type}>{type}</option>
@@ -137,7 +137,7 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, 
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900"
               >
                 {SCHOOL_LOCATIONS.map(loc => (
                   <option key={loc} value={loc}>{loc}</option>
@@ -154,7 +154,7 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, 
                     id="otherTypeDescription"
                     value={otherTypeDescription}
                     onChange={(e) => setOtherTypeDescription(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
                     placeholder="Motivo de la incidencia..."
                     required
                 />
@@ -180,7 +180,7 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, 
               rows={4}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
               placeholder="Añade una descripción detallada de lo ocurrido..."
             ></textarea>
           </div>

@@ -81,7 +81,7 @@ const StudentList: React.FC<StudentListProps> = ({ students, onSelectStudent, on
                     <select
                         value={selectedGrade}
                         onChange={(e) => onGradeChange(e.target.value)}
-                        className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900"
+                        className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900"
                     >
                         {grades.map(grade => (
                             <option key={grade} value={grade}>{grade === 'all' ? 'Todos los Grados' : grade}</option>
@@ -90,7 +90,7 @@ const StudentList: React.FC<StudentListProps> = ({ students, onSelectStudent, on
                      <select
                         value={selectedGroup}
                         onChange={(e) => onGroupChange(e.target.value)}
-                        className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900"
+                        className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900"
                     >
                         {groups.map(group => (
                             <option key={group} value={group}>{group === 'all' ? 'Todos los Grupos' : group}</option>
@@ -101,7 +101,7 @@ const StudentList: React.FC<StudentListProps> = ({ students, onSelectStudent, on
                         placeholder="Buscar estudiante..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                        className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
                     />
                     {onImportClick && (
                          <button 

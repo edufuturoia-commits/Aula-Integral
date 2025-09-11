@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Student, SubjectGrades, GradeItem, AcademicPeriod, SubjectArea, Teacher, InstitutionProfileData } from '../types';
 import { Role, Desempeno } from '../types';
@@ -54,11 +48,11 @@ const ItemModal: React.FC<ItemModalProps> = ({ item, existingItems, onClose, onS
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Nombre del Ítem</label>
-                        <input type="text" value={name} onChange={e => setName(e.target.value)} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900" placeholder="Ej: Examen Parcial" />
+                        <input type="text" value={name} onChange={e => setName(e.target.value)} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" placeholder="Ej: Examen Parcial" />
                     </div>
                      <div>
                         <label className="block text-sm font-medium text-gray-700">Peso / Porcentaje (%)</label>
-                        <input type="number" value={weight} onChange={e => setWeight(Number(e.target.value))} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900" placeholder="Ej: 25" />
+                        <input type="number" value={weight} onChange={e => setWeight(Number(e.target.value))} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" placeholder="Ej: 25" />
                     </div>
                     <div className="text-sm text-gray-600">
                         <p>Peso total de los demás ítems: <span className="font-bold">{(totalWeight * 100).toFixed(0)}%</span></p>
@@ -93,7 +87,7 @@ const ObservationModal: React.FC<ObservationModalProps> = ({ studentName, observ
                     rows={6}
                     value={text}
                     onChange={e => setText(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"
+                    className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"
                     placeholder="Escribe una observación sobre el desempeño del estudiante..."
                 />
                  <div className="flex justify-end space-x-4 pt-4">
@@ -162,7 +156,15 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, subjectGrades
 
     const [institutionProfile] = useState<InstitutionProfileData>(() => {
         const savedProfile = localStorage.getItem('institutionProfile');
-        return savedProfile ? JSON.parse(savedProfile) : MOCK_INSTITUTION_PROFILE;
+        if (savedProfile && savedProfile !== 'undefined') {
+            try {
+                return JSON.parse(savedProfile);
+            } catch (e) {
+                console.error("Failed to parse institutionProfile from localStorage", e);
+                localStorage.removeItem('institutionProfile');
+            }
+        }
+        return MOCK_INSTITUTION_PROFILE;
     });
 
     const isPowerUser = useMemo(() => 
@@ -431,183 +433,181 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, subjectGrades
         const htmlContent = type === 'planilla' ? generatePlanillaHTML() : generateBoletinHTML();
         if (htmlContent) {
             const reportWindow = window.open("", "_blank");
-            reportWindow?.document.write(htmlContent);
-            reportWindow?.document.close();
+            if (reportWindow) {
+                reportWindow.document.write(htmlContent);
+                reportWindow.document.close();
+            } else {
+                alert("No se pudo abrir la ventana para generar el reporte. Por favor, deshabilita el bloqueador de ventanas emergentes.");
+            }
         }
     };
     
-    const formatScoreForDisplay = (score: number | null | undefined): string => {
-        if (score === null || score === undefined) return '';
-        return score.toFixed(1).replace('.', ',');
-    };
+    const totalWeight = useMemo(() => {
+        if (!currentGradebook) return 0;
+        return currentGradebook.gradeItems.reduce((acc, item) => acc + item.weight, 0);
+    }, [currentGradebook]);
 
-    const canEdit = !currentGradebook?.isLocked || isPowerUser;
 
     return (
-        <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-gray-800">Tablero de Calificaciones</h1>
-            
-            <div className="bg-white p-4 rounded-xl shadow-md grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <select value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value as AcademicPeriod)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
-                    {ACADEMIC_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-                <select value={selectedSubject} onChange={e => setSelectedSubject(e.target.value as SubjectArea)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
-                    {SUBJECT_AREAS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-                <select value={selectedGrade} onChange={e => setSelectedGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
-                    {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
-                <select value={selectedGroup} onChange={e => setSelectedGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900">
-                    {availableGroupsForGrade.map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
+    <div className="space-y-6">
+      <div className="bg-white p-6 rounded-xl shadow-md">
+        <div className="flex flex-col md:flex-row justify-between items-start mb-4 gap-4 flex-wrap">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Planilla de Calificaciones</h2>
+            <p className="text-sm text-gray-500">Gestiona las notas y observaciones por período.</p>
+          </div>
+          {isPowerUser && currentGradebook && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleToggleLockPeriod}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ${
+                  currentGradebook.isLocked
+                    ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                }`}
+              >
+                {currentGradebook.isLocked ? <LockClosedIcon className="h-4 w-4" /> : <LockOpenIcon className="h-4 w-4" />}
+                {currentGradebook.isLocked ? 'Período Cerrado' : 'Período Abierto'}
+              </button>
             </div>
+          )}
+        </div>
 
-            {currentGradebook ? (
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                    <div className="p-4 flex flex-wrap justify-between items-center gap-4 border-b">
-                        <div className="flex items-center gap-2">
-                           {currentGradebook.isLocked ? <LockClosedIcon className="h-6 w-6 text-red-500" /> : <LockOpenIcon className="h-6 w-6 text-green-500" />}
-                           <h2 className="text-xl font-bold">Planilla de {currentGradebook.subject}</h2>
-                        </div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                             <button onClick={() => handleGenerateReport('planilla')} className="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200">Generar Planilla</button>
-                             {viewMode === 'full' && (
-                                <button onClick={() => handleGenerateReport('boletin')} className="px-4 py-2 text-sm font-semibold rounded-lg bg-green-100 text-green-700 hover:bg-green-200">Generar Boletín</button>
-                             )}
-                        </div>
-                    </div>
-                     {isPowerUser && viewMode === 'full' && (
-                        <div className="p-3 bg-gray-50 border-b">
-                            <div className="flex items-center justify-between max-w-md mx-auto">
-                                <h3 className="text-sm font-semibold text-gray-700">Controles de Coordinación</h3>
-                                <button onClick={handleToggleLockPeriod} className={`px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 ${currentGradebook.isLocked ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}>
-                                    {currentGradebook.isLocked ? <LockOpenIcon className="h-4 w-4" /> : <LockClosedIcon className="h-4 w-4" />}
-                                    {currentGradebook.isLocked ? 'Habilitar Notas' : 'Deshabilitar Notas'}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                     {currentGradebook.isLocked && !isPowerUser && (
-                        <div className="p-3 bg-yellow-100 text-yellow-800 text-sm font-semibold text-center">
-                            Este período está cerrado. Las calificaciones no se pueden modificar.
-                        </div>
-                    )}
-                    <div className="overflow-x-auto shadow-inner md:shadow-none">
-                        <table className="w-full text-sm text-left text-gray-500">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0 z-10">
-                                <tr>
-                                    <th scope="col" className="px-6 py-3 min-w-[200px]">Estudiante</th>
-                                    {currentGradebook.gradeItems.map(item => (
-                                        <th key={item.id} scope="col" className="px-4 py-3 text-center min-w-[150px]">
-                                            <div className="flex flex-col items-center">
-                                                <span>{item.name} ({item.weight * 100}%)</span>
-                                                {canEdit && (
-                                                    <div className="flex items-center space-x-2 mt-1">
-                                                        <button
-                                                            onClick={() => { setEditingItem(item); setIsItemModalOpen(true); }}
-                                                            className="text-gray-400 hover:text-primary"
-                                                            title="Editar ítem"
-                                                        >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                                <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                                                                <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
-                                                            </svg>
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteItem(item.id)}
-                                                            className="text-gray-400 hover:text-red-600"
-                                                            title="Eliminar ítem"
-                                                        >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" />
-                                                            </svg>
-                                                        </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg border">
+            <select value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value as AcademicPeriod)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                {ACADEMIC_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <select disabled={viewMode === 'teacher' && !isPowerUser} value={selectedSubject} onChange={e => setSelectedSubject(e.target.value as SubjectArea)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 disabled:bg-gray-100">
+                {SUBJECT_AREAS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <select value={selectedGrade} onChange={e => setSelectedGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+            <select value={selectedGroup} onChange={e => setSelectedGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                {availableGroupsForGrade.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+        </div>
+        
+        {!currentGradebook ? (
+          <div className="text-center py-16">
+            <h3 className="text-lg font-semibold text-gray-700">No existe una planilla para esta selección.</h3>
+            <button onClick={handleCreateGradebook} className="mt-4 bg-primary text-white font-semibold py-2 px-6 rounded-lg hover:bg-primary-focus">
+              Crear Planilla de Calificaciones
+            </button>
+          </div>
+        ) : (
+          <div>
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+              <h3 className="text-lg font-semibold">{`Planilla para ${selectedGrade} - Grupo ${selectedGroup}`}</h3>
+              <div className="flex gap-2 flex-wrap">
+                <button onClick={() => handleGenerateReport('planilla')} className="text-sm bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200">Exportar Planilla</button>
+                {isPowerUser && <button onClick={() => handleGenerateReport('boletin')} className="text-sm bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-lg hover:bg-green-200">Generar Boletines</button>}
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+                <table className="w-full min-w-[1000px] text-sm text-left">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0 z-10">
+                        <tr>
+                            <th scope="col" className="px-4 py-3 min-w-[200px] sticky left-0 bg-gray-100 z-20">Estudiante</th>
+                            {currentGradebook.gradeItems.map(item => (
+                                <th scope="col" key={item.id} className="px-2 py-3 text-center min-w-[150px]">
+                                    <div>{item.name}</div>
+                                    <div className="font-normal text-gray-500">({(item.weight * 100).toFixed(0)}%)</div>
+                                    {!currentGradebook.isLocked && (isPowerUser || currentUser.id === currentGradebook.teacherId) && (
+                                        <div className="flex justify-center gap-2 mt-1">
+                                            <button onClick={() => { setEditingItem(item); setIsItemModalOpen(true); }} className="text-blue-600 hover:text-blue-800 text-xs">Editar</button>
+                                            <button onClick={() => handleDeleteItem(item.id)} className="text-red-600 hover:text-red-800 text-xs">Borrar</button>
+                                        </div>
+                                    )}
+                                </th>
+                            ))}
+                            {!currentGradebook.isLocked && (isPowerUser || currentUser.id === currentGradebook.teacherId) && (
+                                <th scope="col" className="px-2 py-3 text-center align-bottom">
+                                    <button onClick={() => { setEditingItem(null); setIsItemModalOpen(true); }} className="bg-primary text-white rounded-full p-2 hover:bg-primary-focus" title="Añadir ítem">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                                    </button>
+                                </th>
+                            )}
+                            <th scope="col" className="px-4 py-3 text-center min-w-[100px]">Definitiva ({ (totalWeight * 100).toFixed(0) }%)</th>
+                            <th scope="col" className="px-4 py-3 min-w-[200px]">Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredStudents.map(student => {
+                            const finalScore = calculateFinalScoreForSubject(student.id, currentGradebook);
+                            const desempeno = getDesempeno(finalScore);
+                            const observation = currentGradebook.observations[student.id] || '';
+                            const canEdit = !currentGradebook.isLocked && (isPowerUser || currentUser.id === currentGradebook.teacherId);
+                            
+                            return (
+                                <tr key={student.id} className="bg-white border-b hover:bg-gray-50">
+                                    <td className="px-4 py-2 font-medium sticky left-0 bg-white z-10">{student.name}</td>
+                                    {currentGradebook.gradeItems.map(item => {
+                                        const cellId = `${student.id}-${item.id}`;
+                                        const score = currentGradebook.scores.find(s => s.studentId === student.id && s.gradeItemId === item.id)?.score;
+                                        return (
+                                            <td key={item.id} className="px-2 py-0 text-center h-full">
+                                                {editingCell === cellId && canEdit ? (
+                                                    <input 
+                                                        type="text"
+                                                        value={editingValue}
+                                                        onChange={e => setEditingValue(e.target.value)}
+                                                        onBlur={handleScoreBlur}
+                                                        onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                                                        autoFocus
+                                                        className="w-20 text-center p-2 border border-primary rounded-md bg-blue-50 text-gray-900"
+                                                    />
+                                                ) : (
+                                                    <div onClick={() => canEdit && handleScoreFocus(student.id, item.id, score ?? null)} className={`h-full w-full p-2 ${canEdit ? 'cursor-pointer' : ''} ${score !== null && score < 3.0 ? 'text-red-600 font-semibold' : ''} ${canEdit ? 'bg-blue-50' : ''}`}>
+                                                        {score !== null ? score.toFixed(2) : '-'}
                                                     </div>
                                                 )}
-                                            </div>
-                                        </th>
-                                    ))}
-                                    {canEdit && <th scope="col" className="px-4 py-3"><button onClick={() => { setEditingItem(null); setIsItemModalOpen(true);}} className="text-primary font-bold text-lg">+</button></th>}
-                                    <th scope="col" className="px-6 py-3 text-center font-extrabold min-w-[100px]">Definitiva</th>
-                                    <th scope="col" className="px-6 py-3 min-w-[200px]">Observaciones</th>
+                                            </td>
+                                        );
+                                    })}
+                                    {canEdit && <td />}
+                                    <td className={`px-4 py-2 text-center font-bold ${finalScore !== null && finalScore < 3.0 ? 'text-red-600' : ''}`}>
+                                        {finalScore?.toFixed(2) ?? 'N/A'}
+                                        <span className="block text-xs font-normal text-gray-500">{desempeno}</span>
+                                    </td>
+                                    <td className="px-4 py-2">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-xs text-gray-600 italic truncate" title={observation}>{observation}</p>
+                                            {canEdit && (
+                                                <button onClick={() => setEditingObservation({ studentId: student.id, studentName: student.name, text: observation })} className="text-blue-600 hover:text-blue-800 text-xs font-semibold ml-2 flex-shrink-0">Editar</button>
+                                            )}
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {filteredStudents.map(student => {
-                                    const finalScore = calculateFinalScoreForSubject(student.id, currentGradebook);
-                                    return (
-                                        <tr key={student.id} className="bg-white border-b hover:bg-gray-50">
-                                            <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{student.name}</th>
-                                            {currentGradebook.gradeItems.map(item => {
-                                                const score = currentGradebook.scores.find(s => s.studentId === student.id && s.gradeItemId === item.id)?.score;
-                                                const cellId = `${student.id}-${item.id}`;
-                                                const isEditingThisCell = editingCell === cellId;
-                                                return (
-                                                    <td key={item.id} className="px-2 py-2">
-                                                        <input 
-                                                            type="text"
-                                                            inputMode="decimal"
-                                                            value={isEditingThisCell ? editingValue : formatScoreForDisplay(score)}
-                                                            onFocus={() => handleScoreFocus(student.id, item.id, score ?? null)}
-                                                            onChange={e => setEditingValue(e.target.value)}
-                                                            onBlur={handleScoreBlur}
-                                                            disabled={!canEdit}
-                                                            className={`w-20 text-center p-2 border rounded-md ${score !== null && score < 3 ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'} disabled:bg-gray-100 disabled:cursor-not-allowed`}
-                                                        />
-                                                    </td>
-                                                );
-                                            })}
-                                            {canEdit && <td></td>}
-                                            <td className={`px-6 py-4 text-center font-bold text-lg ${finalScore !== null && finalScore < 3 ? 'text-red-600' : 'text-green-600'}`}>
-                                                {finalScore?.toFixed(2) ?? 'N/A'}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <button 
-                                                    onClick={() => setEditingObservation({ studentId: student.id, studentName: student.name, text: currentGradebook.observations[student.id] || '' })}
-                                                    disabled={!canEdit}
-                                                    className="text-primary hover:underline text-xs disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
-                                                >
-                                                    {currentGradebook.observations[student.id] ? 'Editar' : 'Añadir'} Observación
-                                                </button>
-                                                {currentGradebook.observations[student.id] && (
-                                                    <p className="text-xs text-gray-500 mt-1 max-w-[200px] truncate" title={currentGradebook.observations[student.id]}>
-                                                        {currentGradebook.observations[student.id]}
-                                                    </p>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            ) : (
-                <div className="bg-white p-8 rounded-xl shadow-md text-center">
-                    <h2 className="text-xl font-semibold text-gray-700">No se encontró una planilla</h2>
-                    <p className="mt-2 text-gray-500">No hay una planilla de calificaciones para los filtros seleccionados.</p>
-                     <button
-                        onClick={handleCreateGradebook}
-                        className="mt-6 px-6 py-2 rounded-md text-white bg-primary hover:bg-primary-focus transition-colors"
-                    >
-                        Crear Planilla para {selectedSubject} {selectedGrade}-{selectedGroup}
-                    </button>
-                </div>
-            )}
+                            );
+                        })}
+                    </tbody>
+                </table>
+                 {filteredStudents.length === 0 && <p className="text-center py-8 text-gray-500">No hay estudiantes en este grupo.</p>}
+            </div>
+          </div>
+        )}
+      </div>
 
-            {isItemModalOpen && currentGradebook && (
-                <ItemModal item={editingItem} existingItems={currentGradebook.gradeItems} onClose={() => setIsItemModalOpen(false)} onSave={handleSaveItem} />
-            )}
-             {isObservationModalOpen && editingObservation && (
-                <ObservationModal
-                    studentName={editingObservation.studentName}
-                    observation={editingObservation.text}
-                    onClose={() => setEditingObservation(null)}
-                    onSave={handleSaveObservation}
-                />
-            )}
-        </div>
-    );
+      {isItemModalOpen && currentGradebook && (
+        <ItemModal
+          item={editingItem}
+          existingItems={currentGradebook.gradeItems}
+          onClose={() => { setIsItemModalOpen(false); setEditingItem(null); }}
+          onSave={handleSaveItem}
+        />
+      )}
+      {isObservationModalOpen && editingObservation && (
+        <ObservationModal
+            studentName={editingObservation.studentName}
+            observation={editingObservation.text}
+            onClose={() => setEditingObservation(null)}
+            onSave={handleSaveObservation}
+        />
+      )}
+    </div>
+  );
 };
 
 export default Calificaciones;

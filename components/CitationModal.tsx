@@ -160,11 +160,11 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
                         <p className="text-sm text-gray-600">Busca y selecciona uno o más estudiantes para enviarles la misma citación. La selección se mantendrá aunque cambies de grupo.</p>
                          {(currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR) && (
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-2 bg-gray-100 rounded-md">
-                                <select value={individualGradeFilter} onChange={e => handleIndividualGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
+                                <select value={individualGradeFilter} onChange={e => handleIndividualGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900">
                                     <option value="all">Todos los Grados</option>
                                     {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
-                                <select value={individualGroupFilter} onChange={e => setIndividualGroupFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
+                                <select value={individualGroupFilter} onChange={e => setIndividualGroupFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900">
                                     {availableGroupsForIndividual.map(g => <option key={g} value={g}>{g === 'all' ? 'Todos los Grupos' : g}</option>)}
                                 </select>
                                 <input
@@ -172,7 +172,7 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
                                     placeholder="Buscar por nombre..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900 placeholder-gray-500 sm:col-span-3"
+                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500 sm:col-span-3"
                                 />
                             </div>
                         )}
@@ -182,7 +182,7 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
                                 placeholder="Buscar por nombre..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
                             />
                         )}
 
@@ -241,13 +241,13 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Grado</label>
-                                <select value={selectedGrade} onChange={e => handleGroupCitationGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
+                                <select value={selectedGrade} onChange={e => handleGroupCitationGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900">
                                     {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
                             </div>
                              <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Grupo</label>
-                                <select value={selectedGroup} onChange={e => setSelectedGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900">
+                                <select value={selectedGroup} onChange={e => setSelectedGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900">
                                     {availableGroupsForGroupCitation.map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
                             </div>
@@ -263,20 +263,20 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
-                            <input type="date" id="date" value={date} onChange={e => setDate(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900" />
+                            <input type="date" id="date" value={date} onChange={e => setDate(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900" />
                         </div>
                          <div>
                             <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-1">Hora</label>
-                            <input type="time" id="time" value={time} onChange={e => setTime(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900" />
+                            <input type="time" id="time" value={time} onChange={e => setTime(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900" />
                         </div>
                     </div>
                     <div>
                         <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Lugar</label>
-                        <input type="text" id="location" value={location} onChange={e => setLocation(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900 placeholder-gray-500" placeholder="Ej: Coordinación, Sala de Juntas"/>
+                        <input type="text" id="location" value={location} onChange={e => setLocation(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500" placeholder="Ej: Coordinación, Sala de Juntas"/>
                     </div>
                     <div>
                         <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1">Motivo</label>
-                        <textarea id="reason" rows={3} value={reason} onChange={e => setReason(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900 placeholder-gray-500" placeholder="Ej: Seguimiento académico, Incidencia de convivencia..."></textarea>
+                        <textarea id="reason" rows={3} value={reason} onChange={e => setReason(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500" placeholder="Ej: Seguimiento académico, Incidencia de convivencia..."></textarea>
                     </div>
                  </div>
             </div>

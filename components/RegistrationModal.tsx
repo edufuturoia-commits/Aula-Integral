@@ -86,29 +86,29 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ plan, onClose, on
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Nombre de la Institución</label>
-                            <input type="text" name="institutionName" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"/>
+                            <input type="text" name="institutionName" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Nombre del Rector(a)</label>
-                            <input type="text" name="rectorName" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"/>
+                            <input type="text" name="rectorName" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
                         </div>
                     </div>
                      <div>
                         <label className="block text-sm font-medium text-gray-700">Correo Electrónico (será tu usuario)</label>
-                        <input type="email" name="email" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"/>
+                        <input type="email" name="email" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
                     </div>
                      <div>
                         <label className="block text-sm font-medium text-gray-700">Teléfono de Contacto</label>
-                        <input type="tel" name="phone" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"/>
+                        <input type="tel" name="phone" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Contraseña</label>
-                            <input type="password" name="password" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"/>
+                            <input type="password" name="password" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Confirmar Contraseña</label>
-                            <input type="password" name="confirmPassword" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900"/>
+                            <input type="password" name="confirmPassword" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
                         </div>
                     </div>
 

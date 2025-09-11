@@ -37,7 +37,7 @@ const GroupMessageModal: React.FC<GroupMessageModalProps> = ({ onClose, onSend }
                 rows={6}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
                 placeholder="Escribe tu comunicado o anuncio aquí..."
                 ></textarea>
             </div>

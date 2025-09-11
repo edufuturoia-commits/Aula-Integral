@@ -1,36 +1,78 @@
 
 
+import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
 
-import React, { useState, useCallback, useEffect } from 'react';
+// Components
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
-import Dashboard from './pages/Dashboard';
-import Classroom from './pages/Classroom';
-import Assessments from './pages/Assessments';
-import Resources from './pages/Resources';
-import Profile from './pages/Profile';
-import Settings from './pages/Settings';
-import Incidents from './pages/Incidents';
-import ParentPortal from './pages/ParentPortal';
-import StudentPortal from './pages/StudentPortal';
-import Rectory from './pages/Rectory';
-import InstitutionProfile from './pages/InstitutionProfile';
-import Login from './pages/Login';
-import Calificaciones from './pages/Calificaciones';
-import ChangePasswordModal from './components/ChangePasswordModal';
-import DemoExpiredModal from './components/DemoExpiredModal';
-import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, UserRegistrationData, AttendanceRecord } from './types';
-import { initDB, getStudents, getTeachers, getDownloadedResources, getTeacherByEmail, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, getStudentByEmail, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords } from './db';
-import { SIDEBAR_ITEMS, MOCK_RESOURCES, MOCK_INSTITUTION_PROFILE, MOCK_STUDENTS, MOCK_TEACHERS } from './constants';
-import LandingPage from './pages/LandingPage';
+
+// Types and DB
+import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident } from './types';
+import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident } from './db';
+
+// Constants
+import { SIDEBAR_ITEMS, MOCK_INSTITUTION_PROFILE, MOCK_CITATIONS } from './constants';
+
+// Lazy load page components for code splitting
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Classroom = lazy(() => import('./pages/Classroom'));
+const Assessments = lazy(() => import('./pages/Assessments'));
+const Resources = lazy(() => import('./pages/Resources'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Incidents = lazy(() => import('./pages/Incidents'));
+const ParentPortal = lazy(() => import('./pages/ParentPortal'));
+const StudentPortal = lazy(() => import('./pages/StudentPortal'));
+const Rectory = lazy(() => import('./pages/Rectory'));
+const InstitutionProfile = lazy(() => import('./pages/InstitutionProfile'));
+const Calificaciones = lazy(() => import('./pages/Calificaciones'));
+const Communication = lazy(() => import('./pages/Communication'));
+
+
+interface NotificationToastProps {
+  title: string;
+  message: string;
+  studentName: string;
+  onClose: () => void;
+}
+
+const NotificationToast: React.FC<NotificationToastProps> = ({ title, message, studentName, onClose }) => {
+  return (
+    <div className="fixed top-24 right-6 w-full max-w-sm bg-white shadow-lg rounded-xl p-4 z-[100] animate-slide-in-right border-l-4 border-primary">
+      <div className="flex items-start">
+        <div className="flex-shrink-0 pt-0.5">
+          <svg className="h-6 w-6 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+        </div>
+        <div className="ml-3 w-0 flex-1">
+          <p className="text-sm font-bold text-gray-900">{title}</p>
+          <p className="mt-1 text-sm text-gray-600"><strong>Estudiante:</strong> {studentName}</p>
+          <p className="mt-1 text-sm text-gray-500">{message}</p>
+        </div>
+        <div className="ml-4 flex-shrink-0 flex">
+          <button onClick={onClose} className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+            <span className="sr-only">Cerrar</span>
+            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<Page>('Dashboard');
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  const [dbReady, setDbReady] = useState(false);
+  // App State Management
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Data state
+  const [currentUser, setCurrentUser] = useState<Teacher | Student | null>(null);
+
+  // Main App Page
+  const [currentPage, setCurrentPage] = useState<Page>('Dashboard');
+
+  // Data States
   const [students, setStudents] = useState<Student[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
@@ -38,233 +80,162 @@ const App: React.FC = () => {
   const [studentResults, setStudentResults] = useState<StudentAssessmentResult[]>([]);
   const [subjectGrades, setSubjectGrades] = useState<SubjectGrades[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [citations, setCitations] = useState<Citation[]>(MOCK_CITATIONS);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [downloadedResourceIds, setDownloadedResourceIds] = useState<Set<string>>(new Set());
   const [institutionProfile, setInstitutionProfile] = useState<InstitutionProfileData>(() => {
     const savedProfile = localStorage.getItem('institutionProfile');
-    return savedProfile ? JSON.parse(savedProfile) : MOCK_INSTITUTION_PROFILE;
+    if (savedProfile && savedProfile !== 'undefined') {
+        try {
+            return JSON.parse(savedProfile);
+        } catch (e) {
+            console.error("Failed to parse institutionProfile from localStorage", e);
+            localStorage.removeItem('institutionProfile');
+        }
+    }
+    return MOCK_INSTITUTION_PROFILE;
   });
 
-  // Auth State
-  const [currentUser, setCurrentUser] = useState<Teacher | Student | null>(null);
-  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
-  const [showDemoExpiredModal, setShowDemoExpiredModal] = useState(false);
-  const [userForPasswordChange, setUserForPasswordChange] = useState<Teacher | Student | null>(null);
-  const [showLogin, setShowLogin] = useState(false);
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const isAdmin = currentUser?.role === Role.ADMIN;
+  
+  // Real-time notification state
+  const [notification, setNotification] = useState<{ title: string; message: string; studentName: string; } | null>(null);
 
 
+  // Effects
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
-
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    
-    initDB().then(success => {
-        if(success) {
-            setDbReady(true);
-        } else {
-            console.error("Failed to initialize database.");
-            setIsLoading(false);
-        }
-    });
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
-  
-  const seedDatabase = useCallback(async () => {
-      const dbStudents = await getStudents();
-      const dbTeachers = await getTeachers();
 
-      if (dbStudents.length === 0 && dbTeachers.length === 0) {
-          console.log("Database is empty. Seeding with mock data...");
-          await addOrUpdateStudents(MOCK_STUDENTS);
-          await addOrUpdateTeachers(MOCK_TEACHERS);
-          console.log("Seeding complete.");
+  // Effect to simulate WebSocket for real-time incident notifications
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const showRandomNotification = () => {
+      // Ensure there are students and the app is online to simulate a realistic scenario
+      if (students.length > 0 && navigator.onLine) {
+        const randomStudent = students[Math.floor(Math.random() * students.length)];
+        const randomIncidentType = Object.values(IncidentType)[Math.floor(Math.random() * Object.values(IncidentType).length)];
+        
+        setNotification({
+          title: 'Nueva Incidencia Reportada',
+          message: `Se ha reportado un nuevo incidente de tipo "${randomIncidentType}".`,
+          studentName: randomStudent.name
+        });
+
+        // Automatically hide after 7 seconds
+        setTimeout(() => {
+          setNotification(null);
+        }, 7000);
       }
-  }, []);
+
+      // Schedule next notification
+      const randomInterval = Math.random() * (45000 - 25000) + 25000; // between 25 and 45 seconds
+      timeoutId = setTimeout(showRandomNotification, randomInterval);
+    };
+
+    // Start the simulation after an initial delay
+    timeoutId = setTimeout(showRandomNotification, 20000); 
+
+    return () => clearTimeout(timeoutId);
+  }, [students]); // Dependency on students ensures we have data to show.
+
 
   const loadResources = useCallback(async () => {
     try {
-        const resourcesMap = new Map<string, Resource>(
-            MOCK_RESOURCES.map(res => [res.id, res])
-        );
-
-        const localResources = await getDownloadedResources();
-        
-        localResources.forEach(res => {
-            resourcesMap.set(res.id, res);
-        });
-
-        setDownloadedResourceIds(new Set(localResources.map(r => r.id)));
-
-        const sortedResources = Array.from(resourcesMap.values()).sort((a, b) => {
-            const aIsAi = !!a.content;
-            const bIsAi = !!b.content;
-            if (aIsAi && !bIsAi) return -1;
-            if (!aIsAi && bIsAi) return 1;
-            return a.title.localeCompare(b.title);
-        });
-        setResources(sortedResources);
+      const allResources = await getDownloadedResources();
+      setResources(allResources.sort((a, b) => a.title.localeCompare(b.title)));
+      setDownloadedResourceIds(new Set(allResources.map(r => r.id)));
     } catch (error) {
-        console.error("Failed to load resources:", error);
+      console.error("Failed to load resources:", error);
+    }
+  }, []);
+
+  const loadIncidents = useCallback(async () => {
+    try {
+        const data = await getIncidents();
+        setIncidents(data);
+    } catch (error) {
+        console.error("Failed to load incidents:", error);
     }
   }, []);
 
   useEffect(() => {
     const loadData = async () => {
-        setIsLoading(true);
-        try {
-            await seedDatabase();
-            await Promise.all([
-                getStudents().then(setStudents),
-                getTeachers().then(setTeachers),
-                getAssessments().then(setAssessments),
-                getStudentResults().then(setStudentResults),
-                getSubjectGrades().then(setSubjectGrades),
-                getAllAttendanceRecords().then(setAttendanceRecords),
-                loadResources()
-            ]);
-        } catch (error) {
-            console.error("Failed to load initial data:", error);
-        } finally {
-            setIsLoading(false);
+      setIsLoading(true);
+      try {
+        const [studentsData, teachersData, assessmentsData, resultsData, gradesData, attendanceData] = await Promise.all([
+          getStudents(),
+          getTeachers(),
+          getAssessments(),
+          getStudentResults(),
+          getSubjectGrades(),
+          getAllAttendanceRecords(),
+        ]);
+        setStudents(studentsData);
+        setTeachers(teachersData);
+        setAssessments(assessmentsData);
+        setStudentResults(resultsData);
+        setSubjectGrades(gradesData);
+        setAttendanceRecords(attendanceData);
+        setCitations(MOCK_CITATIONS);
+        await loadIncidents();
+        
+        // Auto-login as admin for testing purposes
+        const adminUser = teachersData.find(t => t.role === Role.ADMIN);
+        if (adminUser) {
+            setCurrentUser(adminUser);
+        } else {
+            console.error("Admin user not found. Please ensure the database is seeded.");
         }
+
+        await loadResources();
+      } catch (error) {
+        console.error("Failed to load initial data from server:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
+    loadData();
+  }, [loadResources, loadIncidents]);
 
-    if (dbReady) {
-        loadData();
-    }
-  }, [dbReady, loadResources, seedDatabase]);
-
+  // Data Handlers
   const handleUpdateUser = async (user: Teacher | Student) => {
-      if ('subject' in user) { // It's a Teacher
-        const updatedTeachers = teachers.map(t => t.id === user.id ? user : t);
-        await addOrUpdateTeachers(updatedTeachers);
-        setTeachers(updatedTeachers);
-      } else { // It's a Student
-         const updatedStudents = students.map(s => s.id === user.id ? user : s);
-         await addOrUpdateStudents(updatedStudents);
-         setStudents(updatedStudents);
-      }
-      if (currentUser?.id === user.id) {
+    if ('subject' in user) { // Teacher
+        const updated = teachers.map(t => t.id === user.id ? user : t);
+        await addOrUpdateTeachers(updated);
+        setTeachers(updated);
+    } else { // Student
+        const updated = students.map(s => s.id === user.id ? user : s);
+        await addOrUpdateStudents(updated);
+        setStudents(updated);
+    }
+    if (currentUser?.id === user.id) {
         setCurrentUser(user);
-      }
-  };
-
-  const handleLogin = async (email: string, pass: string): Promise<{success: boolean, message: string}> => {
-    let user: Teacher | Student | undefined = await getTeacherByEmail(email);
-    
-    if (!user) {
-        user = await getStudentByEmail(email);
-    }
-
-    if (!user) {
-        return { success: false, message: 'Usuario o contraseña incorrectos.' };
-    }
-    
-    if (user.password !== pass) {
-        return { success: false, message: 'Usuario o contraseña incorrectos.' };
-    }
-
-    if ('isDemo' in user && user.isDemo && user.demoStartDate) {
-        const startDate = new Date(user.demoStartDate);
-        const expirationDate = new Date(startDate);
-        expirationDate.setMonth(startDate.getMonth() + 1); // 1 month trial
-
-        if (new Date() > expirationDate) {
-            setCurrentUser(user);
-            setShowDemoExpiredModal(true);
-            return { success: true, message: 'La demostración ha expirado.' };
-        }
-    }
-
-    if (!user.passwordChanged) {
-        setUserForPasswordChange(user);
-        setShowChangePasswordModal(true);
-        return { success: true, message: 'Redirigiendo para cambiar contraseña.' };
-    }
-    
-    setCurrentUser(user);
-    
-    if (user.role === Role.STUDENT) {
-        setCurrentPage('StudentPortal');
-    } else {
-        setCurrentPage('Dashboard');
-    }
-
-    return { success: true, message: 'Inicio de sesión exitoso.' };
-  };
-  
-  const handleDemoRegister = async (userData: UserRegistrationData): Promise<{ success: boolean, message: string }> => {
-    // Check if email is already taken
-    const existingTeacher = await getTeacherByEmail(userData.email!);
-    const existingStudent = await getStudentByEmail(userData.email!);
-    if (existingTeacher || existingStudent) {
-        return { success: false, message: 'Este correo electrónico ya se encuentra registrado.' };
-    }
-    
-    // Create new user (Rector)
-    const newRector: Teacher = {
-        id: userData.email!, // Using email as ID for demo
-        name: userData.rectorName,
-        avatarUrl: `https://picsum.photos/seed/${userData.email}/100/100`,
-        role: Role.RECTOR,
-        subject: 'Administración',
-        email: userData.email,
-        phone: userData.phone,
-        password: userData.password,
-        passwordChanged: true, // For demo, assume it's changed
-        isDemo: true,
-        demoStartDate: new Date().toISOString()
-    };
-
-    await addOrUpdateTeachers([...teachers, newRector]);
-    setTeachers(prev => [...prev, newRector]);
-    
-    // Also update institution profile for this demo user
-    const newProfile: InstitutionProfileData = {
-        ...MOCK_INSTITUTION_PROFILE,
-        name: userData.institutionName,
-        rector: userData.rectorName,
-        email: userData.email,
-        phone: userData.phone,
-    };
-    handleSetInstitutionProfile(newProfile);
-
-    // Automatically log in
-    setCurrentUser(newRector);
-    setCurrentPage('Dashboard');
-    
-    return { success: true, message: 'Registro de demostración exitoso. ¡Bienvenido!' };
-  };
-
-  const handlePasswordChanged = (user: Teacher | Student) => {
-    setCurrentUser(user);
-    setShowChangePasswordModal(false);
-    setUserForPasswordChange(null);
-     if (user.role === Role.STUDENT) {
-        setCurrentPage('StudentPortal');
-    } else {
-        setCurrentPage('Dashboard');
     }
   };
 
   const handleSetInstitutionProfile = (profile: InstitutionProfileData) => {
-      setInstitutionProfile(profile);
-      localStorage.setItem('institutionProfile', JSON.stringify(profile));
+    setInstitutionProfile(profile);
+    localStorage.setItem('institutionProfile', JSON.stringify(profile));
   };
   
   const handleSetAssessments = async (assessments: Assessment[]) => {
-      await addOrUpdateAssessments(assessments);
-      setAssessments(assessments);
+    await addOrUpdateAssessments(assessments);
+    setAssessments(assessments);
   };
   
   const handleAddResult = async (result: StudentAssessmentResult) => {
-      await addOrUpdateStudentResult(result);
-      setStudentResults(prev => [...prev.filter(r => r.id !== result.id), result]);
+    await addOrUpdateStudentResult(result);
+    setStudentResults(prev => [...prev.filter(r => r.id !== result.id), result]);
   };
   
   const handleSetSubjectGrades = async (updater: React.SetStateAction<SubjectGrades[]>) => {
@@ -272,109 +243,97 @@ const App: React.FC = () => {
         ? (updater as (prevState: SubjectGrades[]) => SubjectGrades[])(subjectGrades) 
         : updater;
     
-    setSubjectGrades(newGrades); // Optimistic UI update
-    await addOrUpdateSubjectGrades(newGrades); // Persist to DB
+    await addOrUpdateSubjectGrades(newGrades);
+    setSubjectGrades(newGrades);
+  };
+  
+  const handleUpdateCitations = (updater: React.SetStateAction<Citation[]>) => {
+      const newCitations = typeof updater === 'function' 
+          ? (updater as (prevState: Citation[]) => Citation[])(citations) 
+          : updater;
+      // In a real app, you would save this to the DB
+      // await addOrUpdateCitations(newCitations); 
+      setCitations(newCitations);
+  };
+
+  const handleUpdateIncidents = async (action: 'add' | 'update' | 'delete', data: Incident | string) => {
+    if (action === 'add') {
+        await addIncident(data as Incident);
+    } else if (action === 'update') {
+        await updateIncident(data as Incident);
+    } else if (action === 'delete') {
+        await deleteIncident(data as string);
+    }
+    await loadIncidents(); // Refresh state from DB
   };
 
   const handleAddOrUpdateAttendanceRecord = async (record: AttendanceRecord) => {
-      await addOrUpdateAttendanceRecord(record);
-      setAttendanceRecords(prev => {
-          const index = prev.findIndex(r => r.id === record.id);
-          if (index > -1) {
-              const newRecords = [...prev];
-              newRecords[index] = record;
-              return newRecords;
-          }
-          return [...prev, record];
-      });
+    await addOrUpdateAttendanceRecord(record);
+    setAttendanceRecords(prev => {
+      const index = prev.findIndex(r => r.id === record.id);
+      if (index > -1) {
+          const newRecords = [...prev];
+          newRecords[index] = record;
+          return newRecords;
+      }
+      return [...prev, record];
+    });
   };
 
   const handleBulkUpdateAttendance = async (records: AttendanceRecord[]) => {
-      await addOrUpdateAttendanceRecords(records);
-      setAttendanceRecords(prev => {
-          const recordsMap = new Map(prev.map(r => [r.id, r]));
-          records.forEach(r => recordsMap.set(r.id, r));
-          return Array.from(recordsMap.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      });
-  };
-  
-  const handleLogout = () => {
-      setCurrentUser(null);
-      setShowLogin(false);
-      setCurrentPage('Dashboard');
-  };
-  
-  const handleUpgrade = async () => {
-      if (currentUser && 'isDemo' in currentUser) {
-          const updatedUser = { ...currentUser, isDemo: false, demoStartDate: undefined };
-          await handleUpdateUser(updatedUser);
-          setShowDemoExpiredModal(false);
-          alert("¡Gracias por tu compra! Tu cuenta ha sido activada.");
-      }
+    await addOrUpdateAttendanceRecords(records);
+    setAttendanceRecords(prev => {
+      const recordsMap = new Map(prev.map(r => [r.id, r]));
+      records.forEach(r => recordsMap.set(r.id, r));
+      return Array.from(recordsMap.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    });
   };
 
-  if (!currentUser) {
-      if (showLogin) {
-          return <Login onLogin={handleLogin} onBackToHome={() => setShowLogin(false)} />;
-      }
-      return (
-        <LandingPage 
-            onShowLogin={() => setShowLogin(true)} 
-            onDemoRegister={handleDemoRegister}
-        />
-      );
-  }
-
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">Cargando...</div>;
+  // Render Logic
+  if (isLoading || !currentUser) {
+    return <div className="flex items-center justify-center h-screen">Cargando aplicación...</div>;
   }
 
   return (
     <div className="flex h-screen bg-gray-100 font-sans">
-      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} currentUser={currentUser} onLogout={handleLogout} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header currentPage={SIDEBAR_ITEMS.find(item => item.name === currentPage)?.label || currentPage} isOnline={isOnline} currentUser={currentUser} />
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto bg-neutral">
-            <div className={currentPage === 'Dashboard' ? '' : 'hidden'}>
-                <Dashboard students={students} teachers={teachers} />
-            </div>
-            <div className={currentPage === 'Classroom' ? '' : 'hidden'}>
-                {currentUser.role !== Role.STUDENT && <Classroom isOnline={isOnline} students={students} setStudents={setStudents} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleAddOrUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendance} />}
-            </div>
-            <div className={currentPage === 'Assessments' ? '' : 'hidden'}>
-                 {currentUser.role !== Role.STUDENT && <Assessments students={students} assessments={assessments} setAssessments={handleSetAssessments} studentResults={studentResults} />}
-            </div>
-            <div className={currentPage === 'Resources' ? '' : 'hidden'}>
-                <Resources resources={resources} downloadedIds={downloadedResourceIds} onUpdate={loadResources}/>
-            </div>
-            <div className={currentPage === 'Profile' ? '' : 'hidden'}>
-                <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />
-            </div>
-            <div className={currentPage === 'Settings' ? '' : 'hidden'}>
-                 {currentUser.role !== Role.STUDENT && <Settings currentUser={currentUser as Teacher} onUpdateUser={handleUpdateUser as (user: Teacher) => Promise<void>} />}
-            </div>
-            <div className={currentPage === 'Incidents' ? '' : 'hidden'}>
-                {(currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR || currentUser.role === Role.ADMIN) && <Incidents isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} />}
-            </div>
-            <div className={currentPage === 'ParentPortal' ? '' : 'hidden'}>
-                <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} />
-            </div>
-            <div className={currentPage === 'StudentPortal' ? '' : 'hidden'}>
-                 {currentUser.role === Role.STUDENT && <StudentPortal students={students} setStudents={setStudents} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleAddResult}/>}
-            </div>
-            <div className={currentPage === 'Rectory' ? '' : 'hidden'}>
-                {(currentUser.role === Role.RECTOR || currentUser.role === Role.ADMIN) && <Rectory students={students} setStudents={setStudents} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher}/>}
-            </div>
-            <div className={currentPage === 'InstitutionProfile' ? '' : 'hidden'}>
-                {(currentUser.role === Role.ADMIN || currentUser.role === Role.RECTOR) && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile} />}
-            </div>
-            <div className={currentPage === 'Calificaciones' ? '' : 'hidden'}>
-                 {currentUser.role !== Role.STUDENT && <Calificaciones students={students} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher}/>}
-            </div>
-        </main>
-      </div>
-      {showChangePasswordModal && userForPasswordChange && <ChangePasswordModal user={userForPasswordChange} onPasswordChanged={handlePasswordChanged} />}
-      {showDemoExpiredModal && <DemoExpiredModal onUpgrade={handleUpgrade} onLogout={handleLogout} />}
+        <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} currentUser={currentUser} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+            <Header currentPage={SIDEBAR_ITEMS.find(item => item.name === currentPage)?.label || currentPage} isOnline={isOnline} currentUser={currentUser} />
+            <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto bg-neutral">
+                <Suspense fallback={<div className="flex items-center justify-center h-full">Cargando página...</div>}>
+                    {currentPage === 'Dashboard' && <Dashboard students={students} teachers={teachers} />}
+                    {currentPage === 'Classroom' && (isAdmin || currentUser.role !== Role.STUDENT) && <Classroom isOnline={isOnline} students={students} setStudents={setStudents} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleAddOrUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendance} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} />}
+                    {currentPage === 'Assessments' && (isAdmin || currentUser.role !== Role.STUDENT) && <Assessments students={students} assessments={assessments} setAssessments={handleSetAssessments} studentResults={studentResults} />}
+                    {currentPage === 'Resources' && <Resources resources={resources} downloadedIds={downloadedResourceIds} onUpdate={loadResources}/>}
+                    {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
+                    {currentPage === 'Settings' && (isAdmin || currentUser.role !== Role.STUDENT) && <Settings currentUser={currentUser as Teacher} onUpdateUser={handleUpdateUser as (user: Teacher) => Promise<void>} />}
+                    {currentPage === 'Incidents' && (isAdmin || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR) && <Incidents isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} />}
+                    {currentPage === 'ParentPortal' && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} />}
+                    {currentPage === 'StudentPortal' && (isAdmin || currentUser.role === Role.STUDENT) && <StudentPortal 
+                        loggedInUser={currentUser}
+                        allStudents={students}
+                        teachers={teachers} 
+                        subjectGrades={subjectGrades} 
+                        resources={resources} 
+                        assessments={assessments} 
+                        studentResults={studentResults} 
+                        onAddResult={handleAddResult}
+                        citations={citations}/>}
+                    {currentPage === 'Rectory' && (isAdmin || currentUser.role === Role.RECTOR) && <Rectory students={students} setStudents={setStudents} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher}/>}
+                    {currentPage === 'InstitutionProfile' && (isAdmin || currentUser.role === Role.RECTOR) && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile} />}
+                    {currentPage === 'Calificaciones' && (isAdmin || currentUser.role !== Role.STUDENT) && <Calificaciones students={students} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher}/>}
+                    {currentPage === 'Communication' && (isAdmin || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR || currentUser.role === Role.TEACHER) && <Communication currentUser={currentUser as Teacher} />}
+                </Suspense>
+            </main>
+        </div>
+         {notification && (
+            <NotificationToast 
+                title={notification.title} 
+                message={notification.message} 
+                studentName={notification.studentName}
+                onClose={() => setNotification(null)}
+            />
+        )}
     </div>
   );
 };
