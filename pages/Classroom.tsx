@@ -369,7 +369,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
                 <div className="lg:col-span-2">
                     <StudentList 
                         students={filteredStudents} 
-                        onSelectStudent={openModalForStudent}
+                        onReportIncident={openModalForStudent}
                         onAddStudentClick={() => setIsAddStudentModalOpen(true)} 
                         grades={availableGrades}
                         selectedGrade={gradeFilter}
@@ -478,24 +478,29 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
                                                 </div>
                                             )}
                                             {[CitationStatus.PENDING, CitationStatus.CONFIRMED].includes(cit.status) && (
-                                                <div className="mt-3 text-right">
-                                                    <button onClick={() => handleOpenCancelModal(cit)} className="text-xs font-semibold text-red-600 hover:text-red-800">
-                                                        Cancelar
-                                                    </button>
+                                                <div className="flex items-center justify-end space-x-2 mt-2 pt-2 border-t">
+                                                    <button onClick={() => handleOpenCancelModal(cit)} className="text-xs font-semibold text-red-600 hover:underline">Cancelar</button>
                                                 </div>
                                             )}
                                         </li>
                                     ))}
-                                    {citations.length === 0 && <p className="text-gray-500 text-center py-8">No hay citaciones programadas.</p>}
+                                    {sortedCitations.length === 0 && <p className="text-gray-500 text-center py-8">No hay citaciones programadas.</p>}
                                 </ul>
                             </div>
                         )}
                          {rightPanelTab === 'coordination' && (
-                             <div className="flex-1 flex flex-col overflow-hidden">
-                                <div ref={coordinationChatRef} className="flex-1 p-6 space-y-4 overflow-y-auto bg-gray-50">
-                                     {coordinationConversation.map((msg, index) => (
-                                        <div key={msg.id} className={`flex items-end gap-2 ${msg.sender === 'teacher' ? 'justify-end' : ''}`}>
-                                            {msg.sender === 'coordination' && <img src={MOCK_COORDINATOR_USER.avatarUrl} className="w-8 h-8 rounded-full" alt="coordinator" />}
+                            <div className="flex-1 flex flex-col overflow-hidden">
+                                <div className="p-4 flex items-center gap-3 border-b">
+                                    <img src={MOCK_COORDINATOR_USER.avatarUrl} alt={MOCK_COORDINATOR_USER.name} className="w-10 h-10 rounded-full" />
+                                    <div>
+                                        <h3 className="font-bold">{MOCK_COORDINATOR_USER.name}</h3>
+                                        <p className="text-sm text-gray-500">Coordinación</p>
+                                    </div>
+                                </div>
+                                <div ref={coordinationChatRef} className="flex-1 p-4 space-y-4 overflow-y-auto bg-gray-50">
+                                    {coordinationConversation.map((msg, index) => (
+                                        <div key={index} className={`flex items-end gap-2 ${msg.sender === 'teacher' ? 'justify-end' : ''}`}>
+                                             {msg.sender === 'coordination' && <img src={MOCK_COORDINATOR_USER.avatarUrl} className="w-8 h-8 rounded-full" alt="coordinator" />}
                                             <div className={`max-w-md p-3 rounded-xl ${msg.sender === 'teacher' ? 'bg-primary text-white rounded-br-none' : 'bg-gray-200 text-gray-800 rounded-bl-none'}`}>
                                                 <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                                                 <p className="text-xs opacity-70 mt-1 text-right">{msg.timestamp}</p>
@@ -505,31 +510,37 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
                                     ))}
                                 </div>
                                 <form onSubmit={handleSendToCoordination} className="p-4 border-t bg-white flex items-center gap-4">
-                                     <textarea value={newCoordinationMessage} onChange={e => setNewCoordinationMessage(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendToCoordination(e); }}} placeholder="Escribe un mensaje a coordinación..." className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary resize-none bg-gray-50" rows={1}/>
-                                     <button type="submit" className="bg-primary text-white rounded-full p-3 hover:bg-primary-focus disabled:bg-gray-300" disabled={!newCoordinationMessage.trim()}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg></button>
+                                     <textarea
+                                        value={newCoordinationMessage}
+                                        onChange={(e) => setNewCoordinationMessage(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendToCoordination(e); }}}
+                                        placeholder="Escribe un mensaje a coordinación..."
+                                        className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary resize-none bg-gray-50 text-gray-900 placeholder-gray-500"
+                                        rows={1}
+                                    />
+                                    <button type="submit" className="bg-primary text-white rounded-full p-3 hover:bg-primary-focus disabled:bg-gray-300" disabled={!newCoordinationMessage.trim()}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                                    </button>
                                 </form>
-                             </div>
-                         )}
+                            </div>
+                        )}
                     </div>
-
-                    {rightPanelTab !== 'coordination' && (
-                         <div className="p-4 border-t">
-                            <button
-                                onClick={handleFabClick}
-                                title={getFabTitle()}
-                                className="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors flex items-center justify-center space-x-2"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                                <span>{getFabTitle()}</span>
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>
-
-        <div className={activeTab === 'calificaciones' ? '' : 'hidden'}>
-            <Calificaciones
+        
+        <div className={activeTab === 'attendance' ? '' : 'hidden'}>
+            <AttendanceTaker 
+                students={filteredStudents} 
+                isOnline={isOnline} 
+                allAttendanceRecords={attendanceRecords} 
+                onUpdateRecord={onUpdateAttendance}
+                onBulkUpdateRecords={onBulkUpdateAttendance}
+            />
+        </div>
+        
+         <div className={activeTab === 'calificaciones' ? '' : 'hidden'}>
+            <Calificaciones 
                 students={students}
                 subjectGradesData={subjectGradesData}
                 setSubjectGradesData={setSubjectGradesData}
@@ -538,33 +549,25 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
             />
         </div>
 
-        <div className={activeTab === 'attendance' ? '' : 'hidden'}>
-            <AttendanceTaker 
-                isOnline={isOnline} 
-                students={filteredStudents}
-                allAttendanceRecords={attendanceRecords}
-                onUpdateRecord={onUpdateAttendance}
-                onBulkUpdateRecords={onBulkUpdateAttendance}
-            />
-        </div>
-
-        <div className={activeTab === 'events' ? '' : 'hidden'}>
-            <EventPostersViewer />
-        </div>
-
         <div className={activeTab === 'manual' ? '' : 'hidden'}>
             <ManualViewer />
         </div>
+        
+        <div className={activeTab === 'events' ? '' : 'hidden'}>
+            <EventPostersViewer />
+        </div>
       
+      {/* Modals */}
       {isModalOpen && <IncidentModal student={selectedStudent} students={students} onClose={handleCloseModal} onSave={handleSaveIncident} reporterName={currentUser.name} />}
       {isAddStudentModalOpen && <AddStudentModal onClose={() => setIsAddStudentModalOpen(false)} onSave={handleSaveNewStudent} />}
-      {isCitationModalOpen && <CitationModal students={filteredStudents} onClose={() => setIsCitationModalOpen(false)} onSave={handleSaveCitations} currentUser={currentUser}/>}
+      {isCitationModalOpen && <CitationModal students={filteredStudents} onClose={() => setIsCitationModalOpen(false)} onSave={handleSaveCitations} currentUser={currentUser} />}
       {isGroupMessageModalOpen && <GroupMessageModal onClose={() => setIsGroupMessageModalOpen(false)} onSend={handleSendGroupMessage} />}
       {isCancelModalOpen && citationToCancel && <CancelCitationModal onClose={() => setIsCancelModalOpen(false)} onConfirm={handleConfirmCancelCitation} />}
       {activeChat && <ChatModal chat={activeChat} onClose={() => setActiveChat(null)} onUpdateConversation={handleUpdateConversation} currentUser={currentUser} />}
 
+      {/* Snackbar */}
       {showSnackbar.visible && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-fade-in">
+        <div className="fixed bottom-6 right-6 bg-gray-800 text-white py-3 px-6 rounded-lg shadow-lg animate-fade-in-up">
           {showSnackbar.message}
         </div>
       )}

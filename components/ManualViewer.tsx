@@ -34,11 +34,12 @@ const ManualViewer: React.FC = () => {
     useEffect(() => {
         try {
             const savedSummary = localStorage.getItem('peiSummaryContent');
-            if (savedSummary) {
+            if (savedSummary && savedSummary !== 'undefined') {
                 setSummaryContent(JSON.parse(savedSummary));
             }
         } catch (error) {
             console.error("Failed to load PEI summary from localStorage", error);
+            localStorage.removeItem('peiSummaryContent');
         } finally {
             setIsLoading(false);
         }

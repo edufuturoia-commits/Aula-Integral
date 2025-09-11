@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useMemo } from 'react';
 import type { Student, Teacher, Resource, SubjectGrades, InstitutionProfileData, Citation, Incident } from '../types';
 import { CitationStatus } from '../types';
@@ -177,13 +174,10 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                             <h2 className="text-xl font-bold">Historial de Incidencias</h2>
                             {studentIncidents.length > 0 ? (
                                 studentIncidents.map(inc => (
-                                    <div key={inc.id} className="p-3 border rounded-lg bg-gray-50">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-semibold text-gray-900">{inc.studentName}</p>
-                                                <p className="text-sm text-gray-600">{inc.type}</p>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
+                                    <div key={inc.id} className="p-4 border rounded-lg bg-gray-50 space-y-2">
+                                        <div className="flex justify-between items-start gap-4">
+                                            <h4 className="font-bold text-primary">{inc.type}</h4>
+                                            <div className="flex items-center space-x-2 flex-shrink-0">
                                                 {inc.archived && (
                                                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-800">
                                                         Archivado
@@ -192,8 +186,8 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                                                 <span className="text-xs text-gray-500">{new Date(inc.timestamp).toLocaleDateString('es-CO')}</span>
                                             </div>
                                         </div>
-                                        <p className="text-sm text-gray-600 mt-1">{inc.notes}</p>
-                                        <p className="text-xs text-gray-500 mt-2">Reportado por: {inc.teacherName}</p>
+                                        <p className="text-sm text-gray-700">{inc.notes}</p>
+                                        <p className="text-xs text-gray-500 pt-2 border-t">Reportado por: {inc.teacherName}</p>
                                     </div>
                                 ))
                             ) : (

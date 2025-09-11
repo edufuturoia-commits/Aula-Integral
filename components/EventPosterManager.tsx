@@ -21,11 +21,12 @@ const EventPosterManager: React.FC = () => {
     useEffect(() => {
         try {
             const savedPosters = localStorage.getItem('eventPosters');
-            if (savedPosters) {
+            if (savedPosters && savedPosters !== 'undefined') {
                 setPosters(JSON.parse(savedPosters));
             }
         } catch (e) {
             console.error("Failed to load event posters from localStorage", e);
+            localStorage.removeItem('eventPosters');
         }
     }, []);
 

@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades } from '../types';
 import { IncidentType, AttendanceStatus, CitationStatus, Role } from '../types';
@@ -580,9 +576,9 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                                 <option value="all">Todos los Tipos</option>
                                 {Object.values(IncidentType).map(t => <option key={t} value={t}>{t}</option>)}
                             </select>
-                            <div className="bg-gray-200 rounded-lg p-1 flex">
-                                <button onClick={() => setIncidentView('active')} className={`px-3 py-1 text-sm font-semibold rounded-md ${incidentView === 'active' ? 'bg-white shadow' : ''}`}>Activas</button>
-                                <button onClick={() => setIncidentView('archived')} className={`px-3 py-1 text-sm font-semibold rounded-md ${incidentView === 'archived' ? 'bg-white shadow' : ''}`}>Archivadas</button>
+                            <div className="bg-gray-100 rounded-lg p-1 flex">
+                                <button onClick={() => setIncidentView('active')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors duration-200 ${incidentView === 'active' ? 'bg-white shadow text-primary' : 'text-gray-600 hover:bg-gray-200'}`}>Activas</button>
+                                <button onClick={() => setIncidentView('archived')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors duration-200 ${incidentView === 'archived' ? 'bg-white shadow text-primary' : 'text-gray-600 hover:bg-gray-200'}`}>Archivadas</button>
                             </div>
                             <button onClick={() => handleDownloadIncidents('pdf')} className="p-2 bg-primary text-white rounded-lg hover:bg-primary-focus">PDF</button>
                             <button onClick={() => handleDownloadIncidents('csv')} className="p-2 bg-primary text-white rounded-lg hover:bg-primary-focus">CSV</button>
@@ -685,184 +681,85 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                             <option value="all">Todos los Estados</option>
                             {Object.values(CitationStatus).map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
+                        <select value={citationGradeFilter} onChange={e => handleCitationGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                             <option value="all">Todos los Grados</option>
+                            {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+                        </select>
                     </div>
-                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div className="md:col-start-4">
+                            <select value={citationGroupFilter} onChange={e => setCitationGroupFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                                <option value="all">Todos los Grupos</option>
+                                {availableGroupsForCitations.map(g => <option key={g} value={g}>{g}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                         {displayedCitations.map(cit => (
-                            <div key={cit.id} className="p-4 border rounded-lg bg-gray-50">
+                            <div key={cit.id} className={`p-4 border rounded-lg ${cit.status === CitationStatus.CANCELLED ? 'bg-gray-100' : 'bg-gray-50'}`}>
                                 <div className="flex justify-between items-start">
-                                    <p className="font-semibold">{cit.studentName} - {cit.reason}</p>
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCitationStatusClass(cit.status)}`}>{cit.status}</span>
+                                    <div>
+                                        <p className="font-bold text-primary">{cit.studentName}</p>
+                                        <p className="text-sm text-gray-600">{cit.reason}</p>
+                                        <p className="text-xs text-gray-500 mt-1">{new Date(cit.date + 'T00:00:00').toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} - {cit.time} @ {cit.location}</p>
+                                    </div>
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCitationStatusClass(cit.status)}`}>
+                                        {cit.status}
+                                    </span>
                                 </div>
-                                <p className="text-sm text-gray-500 mt-1">{new Date(cit.date).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })} - {cit.time}</p>
-                                {cit.status === CitationStatus.PENDING && (
-                                    <div className="mt-3 text-right">
-                                        <button onClick={() => handleOpenCancelModal(cit)} className="text-xs font-semibold text-red-600 hover:text-red-800">
-                                            Cancelar
-                                        </button>
+                                {cit.status === CitationStatus.CANCELLED && cit.cancellationReason && (
+                                    <div className="mt-2 p-2 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm">
+                                        <p><strong className="font-semibold">Cancelada:</strong> {cit.cancellationReason}</p>
                                     </div>
                                 )}
-                                {cit.status === CitationStatus.RESCHEDULE_REQUESTED && (
-                                    <div className="mt-4 flex items-center justify-end space-x-3">
-                                        <button 
-                                            onClick={() => handleDeleteCitation(cit.id)}
-                                            className="text-sm font-semibold text-red-600 hover:underline"
-                                        >
-                                            Eliminar
-                                        </button>
-                                        <button 
-                                            onClick={() => setEditingCitation(cit)}
-                                            className="bg-primary text-white font-semibold py-1 px-3 rounded-lg hover:bg-primary-focus transition-colors text-sm"
-                                        >
-                                            Editar Cita
-                                        </button>
-                                    </div>
-                                )}
+                                <div className="flex items-center justify-end space-x-3 mt-2 pt-2 border-t">
+                                    <button onClick={() => setEditingCitation(cit)} className="text-xs font-semibold text-blue-600 hover:underline">Editar</button>
+                                    {[CitationStatus.PENDING, CitationStatus.CONFIRMED, CitationStatus.RESCHEDULE_REQUESTED].includes(cit.status) && (
+                                        <button onClick={() => handleOpenCancelModal(cit)} className="text-xs font-semibold text-orange-600 hover:underline">Cancelar</button>
+                                    )}
+                                    <button onClick={() => handleDeleteCitation(cit.id)} className="text-xs font-semibold text-red-600 hover:underline">Eliminar</button>
+                                </div>
                             </div>
                         ))}
+                        {displayedCitations.length === 0 && <p className="text-center text-gray-500 py-8">No se encontraron citaciones.</p>}
                     </div>
                 </div>
             </div>
-            
-            <div className={activeTab === 'comunicados' ? '' : 'hidden'}>
-                <div className="bg-white p-6 rounded-xl shadow-md">
-                    <h3 className="text-xl font-bold mb-4">Enviar Comunicado General</h3>
-                    <form onSubmit={handleSendAnnouncement} className="space-y-4">
-                            <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Destinatarios</label>
-                            <select value={commRecipientType} onChange={e => setCommRecipientType(e.target.value as any)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
-                                <option value="all">Toda la comunidad (Docentes y Acudientes)</option>
-                                <option value="group">Grupo Específico</option>
-                                <option value="individual">Docente Individual</option>
-                            </select>
-                        </div>
-                        {commRecipientType === 'group' && (
-                            <div className="grid grid-cols-2 gap-2">
-                                <select value={commGrade} onChange={e => setCommGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
-                                    {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
-                                </select>
-                                <select value={commGroup} onChange={e => setCommGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
-                                    {(GRADE_GROUP_MAP[commGrade] || []).map(g => <option key={g} value={g}>{g}</option>)}
-                                </select>
-                            </div>
-                        )}
-                            <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                            <input type="text" value={commTitle} onChange={e => setCommTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" required />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Contenido</label>
-                            <textarea rows={5} value={commContent} onChange={e => setCommContent(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" required></textarea>
-                        </div>
-                        <button type="submit" className="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus">Enviar Comunicado</button>
-                    </form>
-                </div>
+
+             <div className={activeTab === 'comunicados' ? '' : 'hidden'}>
+                {/* Communication Tab Content will be added here */}
             </div>
 
             <div className={activeTab === 'teacher_management' ? '' : 'hidden'}>
-                <div className="bg-white p-6 rounded-xl shadow-md">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-bold">Gestión de Docentes ({teachers.length})</h3>
-                        <button onClick={() => setIsImportTeachersModalOpen(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus">Importar Docentes</button>
-                    </div>
-                    <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-                            {teachers.map(teacher => (
-                            <div key={teacher.id} className="p-3 border rounded-lg flex justify-between items-center">
-                                <div className="flex items-center space-x-3">
-                                    <img src={teacher.avatarUrl} alt={teacher.name} className="w-10 h-10 rounded-full" />
-                                    <div>
-                                        <p className="font-semibold">{teacher.name}</p>
-                                        <p className="text-sm text-gray-500">{teacher.subject}</p>
-                                    </div>
-                                </div>
-                                <button onClick={() => setEditingTeacher(teacher)} className="text-sm font-semibold text-primary hover:underline">Editar</button>
-                            </div>
-                            ))}
-                    </div>
-                </div>
+                {/* Teacher Management Tab Content will be added here */}
             </div>
             
             <div className={activeTab === 'student_management' ? '' : 'hidden'}>
-                <StudentList 
-                    students={filteredStudentsForList}
-                    onImportClick={() => setIsImportStudentsModalOpen(true)}
-                    onReportIncident={handleOpenIncidentModal}
-                    onEditStudent={handleOpenEditStudentModal}
-                    grades={['all', ...GRADES]}
-                    selectedGrade={studentGradeFilter}
-                    onGradeChange={setStudentGradeFilter}
-                    groups={availableGroupsForStudentMgmt}
-                    selectedGroup={studentGroupFilter}
-                    onGroupChange={setStudentGroupFilter}
-                />
+                {/* Student Management Tab Content will be added here */}
             </div>
-
-            <div className={activeTab === 'calificaciones' ? '' : 'hidden'}>
+            
+             <div className={activeTab === 'calificaciones' ? '' : 'hidden'}>
                 <Calificaciones
                     students={students}
                     subjectGradesData={subjectGradesData}
                     setSubjectGradesData={setSubjectGradesData}
                     currentUser={currentUser}
+                    viewMode="full"
                 />
             </div>
             
-            {isCitationModalOpen && (
-                <CitationModal 
-                    students={students}
-                    onClose={() => setIsCitationModalOpen(false)}
-                    onSave={handleSaveCitations}
-                    currentUser={currentUser}
-                />
-            )}
-            {isCancelModalOpen && citationToCancel && (
-                <CancelCitationModal 
-                    onClose={() => setIsCancelModalOpen(false)}
-                    onConfirm={handleConfirmCancelCitation}
-                />
-            )}
-             {isImportTeachersModalOpen && (
-                <ImportTeachersModal 
-                    onClose={() => setIsImportTeachersModalOpen(false)}
-                    onSave={handleSaveTeachers}
-                />
-            )}
-             {editingTeacher && (
-                <EditTeacherModal 
-                    teacher={editingTeacher}
-                    onClose={() => setEditingTeacher(null)}
-                    onSave={handleSaveTeacherEdit}
-                />
-            )}
-             {isImportStudentsModalOpen && (
-                <ImportStudentsModal
-                    onClose={() => setIsImportStudentsModalOpen(false)}
-                    onSave={handleImportStudents}
-                />
-            )}
-            {isIncidentModalOpen && (
-                <IncidentModal 
-                    student={selectedStudentForIncident}
-                    students={students}
-                    onClose={() => setIsIncidentModalOpen(false)}
-                    onSave={handleSaveIncident}
-                    reporterName={currentUser.name}
-                />
-            )}
-             {isEditStudentModalOpen && studentToEdit && (
-                <EditStudentModal
-                    student={studentToEdit}
-                    onClose={() => setIsEditStudentModalOpen(false)}
-                    onSave={handleSaveStudentEdit}
-                />
-            )}
-            {editingCitation && (
-                <EditCitationModal
-                    citation={editingCitation}
-                    onClose={() => setEditingCitation(null)}
-                    onSave={handleSaveEditedCitation}
-                />
-            )}
-            {showSnackbar.visible && (
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg z-50">
+            {/* Modals */}
+            {isCitationModalOpen && <CitationModal students={students} onClose={() => setIsCitationModalOpen(false)} onSave={handleSaveCitations} currentUser={currentUser} />}
+            {isCancelModalOpen && citationToCancel && <CancelCitationModal onClose={() => setIsCancelModalOpen(false)} onConfirm={handleConfirmCancelCitation} />}
+            {editingCitation && <EditCitationModal citation={editingCitation} onClose={() => setEditingCitation(null)} onSave={handleSaveEditedCitation} />}
+            {isImportTeachersModalOpen && <ImportTeachersModal onClose={() => setIsImportTeachersModalOpen(false)} onSave={handleSaveTeachers} />}
+            {editingTeacher && <EditTeacherModal teacher={editingTeacher} onClose={() => setEditingTeacher(null)} onSave={handleSaveTeacherEdit} />}
+            {isImportStudentsModalOpen && <ImportStudentsModal onClose={() => setIsImportStudentsModalOpen(false)} onSave={handleImportStudents} />}
+            {isIncidentModalOpen && <IncidentModal student={selectedStudentForIncident} students={students} onClose={() => setIsIncidentModalOpen(false)} onSave={handleSaveIncident} reporterName={currentUser.name} />}
+            {isEditStudentModalOpen && studentToEdit && <EditStudentModal student={studentToEdit} onClose={() => setIsEditStudentModalOpen(false)} onSave={handleSaveStudentEdit} />}
+             {showSnackbar.visible && (
+                <div className="fixed bottom-6 right-6 bg-gray-800 text-white py-3 px-6 rounded-lg shadow-lg animate-fade-in-up">
                 {showSnackbar.message}
                 </div>
             )}
