@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { Teacher, Student, NotificationSettings } from '../types';
 import { Role } from '../types';
@@ -8,18 +9,18 @@ interface ProfileProps {
 }
 
 const ProfileSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div className="bg-white p-6 rounded-xl shadow-md">
-        <h2 className="text-xl font-bold text-gray-800 border-b pb-3 mb-4">{title}</h2>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 border-b dark:border-gray-700 pb-3 mb-4">{title}</h2>
         {children}
     </div>
 );
 
 const ToggleSwitch: React.FC<{ label: string; enabled: boolean; onChange: (enabled: boolean) => void }> = ({ label, enabled, onChange }) => (
     <div className="flex items-center justify-between py-2">
-        <span className="text-gray-700">{label}</span>
+        <span className="text-gray-700 dark:text-gray-200">{label}</span>
         <button
             onClick={() => onChange(!enabled)}
-            className={`${enabled ? 'bg-primary' : 'bg-gray-200'} relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary`}
+            className={`${enabled ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-600'} relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary`}
         >
             <span className={`${enabled ? 'translate-x-6' : 'translate-x-1'} inline-block w-4 h-4 transform bg-white rounded-full transition-transform`} />
         </button>
@@ -95,7 +96,7 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
             className="hidden" 
             accept="image/*"
         />
-      <div className="flex items-center space-x-6 bg-white p-6 rounded-xl shadow-md">
+      <div className="flex items-center space-x-6 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
          <div className="relative">
             <img src={user.avatarUrl} alt={user.name} className="w-24 h-24 rounded-full object-cover border-4 border-primary" />
             {isEditing && (
@@ -109,8 +110,8 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
             )}
          </div>
          <div>
-            <h1 className="text-3xl font-bold text-gray-800">{user.name}</h1>
-            <p className="text-gray-500">{user.role}</p>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">{user.name}</h1>
+            <p className="text-gray-500 dark:text-gray-400">{user.role}</p>
          </div>
       </div>
 
@@ -119,31 +120,31 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
             <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
-                        <input type="email" name="email" value={user.email} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo Electrónico</label>
+                        <input type="email" name="email" value={user.email} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-200"/>
                     </div>
                     {isTeacher && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Teléfono</label>
-                            <input type="tel" name="phone" value={(user as Teacher).phone} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono</label>
+                            <input type="tel" name="phone" value={(user as Teacher).phone} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-200"/>
                         </div>
                     )}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
-                        <input type="date" name="dateOfBirth" value={user.dateOfBirth || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Nacimiento</label>
+                        <input type="date" name="dateOfBirth" value={user.dateOfBirth || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-200"/>
                     </div>
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
-                    <button onClick={handleCancel} className="px-4 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300">Cancelar</button>
+                    <button onClick={handleCancel} className="px-4 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">Cancelar</button>
                     <button onClick={handleSave} className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Guardar Cambios</button>
                 </div>
             </div>
         ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 text-gray-800 dark:text-gray-200">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <p><strong className="font-medium text-gray-600">Correo Electrónico:</strong> {user.email || 'No especificado'}</p>
-                    {isTeacher && <p><strong className="font-medium text-gray-600">Teléfono:</strong> {(user as Teacher).phone || 'No especificado'}</p>}
-                    <p><strong className="font-medium text-gray-600">Fecha de Nacimiento:</strong> {user.dateOfBirth ? new Date(user.dateOfBirth + 'T00:00:00').toLocaleDateString('es-CO') : 'No especificado'}</p>
+                    <p><strong className="font-medium text-gray-600 dark:text-gray-400">Correo Electrónico:</strong> {user.email || 'No especificado'}</p>
+                    {isTeacher && <p><strong className="font-medium text-gray-600 dark:text-gray-400">Teléfono:</strong> {(user as Teacher).phone || 'No especificado'}</p>}
+                    <p><strong className="font-medium text-gray-600 dark:text-gray-400">Fecha de Nacimiento:</strong> {user.dateOfBirth ? new Date(user.dateOfBirth + 'T00:00:00').toLocaleDateString('es-CO') : 'No especificado'}</p>
                  </div>
                  <div className="text-right pt-4">
                     <button onClick={handleEdit} className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Editar Perfil</button>
@@ -155,16 +156,16 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
       <ProfileSection title="Seguridad">
         <form className="space-y-4" onSubmit={handleChangePassword}>
             <div>
-                <label className="block text-sm font-medium text-gray-700">Contraseña Actual</label>
-                <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña Actual</label>
+                <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-200"/>
             </div>
              <div>
-                <label className="block text-sm font-medium text-gray-700">Nueva Contraseña</label>
-                <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nueva Contraseña</label>
+                <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-200"/>
             </div>
              <div>
-                <label className="block text-sm font-medium text-gray-700">Confirmar Nueva Contraseña</label>
-                <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900"/>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirmar Nueva Contraseña</label>
+                <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-200"/>
             </div>
             <div className="text-right pt-2">
                 <button type="submit" className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Cambiar Contraseña</button>

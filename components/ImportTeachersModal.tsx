@@ -47,7 +47,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 const fileToGenerativePart = async (file: File) => {
     const base64Data = await fileToBase64(file);
     return {
-        inlineData: { data: base64Data, mimeType: 'application/pdf' },
+        inlineData: { data: base64Data, mimeType: file.type },
     };
 };
 
@@ -61,9 +61,9 @@ const ImportTeachersModal: React.FC<ImportTeachersModalProps> = ({ onClose, onSa
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const selectedFile = e.target.files[0];
-            const allowedExtensions = /(\.pdf)$/i;
+            const allowedExtensions = /(\.pdf|\.xls|\.xlsx)$/i;
             if (!allowedExtensions.exec(selectedFile.name)) {
-                setError('Formato no soportado. Sube un archivo PDF (.pdf).');
+                setError('Formato no soportado. Sube un archivo PDF o Excel.');
                 setFile(null);
                 if (e.target) e.target.value = '';
                 return;
@@ -86,23 +86,32 @@ const ImportTeachersModal: React.FC<ImportTeachersModalProps> = ({ onClose, onSa
             const subjectList = SUBJECT_AREAS.join(', ');
 
             const responseSchema = {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  cedula: { type: Type.STRING },
-                  nombresYApellidos: { type: Type.STRING },
-                  fechaDeNacimiento: { type: Type.STRING },
-                  areaEducativa: { type: Type.STRING, enum: SUBJECT_AREAS },
-                  direccion: { type: Type.STRING },
-                  email: { type: Type.STRING },
-                  movil: { type: Type.STRING },
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        cedula: { type: Type.STRING, description: "La cédula o un ID temporal si no se encuentra. No debe estar vacío." },
+                        nombresYApellidos: { type: Type.STRING, description: "El nombre y apellido completo del docente. DEBE ser extraído de forma literal del documento, sin ninguna corrección, modificación o alteración. Copiar textualmente es la regla principal." },
+                        fechaDeNacimiento: { type: Type.STRING, description: "La fecha de nacimiento del docente (YYYY-MM-DD)." },
+                        areaEducativa: { type: Type.STRING, enum: SUBJECT_AREAS, description: `El área de especialización del docente. Debe ser uno de los valores permitidos.` },
+                        direccion: { type: Type.STRING, description: "La dirección de residencia del docente." },
+                        email: { type: Type.STRING, description: "El correo electrónico del docente." },
+                        movil: { type: Type.STRING, description: "El número de teléfono móvil del docente." },
+                    },
+                    required: ['cedula', 'nombresYApellidos'],
                 },
-                required: ['cedula', 'nombresYApellidos', 'fechaDeNacimiento', 'areaEducativa', 'direccion', 'email', 'movil'],
-              },
             };
             
-            const promptInstruction = `Has recibido un documento que contiene un listado de docentes. Extrae la información para cada docente. La información a extraer es: Cédula, Nombres y Apellidos, Fecha de Nacimiento, Área Educativa, Dirección, Email y Móvil. Devuelve el resultado como un array JSON de objetos. Cada objeto debe tener las siguientes propiedades en minúsculas y camelCase: "cedula" (string), "nombresYApellidos" (string), "fechaDeNacimiento" (string en formato YYYY-MM-DD), "areaEducativa" (string, debe ser una de la lista: ${subjectList}), "direccion" (string), "email" (string), "movil" (string). Si un valor no se encuentra, déjalo como un string vacío. Asegúrate de que el JSON esté bien formado.`;
+            const promptInstruction = `Tu tarea es analizar un documento que contiene una lista de docentes y extraer su información.
+
+**Reglas Estrictas:**
+1.  **Extracción Literal de Nombres**: La regla más importante es que los **Nombres y Apellidos** deben ser extraídos **LITERALMENTE** y **SIN NINGUNA MODIFICACIÓN**. Copia el texto tal cual aparece, incluyendo mayúsculas, minúsculas, tildes o la falta de ellas. No corrijas, no abrevies, no completes ni alteres los nombres bajo ninguna circunstancia. La fidelidad al documento original es la máxima prioridad.
+2.  **Manejo de Cédula/ID**: Extrae el número de Cédula o Identificación. Si no se encuentra, **DEBES GENERAR** un ID temporal único (ej: 'temp_12345'). El campo de la cédula no puede quedar vacío.
+3.  **Campos Opcionales**: Si no encuentras información para Fecha de Nacimiento, Dirección, Email o Móvil, deja el campo como un string vacío.
+4.  **Área Educativa**: El 'areaEducativa' debe ser uno de los siguientes valores: ${subjectList}. Si el área no se especifica en el documento, asigna 'Matemáticas' por defecto.
+
+**Formato de Salida:**
+Devuelve un array JSON de objetos. Cada objeto debe tener las siguientes propiedades: "cedula", "nombresYApellidos", "fechaDeNacimiento", "areaEducativa", "direccion", "email", "movil".`;
 
             const filePart = await fileToGenerativePart(file);
             const contents = { parts: [{ text: promptInstruction }, filePart] };
@@ -130,7 +139,7 @@ const ImportTeachersModal: React.FC<ImportTeachersModalProps> = ({ onClose, onSa
             }
 
             setExtractedTeachers(rawTeachers.map(t => ({
-                id: t.cedula || '',
+                id: t.cedula || `temp_${Date.now()}_${Math.random()}`,
                 name: t.nombresYApellidos || '',
                 subject: SUBJECT_AREAS.includes(t.areaEducativa) ? t.areaEducativa : SUBJECT_AREAS[0],
                 dateOfBirth: t.fechaDeNacimiento || '',
@@ -195,11 +204,11 @@ const ImportTeachersModal: React.FC<ImportTeachersModalProps> = ({ onClose, onSa
             
             {step === 1 && (
                 <div className="flex-1">
-                  <p className="text-gray-600 mb-4">Sube un archivo PDF con los datos de tus docentes (hasta 200). La IA extraerá automáticamente la información relevante.</p>
+                  <p className="text-gray-600 mb-4">Sube un archivo PDF o Excel con los datos de tus docentes (hasta 200). La IA extraerá automáticamente la información relevante.</p>
                   <div className="space-y-4">
                       <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Archivo PDF</label>
-                          <input type="file" onChange={handleFileChange} accept=".pdf" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Archivo PDF o Excel</label>
+                          <input type="file" onChange={handleFileChange} accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
                       </div>
                       {file && <p className="text-sm text-gray-500">Archivo seleccionado: <strong>{file.name}</strong></p>}
                   </div>
@@ -231,22 +240,22 @@ const ImportTeachersModal: React.FC<ImportTeachersModalProps> = ({ onClose, onSa
                             <tbody>
                                 {extractedTeachers.map((teacher, index) => (
                                     <tr key={index} className="border-b">
-                                        <td className="p-2"><input type="text" value={teacher.id} onChange={(e) => handleTeacherDataChange(index, 'id', e.target.value)} className="w-full p-1 border rounded bg-gray-50"/></td>
-                                        <td className="p-2"><input type="text" value={teacher.name} onChange={(e) => handleTeacherDataChange(index, 'name', e.target.value)} className="w-full p-1 border rounded bg-gray-50"/></td>
+                                        <td className="p-2"><input type="text" value={teacher.id} onChange={(e) => handleTeacherDataChange(index, 'id', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
+                                        <td className="p-2"><input type="text" value={teacher.name} onChange={(e) => handleTeacherDataChange(index, 'name', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
                                         <td className="p-2">
-                                            <select value={teacher.subject} onChange={(e) => handleTeacherDataChange(index, 'subject', e.target.value)} className="w-full p-1 border rounded bg-gray-50">
+                                            <select value={teacher.subject} onChange={(e) => handleTeacherDataChange(index, 'subject', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent">
                                                 {SUBJECT_AREAS.map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
                                         </td>
-                                        <td className="p-2"><input type="email" value={teacher.email} onChange={(e) => handleTeacherDataChange(index, 'email', e.target.value)} className="w-full p-1 border rounded bg-gray-50"/></td>
+                                        <td className="p-2"><input type="email" value={teacher.email} onChange={(e) => handleTeacherDataChange(index, 'email', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
                                         <td className="p-2 text-center">
-                                            <input type="checkbox" checked={teacher.isHomeroomTeacher} onChange={(e) => handleTeacherDataChange(index, 'isHomeroomTeacher', e.target.checked)} className="h-4 w-4"/>
+                                            <input type="checkbox" checked={teacher.isHomeroomTeacher} onChange={(e) => handleTeacherDataChange(index, 'isHomeroomTeacher', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"/>
                                             {teacher.isHomeroomTeacher && (
                                                 <div className="flex gap-1 mt-1">
-                                                    <select value={teacher.assignedGrade} onChange={(e) => handleTeacherGroupChange(index, 'assignedGrade', e.target.value)} className="w-full p-1 border rounded bg-gray-50">
+                                                    <select value={teacher.assignedGrade} onChange={(e) => handleTeacherGroupChange(index, 'assignedGrade', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent">
                                                         {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                                                     </select>
-                                                    <select value={teacher.assignedGroup} onChange={(e) => handleTeacherGroupChange(index, 'assignedGroup', e.target.value)} className="w-full p-1 border rounded bg-gray-50">
+                                                    <select value={teacher.assignedGroup} onChange={(e) => handleTeacherGroupChange(index, 'assignedGroup', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent">
                                                         {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
                                                     </select>
                                                 </div>

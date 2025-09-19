@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import type { Student, SubjectGrades, GradeItem, AcademicPeriod, SubjectArea, Teacher, InstitutionProfileData } from '../types';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import type { Student, SubjectGrades, GradeItem, AcademicPeriod, SubjectArea, Teacher } from '../types';
 import { Role, Desempeno } from '../types';
-import { ACADEMIC_PERIODS, SUBJECT_AREAS, GRADES, GROUPS, MOCK_INSTITUTION_PROFILE, GRADE_GROUP_MAP } from '../constants';
+import { ACADEMIC_PERIODS, SUBJECT_AREAS, GRADES, GROUPS, GRADE_GROUP_MAP } from '../constants';
 
 // --- Helper Components (Modals) ---
 
@@ -43,23 +43,23 @@ const ItemModal: React.FC<ItemModalProps> = ({ item, existingItems, onClose, onS
 
     return (
          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md mx-4">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">{item ? 'Editar' : 'Añadir'} Ítem de Calificación</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-md mx-4">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">{item ? 'Editar' : 'Añadir'} Ítem de Calificación</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Nombre del Ítem</label>
-                        <input type="text" value={name} onChange={e => setName(e.target.value)} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" placeholder="Ej: Examen Parcial" />
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre del Ítem</label>
+                        <input type="text" value={name} onChange={e => setName(e.target.value)} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" placeholder="Ej: Examen Parcial" />
                     </div>
                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Peso / Porcentaje (%)</label>
-                        <input type="number" value={weight} onChange={e => setWeight(Number(e.target.value))} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" placeholder="Ej: 25" />
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Peso / Porcentaje (%)</label>
+                        <input type="number" value={weight} onChange={e => setWeight(Number(e.target.value))} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" placeholder="Ej: 25" />
                     </div>
-                    <div className="text-sm text-gray-600">
-                        <p>Peso total de los demás ítems: <span className="font-bold">{(totalWeight * 100).toFixed(0)}%</span></p>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                        <p>Peso actual de los demás ítems: <span className="font-bold">{(totalWeight * 100).toFixed(0)}%</span></p>
                          <p>Peso total con este ítem: <span className="font-bold">{((totalWeight + (weight/100)) * 100).toFixed(0)}%</span></p>
                     </div>
                     <div className="flex justify-end space-x-4 pt-4">
-                        <button type="button" onClick={onClose} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300">Cancelar</button>
+                        <button type="button" onClick={onClose} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 dark:bg-gray-600 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
                         <button type="submit" className="px-6 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Guardar</button>
                     </div>
                 </form>
@@ -80,18 +80,18 @@ const ObservationModal: React.FC<ObservationModalProps> = ({ studentName, observ
     
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-lg mx-4">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Observación para {studentName}</h2>
-                <p className="text-gray-600 mb-6">Esta observación aparecerá en el boletín del estudiante.</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-lg mx-4">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Observación para {studentName}</h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">Esta observación aparecerá en el boletín del estudiante.</p>
                 <textarea
                     rows={6}
                     value={text}
                     onChange={e => setText(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
                     placeholder="Escribe una observación sobre el desempeño del estudiante..."
                 />
                  <div className="flex justify-end space-x-4 pt-4">
-                    <button type="button" onClick={onClose} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300">Cancelar</button>
+                    <button type="button" onClick={onClose} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 dark:bg-gray-600 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
                     <button type="button" onClick={() => onSave(text)} className="px-6 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Guardar Observación</button>
                 </div>
             </div>
@@ -103,37 +103,24 @@ const ObservationModal: React.FC<ObservationModalProps> = ({ studentName, observ
 const LockClosedIcon = ({ className = '' }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H3a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>;
 const LockOpenIcon = ({ className = '' }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zm0 2a3 3 0 013 3v2H7V7a3 3 0 013-3z" /></svg>;
 
+// --- Helper Functions ---
+const calculateFinalScore = (studentId: number, gradebook: SubjectGrades | null): { finalScore: number | null; totalWeight: number } => {
+    if (!gradebook) return { finalScore: null, totalWeight: 0 };
 
-// --- Main Component ---
+    const { scores, gradeItems } = gradebook;
+    let weightedSum = 0;
+    let totalWeight = 0;
 
-interface CalificacionesProps {
-    students: Student[];
-    subjectGradesData: SubjectGrades[];
-    setSubjectGradesData: React.Dispatch<React.SetStateAction<SubjectGrades[]>>;
-    currentUser: Teacher;
-    viewMode?: 'full' | 'teacher';
-}
-
-const calculateFinalScoreForSubject = (studentId: number, gradebook: SubjectGrades): number | null => {
-    if (!gradebook) return null;
-    const studentScores = gradebook.scores.filter(s => s.studentId === studentId);
-    if (studentScores.length === 0) return null;
-
-    const totalScore = studentScores.reduce((acc, score) => {
-        const item = gradebook.gradeItems.find(i => i.id === score.gradeItemId);
-        if (item && score.score !== null) {
-            return acc + (score.score * item.weight);
+    gradeItems.forEach(item => {
+        const score = scores.find(s => s.studentId === studentId && s.gradeItemId === item.id);
+        if (score && score.score !== null) {
+            weightedSum += score.score * item.weight;
+            totalWeight += item.weight;
         }
-        return acc;
-    }, 0);
-    
-    const totalWeight = studentScores.reduce((acc, score) => {
-         const item = gradebook.gradeItems.find(i => i.id === score.gradeItemId);
-         if (item && score.score !== null) return acc + item.weight;
-         return acc;
-    }, 0);
+    });
 
-    return totalWeight > 0 ? totalScore / totalWeight : null;
+    if (totalWeight === 0) return { finalScore: null, totalWeight: 0 };
+    return { finalScore: weightedSum / totalWeight, totalWeight: totalWeight };
 };
 
 const getDesempeno = (score: number | null): Desempeno => {
@@ -144,470 +131,432 @@ const getDesempeno = (score: number | null): Desempeno => {
     return Desempeno.BAJO;
 };
 
-const Calificaciones: React.FC<CalificacionesProps> = ({ students, subjectGradesData, setSubjectGradesData, currentUser, viewMode = 'full' }) => {
-    const [isItemModalOpen, setIsItemModalOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState<GradeItem | null>(null);
+const getDesempenoClass = (desempeno: Desempeno) => {
+    switch (desempeno) {
+        case Desempeno.SUPERIOR: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200';
+        case Desempeno.ALTO: return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200';
+        case Desempeno.BASICO: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200';
+        case Desempeno.BAJO: return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+}
 
-    const [isObservationModalOpen, setIsObservationModalOpen] = useState(false);
-    const [editingObservation, setEditingObservation] = useState<{ studentId: number; studentName: string, text: string } | null>(null);
-    
-    const [editingCell, setEditingCell] = useState<string | null>(null); // "studentId-itemId"
-    const [editingValue, setEditingValue] = useState('');
+// --- Main Component ---
 
-    const [institutionProfile] = useState<InstitutionProfileData>(() => {
-        const savedProfile = localStorage.getItem('institutionProfile');
-        if (savedProfile && savedProfile !== 'undefined') {
-            try {
-                return JSON.parse(savedProfile);
-            } catch (e) {
-                console.error("Failed to parse institutionProfile from localStorage", e);
-                localStorage.removeItem('institutionProfile');
-            }
-        }
-        return MOCK_INSTITUTION_PROFILE;
-    });
+interface CalificacionesProps {
+  students: Student[];
+  teachers: Teacher[];
+  subjectGradesData: SubjectGrades[];
+  setSubjectGradesData: (updater: React.SetStateAction<SubjectGrades[]>) => Promise<void>;
+  currentUser: Teacher;
+  viewMode?: 'teacher'; // Optional prop for specific views
+}
 
-    const isPowerUser = useMemo(() => 
-        [Role.COORDINATOR, Role.RECTOR, Role.ADMIN].includes(currentUser.role),
-        [currentUser.role]
-    );
-
+const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, subjectGradesData, setSubjectGradesData, currentUser, viewMode }) => {
+    // --- State Management ---
     const [selectedPeriod, setSelectedPeriod] = useState<AcademicPeriod>(ACADEMIC_PERIODS[0]);
-    const [selectedSubject, setSelectedSubject] = useState<SubjectArea>(currentUser.subject);
-    const [selectedGrade, setSelectedGrade] = useState<string>(GRADES[0]);
-    const [selectedGroup, setSelectedGroup] = useState<string>(GRADE_GROUP_MAP[GRADES[0]][0]);
+    const [selectedSubject, setSelectedSubject] = useState<SubjectArea | null>(null);
+    const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
+    const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+
+    const [editingItem, setEditingItem] = useState<GradeItem | null>(null);
+    const [isItemModalOpen, setIsItemModalOpen] = useState(false);
     
-    const availableGroupsForGrade = useMemo(() => {
-        return GRADE_GROUP_MAP[selectedGrade] || [];
-    }, [selectedGrade]);
+    const [editingObservation, setEditingObservation] = useState<{ studentId: number; studentName: string; text: string } | null>(null);
+    const [isObservationModalOpen, setIsObservationModalOpen] = useState(false);
+    
+    const tableContainerRef = useRef<HTMLDivElement>(null);
+    const [showSnackbar, setShowSnackbar] = useState('');
 
-    useEffect(() => {
-        const groupsForSelectedGrade = GRADE_GROUP_MAP[selectedGrade] || [];
-        if (groupsForSelectedGrade.length > 0) {
-            // Check if the current group is valid for the new grade
-            if (!groupsForSelectedGrade.includes(selectedGroup)) {
-                setSelectedGroup(groupsForSelectedGrade[0]);
-            }
-        } else {
-            setSelectedGroup('');
+    // --- Derived State and Data Filtering ---
+    const canAdminGrades = useMemo(() =>
+        currentUser.role === Role.ADMIN ||
+        currentUser.role === Role.RECTOR ||
+        currentUser.role === Role.COORDINATOR,
+    [currentUser.role]);
+
+    const teacherSubjects = useMemo(() => {
+        if (canAdminGrades) {
+            return SUBJECT_AREAS;
         }
-    }, [selectedGrade, selectedGroup]);
+        return Array.from(new Set(subjectGradesData
+            .filter(sg => sg.teacherId === currentUser.id)
+            .map(sg => sg.subject)));
+    }, [subjectGradesData, currentUser.id, canAdminGrades]);
+
+    const availableGradeGroups = useMemo(() => {
+        const gradeGroupSet = new Set<string>();
+
+        // From existing gradebooks
+        subjectGradesData.forEach(sg => {
+            gradeGroupSet.add(`${sg.grade}|${sg.group}`);
+        });
+
+        // From students list
+        students.forEach(s => {
+            gradeGroupSet.add(`${s.grade}|${s.group}`);
+        });
+
+        // From homeroom teachers
+        teachers.forEach(t => {
+            if (t.isHomeroomTeacher && t.assignedGroup) {
+                gradeGroupSet.add(`${t.assignedGroup.grade}|${t.assignedGroup.group}`);
+            }
+        });
+
+        const allGroups = Array.from(gradeGroupSet).map(gg => {
+            const [grade, group] = gg.split('|');
+            return { grade, group };
+        });
+
+        // Filter for regular teachers to only see their groups
+        if (!canAdminGrades) {
+            const teacherOwnedGroups = new Set<string>();
+            subjectGradesData.forEach(sg => {
+                if (sg.teacherId === currentUser.id) {
+                    teacherOwnedGroups.add(`${sg.grade}|${sg.group}`);
+                }
+            });
+             if (currentUser.isHomeroomTeacher && currentUser.assignedGroup) {
+                teacherOwnedGroups.add(`${currentUser.assignedGroup.grade}|${currentUser.assignedGroup.group}`);
+            }
+            return allGroups.filter(gg => teacherOwnedGroups.has(`${gg.grade}|${gg.group}`));
+        }
+
+        return allGroups.sort((a, b) => {
+            const gradeA = parseInt(a.grade.replace('º', ''));
+            const gradeB = parseInt(b.grade.replace('º', ''));
+            if (!isNaN(gradeA) && !isNaN(gradeB)) {
+                if (gradeA !== gradeB) return gradeA - gradeB;
+            } else {
+                if (a.grade.localeCompare(b.grade) !== 0) return a.grade.localeCompare(b.grade);
+            }
+            return a.group.localeCompare(b.group);
+        });
+    }, [subjectGradesData, students, teachers, currentUser, canAdminGrades]);
+
 
     useEffect(() => {
-        setIsObservationModalOpen(!!editingObservation);
-    }, [editingObservation]);
+        if (teacherSubjects.length > 0 && !selectedSubject) {
+            setSelectedSubject(teacherSubjects[0]);
+        }
+        if (availableGradeGroups.length > 0 && (!selectedGrade || !selectedGroup)) {
+            const firstGroup = availableGradeGroups[0];
+            setSelectedGrade(firstGroup.grade);
+            setSelectedGroup(firstGroup.group);
+        }
+    }, [teacherSubjects, availableGradeGroups, selectedSubject, selectedGrade, selectedGroup]);
 
-    const currentGradebook = useMemo(() => 
-        subjectGradesData.find(sg => 
+
+    const selectedGradebook = useMemo(() => {
+        return subjectGradesData.find(sg =>
             sg.period === selectedPeriod &&
             sg.subject === selectedSubject &&
             sg.grade === selectedGrade &&
             sg.group === selectedGroup
-        ), 
-    [subjectGradesData, selectedPeriod, selectedSubject, selectedGrade, selectedGroup]);
+        ) || null;
+    }, [subjectGradesData, selectedPeriod, selectedSubject, selectedGrade, selectedGroup]);
 
-    const filteredStudents = useMemo(() => 
-        students.filter(s => s.grade === selectedGrade && s.group === selectedGroup),
-    [students, selectedGrade, selectedGroup]);
+    const classStudents = useMemo(() => {
+        if (!selectedGrade || !selectedGroup) return [];
+        return students
+            .filter(s => s.grade === selectedGrade && s.group === selectedGroup)
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [students, selectedGrade, selectedGroup]);
 
-    const handleUpdateGradebook = (updatedGradebook: SubjectGrades) => {
-        setSubjectGradesData(prev => prev.map(sg => sg.id === updatedGradebook.id ? updatedGradebook : sg));
-    };
+    // --- Handlers for Data Mutation ---
 
-    const handleCreateGradebook = () => {
-        if (!selectedGrade || !selectedGroup || !selectedSubject || !selectedPeriod) {
-            alert("Por favor, selecciona período, materia, grado y grupo para crear una planilla.");
+    const handleUpdateGradebook = useCallback(async (updatedGradebook: SubjectGrades) => {
+        await setSubjectGradesData(prev =>
+            prev.map(sg => sg.id === updatedGradebook.id ? updatedGradebook : sg)
+        );
+    }, [setSubjectGradesData]);
+    
+    const handleScoreChange = (studentId: number, gradeItemId: string, newScore: string) => {
+        if (!selectedGradebook || selectedGradebook.isLocked) return;
+
+        const scoreValue = newScore === '' ? null : parseFloat(newScore.replace(',', '.'));
+        if (scoreValue !== null && (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 5)) {
             return;
         }
 
-        const newGradebook: SubjectGrades = {
-            id: `${selectedSubject}-${selectedGrade}-${selectedGroup}-${selectedPeriod}`,
-            subject: selectedSubject,
-            grade: selectedGrade,
-            group: selectedGroup,
-            period: selectedPeriod,
-            teacherId: currentUser.id,
-            gradeItems: [],
-            scores: [],
-            observations: {},
-            isLocked: false,
-        };
-        
-        setSubjectGradesData(prev => [...prev, newGradebook]);
-    };
-    
-    const handleToggleLockPeriod = () => {
-        if (!currentGradebook) return;
-        const confirmationText = currentGradebook.isLocked
-            ? "¿Estás seguro de que quieres HABILITAR la subida de notas para este período?"
-            : "¿Estás seguro de que quieres DESHABILITAR la subida de notas para este período? Los docentes ya no podrán modificar las calificaciones.";
-        if (window.confirm(confirmationText)) {
-            handleUpdateGradebook({ ...currentGradebook, isLocked: !currentGradebook.isLocked });
-        }
-    };
+        const updatedScores = [...selectedGradebook.scores];
+        const scoreIndex = updatedScores.findIndex(s => s.studentId === studentId && s.gradeItemId === gradeItemId);
 
-    const handleScoreFocus = (studentId: number, itemId: string, score: number | null) => {
-        setEditingCell(`${studentId}-${itemId}`);
-        setEditingValue(score === null ? '' : String(score).replace('.', ','));
-    };
-    
-    const handleScoreBlur = () => {
-        if (!editingCell) return;
-        const [studentIdStr, itemId] = editingCell.split('-');
-        const studentId = parseInt(studentIdStr, 10);
-    
-        let valueToProcess = editingValue.replace(',', '.').trim();
-    
-        // Auto-format single digits (e.g., "5" becomes "5.0")
-        if (/^[0-5]$/.test(valueToProcess)) {
-            valueToProcess = `${valueToProcess}.0`;
-        }
-    
-        const scoreValue = valueToProcess === '' ? null : parseFloat(valueToProcess);
-    
-        if (scoreValue !== null && (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 5)) {
-            alert("La nota debe ser un número entre 0.0 y 5.0.");
-        } else if (currentGradebook) {
-            const updatedScores = [...currentGradebook.scores];
-            const scoreIndex = updatedScores.findIndex(s => s.studentId === studentId && s.gradeItemId === itemId);
-    
-            if (scoreIndex !== -1) {
-                if (scoreValue === null) {
-                    updatedScores.splice(scoreIndex, 1);
-                } else {
-                    updatedScores[scoreIndex].score = scoreValue;
-                }
-            } else if (scoreValue !== null) {
-                updatedScores.push({ studentId, gradeItemId: itemId, score: scoreValue });
-            }
-            handleUpdateGradebook({ ...currentGradebook, scores: updatedScores });
-        }
-        setEditingCell(null);
-    };
-
-    const handleSaveItem = (item: GradeItem) => {
-        if (!currentGradebook) return;
-        const updatedItems = [...currentGradebook.gradeItems];
-        const itemIndex = updatedItems.findIndex(i => i.id === item.id);
-        if (itemIndex !== -1) {
-            updatedItems[itemIndex] = item;
+        if (scoreIndex > -1) {
+            updatedScores[scoreIndex] = { ...updatedScores[scoreIndex], score: scoreValue };
         } else {
-            updatedItems.push(item);
+            updatedScores.push({ studentId, gradeItemId, score: scoreValue });
         }
-        handleUpdateGradebook({ ...currentGradebook, gradeItems: updatedItems });
+        
+        handleUpdateGradebook({ ...selectedGradebook, scores: updatedScores });
+    };
+
+    const handleItemSave = (item: GradeItem) => {
+        if (!selectedGradebook) return;
+        const existingItems = selectedGradebook.gradeItems;
+        const itemIndex = existingItems.findIndex(i => i.id === item.id);
+        let updatedItems: GradeItem[];
+
+        if (itemIndex > -1) {
+            updatedItems = existingItems.map(i => i.id === item.id ? item : i);
+        } else {
+            updatedItems = [...existingItems, item];
+        }
+        
+        handleUpdateGradebook({ ...selectedGradebook, gradeItems: updatedItems });
         setIsItemModalOpen(false);
         setEditingItem(null);
     };
     
-    const handleDeleteItem = (itemId: string) => {
-        if (!currentGradebook) return;
-        if (window.confirm("¿Estás seguro de que quieres eliminar este ítem de calificación? Todas las notas asociadas se perderán permanentemente.")) {
-            const updatedItems = currentGradebook.gradeItems.filter(i => i.id !== itemId);
-            const updatedScores = currentGradebook.scores.filter(s => s.gradeItemId !== itemId);
-            handleUpdateGradebook({ ...currentGradebook, gradeItems: updatedItems, scores: updatedScores });
+    const handleItemDelete = (itemId: string) => {
+        if (!selectedGradebook || selectedGradebook.isLocked) return;
+        if (confirm("¿Estás seguro de que quieres eliminar este ítem? Todas las notas asociadas se perderán.")) {
+            const updatedItems = selectedGradebook.gradeItems.filter(i => i.id !== itemId);
+            const updatedScores = selectedGradebook.scores.filter(s => s.gradeItemId !== itemId);
+            handleUpdateGradebook({ ...selectedGradebook, gradeItems: updatedItems, scores: updatedScores });
         }
     };
-
-    const handleSaveObservation = (text: string) => {
-        if (!currentGradebook || !editingObservation) return;
-        const updatedObservations = { ...currentGradebook.observations, [editingObservation.studentId]: text };
-        handleUpdateGradebook({ ...currentGradebook, observations: updatedObservations });
+    
+    const handleObservationSave = (text: string) => {
+        if (!selectedGradebook || !editingObservation || selectedGradebook.isLocked) return;
+        const updatedObservations = {
+            ...selectedGradebook.observations,
+            [editingObservation.studentId]: text,
+        };
+        handleUpdateGradebook({ ...selectedGradebook, observations: updatedObservations });
+        setIsObservationModalOpen(false);
         setEditingObservation(null);
-    }
-    
-    const generatePlanillaHTML = () => {
-        if (!currentGradebook) return '';
-        const itemsHeader = currentGradebook.gradeItems.map(item => `<th style="min-width: 80px; text-align: center;">${item.name}<br>(${item.weight * 100}%)</th>`).join('');
-        const studentRows = filteredStudents.map((student, index) => {
-            const itemCells = currentGradebook.gradeItems.map(item => {
-                const score = currentGradebook.scores.find(s => s.studentId === student.id && s.gradeItemId === item.id)?.score;
-                return `<td style="text-align: center;">${score?.toFixed(2) ?? '-'}</td>`;
-            }).join('');
-            const finalScore = calculateFinalScoreForSubject(student.id, currentGradebook);
-            return `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${student.name}</td>
-                    ${itemCells}
-                    <td style="font-weight: bold; text-align: center;">${finalScore?.toFixed(2) ?? 'N/A'}</td>
-                </tr>
-            `;
-        }).join('');
-
-        return `
-            <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Planilla de Calificaciones</title>
-            <style>body{font-family:sans-serif;margin:20px}h1,h2,h3{color:#005A9C}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #ccc;padding:8px}thead{background-color:#f2f2f2}tbody tr:nth-child(even){background-color:#f9f9f9}</style>
-            </head><body>
-                <h1>${institutionProfile.name}</h1>
-                <h2>Planilla de Calificaciones</h2>
-                <h3>${currentGradebook.subject} - ${selectedGrade} Grupo ${selectedGroup} - ${currentGradebook.period}</h3>
-                <table>
-                    <thead><tr><th style="width: 30px;">#</th><th style="text-align: left;">Estudiante</th>${itemsHeader}<th>Definitiva</th></tr></thead>
-                    <tbody>${studentRows}</tbody>
-                </table>
-            </body></html>
-        `;
     };
     
-    const generateBoletinHTML = () => {
-        const gradebooksForClass = subjectGradesData.filter(
-            sg => sg.grade === selectedGrade && sg.group === selectedGroup && sg.period === selectedPeriod
-        );
-
-        if (gradebooksForClass.length === 0) {
-            alert(`No se encontraron datos de calificaciones para ${selectedGrade}-${selectedGroup} en el ${selectedPeriod}.`);
-            return '';
-        }
-
-        const reports = filteredStudents.map(student => {
-            const subjectRows = gradebooksForClass.map(gb => {
-                const finalScore = calculateFinalScoreForSubject(student.id, gb);
-                const desempeno = getDesempeno(finalScore);
-                const observation = gb.observations[student.id] || '';
-                
-                return `
-                    <tr>
-                        <td>${gb.subject}</td>
-                        <td style="text-align: center; font-weight: bold;">${finalScore?.toFixed(2) ?? '-'}</td>
-                        <td style="text-align: center;">${desempeno}</td>
-                        <td>${observation}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            return `
-                <div class="boletin">
-                    <div class="header">
-                        <img src="${institutionProfile.logoUrl}" alt="logo" style="width: 80px; height: 80px;">
-                        <div>
-                            <h1>${institutionProfile.name}</h1>
-                            <h2>Boletín de Calificaciones</h2>
-                        </div>
-                    </div>
-                    <p><strong>Estudiante:</strong> ${student.name}</p>
-                    <p><strong>Grado:</strong> ${selectedGrade} - Grupo ${selectedGroup}</p>
-                    <p><strong>Período:</strong> ${selectedPeriod}</p>
-                    
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Asignatura</th>
-                                <th>Nota Final</th>
-                                <th>Desempeño</th>
-                                <th>Observaciones del Docente</th>
-                            </tr>
-                        </thead>
-                        <tbody>${subjectRows}</tbody>
-                    </table>
-                     <div class="signatures">
-                        <div>
-                            <p>_________________________</p>
-                            <p><strong>${currentUser.name}</strong></p>
-                            <p>Director(a) de Grupo</p>
-                        </div>
-                        <div>
-                            <p>_________________________</p>
-                            <p><strong>${institutionProfile.rector}</strong></p>
-                             <p>Rector(a)</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        
-        return `
-            <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Boletines ${selectedGrade}-${selectedGroup}</title>
-            <style>
-                body{font-family:sans-serif;margin:20px;font-size:12px;color:#333}
-                .boletin{border:2px solid #005A9C;padding:20px;margin-bottom:20px;page-break-after:always}
-                .header{display:flex;align-items:center;gap:20px;border-bottom:1px solid #ccc;padding-bottom:10px;margin-bottom:10px}
-                h1,h2{color:#005A9C;margin:0} h1{font-size:22px} h2{font-size:16px}
-                table{width:100%;border-collapse:collapse;margin:20px 0}th,td{border:1px solid #ccc;padding:8px;vertical-align:top}thead{background-color:#f2f2f2}
-                .signatures{display:flex;justify-content:space-around;margin-top:80px;text-align:center;}
-                .signatures p{margin:0;}
-            </style>
-            </head><body>${reports}</body></html>`;
+    const handleLockToggle = async (locked: boolean) => {
+        if (!selectedGradebook) return;
+        const updatedGradebook = { ...selectedGradebook, isLocked: locked };
+        await handleUpdateGradebook(updatedGradebook);
+        setShowSnackbar(`La planilla ha sido ${locked ? 'CERRADA' : 'ABIERTA'}.`);
+        setTimeout(() => setShowSnackbar(''), 3000);
     };
 
-    const handleGenerateReport = (type: 'planilla' | 'boletin') => {
-        const htmlContent = type === 'planilla' ? generatePlanillaHTML() : generateBoletinHTML();
-        if (htmlContent) {
-            const reportWindow = window.open("", "_blank");
-            if (reportWindow) {
-                reportWindow.document.write(htmlContent);
-                reportWindow.document.close();
-            } else {
-                alert("No se pudo abrir la ventana para generar el reporte. Por favor, deshabilita el bloqueador de ventanas emergentes.");
-            }
+    const handleBulkLock = async (lock: boolean) => {
+        const action = lock ? 'cerrar' : 'abrir';
+        const confirmation = window.confirm(`¿Estás seguro de que quieres ${action} TODAS las planillas? Los docentes ${lock ? 'no podrán' : 'podrán'} modificar notas y observaciones.`);
+
+        if (confirmation) {
+            const updatedGrades = subjectGradesData.map(gb => ({
+                ...gb,
+                isLocked: lock,
+            }));
+            await setSubjectGradesData(updatedGrades);
+            setShowSnackbar(`Todas las planillas han sido ${lock ? 'cerradas' : 'abiertas'}.`);
+            setTimeout(() => setShowSnackbar(''), 3000);
         }
     };
-    
-    const totalWeight = useMemo(() => {
-        if (!currentGradebook) return 0;
-        return currentGradebook.gradeItems.reduce((acc, item) => acc + item.weight, 0);
-    }, [currentGradebook]);
 
+    const getGradeSelectorOptions = () => {
+        return availableGradeGroups.map(gg => (
+            <option key={`${gg.grade}-${gg.group}`} value={`${gg.grade}|${gg.group}`}>
+                {`${gg.grade} - Grupo ${gg.group}`}
+            </option>
+        ));
+    };
 
     return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow-md">
-        <div className="flex flex-col md:flex-row justify-between items-start mb-4 gap-4 flex-wrap">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">Planilla de Calificaciones</h2>
-            <p className="text-sm text-gray-500">Gestiona las notas y observaciones por período.</p>
-          </div>
-          {isPowerUser && currentGradebook && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleToggleLockPeriod}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ${
-                  currentGradebook.isLocked
-                    ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                    : 'bg-green-100 text-green-700 hover:bg-green-200'
-                }`}
-              >
-                {currentGradebook.isLocked ? <LockClosedIcon className="h-4 w-4" /> : <LockOpenIcon className="h-4 w-4" />}
-                {currentGradebook.isLocked ? 'Período Cerrado' : 'Período Abierto'}
-              </button>
-            </div>
-          )}
-        </div>
+        <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Gestor de Calificaciones</h2>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <select
+                            value={selectedPeriod}
+                            onChange={e => setSelectedPeriod(e.target.value as AcademicPeriod)}
+                            className="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+                        >
+                            {ACADEMIC_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                         <select
+                            value={selectedSubject || ''}
+                            onChange={e => setSelectedSubject(e.target.value as SubjectArea)}
+                            className="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+                            disabled={teacherSubjects.length === 0}
+                        >
+                            {teacherSubjects.length > 0 ? teacherSubjects.map(s => <option key={s} value={s}>{s}</option>) : <option>No hay asignaturas</option>}
+                        </select>
+                        <select
+                            value={`${selectedGrade || ''}|${selectedGroup || ''}`}
+                            onChange={e => {
+                                const [grade, group] = e.target.value.split('|');
+                                setSelectedGrade(grade);
+                                setSelectedGroup(group);
+                            }}
+                            className="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+                            disabled={availableGradeGroups.length === 0}
+                        >
+                           {availableGradeGroups.length > 0 ? getGradeSelectorOptions() : <option>No hay grupos</option>}
+                        </select>
+                    </div>
+                </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg border">
-            <select value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value as AcademicPeriod)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
-                {ACADEMIC_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <select disabled={viewMode === 'teacher' && !isPowerUser} value={selectedSubject} onChange={e => setSelectedSubject(e.target.value as SubjectArea)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 disabled:bg-gray-100">
-                {SUBJECT_AREAS.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-            <select value={selectedGrade} onChange={e => setSelectedGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
-                {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
-            </select>
-            <select value={selectedGroup} onChange={e => setSelectedGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
-                {availableGroupsForGrade.map(g => <option key={g} value={g}>{g}</option>)}
-            </select>
-        </div>
-        
-        {!currentGradebook ? (
-          <div className="text-center py-16">
-            <h3 className="text-lg font-semibold text-gray-700">No existe una planilla para esta selección.</h3>
-            <button onClick={handleCreateGradebook} className="mt-4 bg-primary text-white font-semibold py-2 px-6 rounded-lg hover:bg-primary-focus">
-              Crear Planilla de Calificaciones
-            </button>
-          </div>
-        ) : (
-          <div>
-            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-              <h3 className="text-lg font-semibold">{`Planilla para ${selectedGrade} - Grupo ${selectedGroup}`}</h3>
-              <div className="flex gap-2 flex-wrap">
-                <button onClick={() => handleGenerateReport('planilla')} className="text-sm bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200">Exportar Planilla</button>
-                {isPowerUser && <button onClick={() => handleGenerateReport('boletin')} className="text-sm bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-lg hover:bg-green-200">Generar Boletines</button>}
-              </div>
+                {!selectedGradebook && (
+                    <div className="text-center py-12">
+                        <p className="text-gray-500 dark:text-gray-400">No hay una planilla de calificaciones configurada para esta selección.</p>
+                        {(!viewMode || canAdminGrades) && (
+                            <button
+                                onClick={() => alert("Función para crear nueva planilla no implementada.")}
+                                className="mt-4 px-4 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-primary-focus"
+                                disabled={!selectedGrade || !selectedGroup || !selectedSubject}
+                            >
+                                Crear Planilla
+                            </button>
+                        )}
+                    </div>
+                )}
+                
+                 {viewMode === 'teacher' && selectedGradebook?.isLocked && (
+                    <div className="mb-4 p-4 bg-yellow-100 dark:bg-yellow-900/50 border-l-4 border-yellow-500 dark:border-yellow-600 text-yellow-800 dark:text-yellow-200 rounded-md flex items-center gap-3">
+                        <LockClosedIcon className="h-6 w-6" />
+                        <div>
+                            <p className="font-bold">Planilla Cerrada</p>
+                            <p className="text-sm">Esta planilla ha sido cerrada por la administración. No se pueden realizar modificaciones.</p>
+                        </div>
+                    </div>
+                )}
+
+
+                {selectedGradebook && (
+                    <>
+                        <div className="flex flex-col md:flex-row justify-between items-center mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg gap-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-primary dark:text-secondary">
+                                    {selectedSubject} - {selectedGrade} {selectedGroup}
+                                </h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Período: {selectedPeriod} | Total Ítems: {selectedGradebook.gradeItems.length}
+                                </p>
+                            </div>
+                            
+                            {canAdminGrades && viewMode !== 'teacher' && (
+                                <div className="flex items-center space-x-4">
+                                    <div className="flex items-center space-x-2">
+                                        <button onClick={() => handleBulkLock(true)} className="bg-red-500 text-white font-semibold py-1 px-3 rounded-lg hover:bg-red-600 text-sm flex items-center gap-1"><LockClosedIcon className="h-4 w-4" /> Cerrar Todas</button>
+                                        <button onClick={() => handleBulkLock(false)} className="bg-green-500 text-white font-semibold py-1 px-3 rounded-lg hover:bg-green-600 text-sm flex items-center gap-1"><LockOpenIcon className="h-4 w-4" /> Abrir Todas</button>
+                                    </div>
+                                    <div className="w-px h-8 bg-gray-300 dark:bg-gray-600"></div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{selectedGradebook.isLocked ? "Planilla Cerrada" : "Planilla Abierta"}</span>
+                                        <button onClick={() => handleLockToggle(!selectedGradebook.isLocked)} className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${selectedGradebook.isLocked ? 'bg-red-500' : 'bg-green-500'}`}>
+                                            <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${selectedGradebook.isLocked ? 'translate-x-1' : 'translate-x-6'}`} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div ref={tableContainerRef} className="overflow-x-auto">
+                            <table className="w-full text-sm text-left border-collapse">
+                                {/* Table Header */}
+                                <thead className="text-xs text-gray-700 dark:text-gray-300 uppercase bg-gray-100 dark:bg-gray-700 sticky top-0 z-10">
+                                    <tr>
+                                        <th className="px-4 py-3 font-semibold text-left sticky left-0 bg-gray-100 dark:bg-gray-700 w-48">Estudiante</th>
+                                        {selectedGradebook.gradeItems.map(item => (
+                                            <th key={item.id} className="px-4 py-3 text-center min-w-[120px]">
+                                                <div className="flex flex-col">
+                                                    <span>{item.name}</span>
+                                                    <span className="font-normal text-gray-500 dark:text-gray-400">({(item.weight * 100).toFixed(0)}%)</span>
+                                                     {!selectedGradebook.isLocked && (
+                                                        <div className="flex justify-center items-center mt-1">
+                                                            <button onClick={() => { setEditingItem(item); setIsItemModalOpen(true); }} className="text-blue-500 hover:underline text-xs">Editar</button>
+                                                            <span className="mx-1 text-gray-300">|</span>
+                                                            <button onClick={() => handleItemDelete(item.id)} className="text-red-500 hover:underline text-xs">Eliminar</button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </th>
+                                        ))}
+                                        {!selectedGradebook.isLocked && (!viewMode || canAdminGrades) && (
+                                            <th className="px-4 py-3 min-w-[100px] text-center">
+                                                <button onClick={() => { setEditingItem(null); setIsItemModalOpen(true); }} className="w-full h-full bg-primary/20 text-primary dark:bg-secondary/20 dark:text-secondary rounded-md p-2 hover:bg-primary/30 text-xs font-semibold">+ Ítem</button>
+                                            </th>
+                                        )}
+                                        <th className="px-4 py-3 text-center font-semibold min-w-[100px]">Final</th>
+                                        <th className="px-4 py-3 text-center font-semibold min-w-[100px]">Desempeño</th>
+                                        <th className="px-4 py-3 text-center font-semibold min-w-[120px]">Observaciones</th>
+                                    </tr>
+                                </thead>
+                                {/* Table Body */}
+                                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    {classStudents.map(student => {
+                                        const { finalScore } = calculateFinalScore(student.id, selectedGradebook);
+                                        const desempeno = getDesempeno(finalScore);
+                                        const observation = selectedGradebook.observations[student.id] || '';
+                                        return (
+                                            <tr key={student.id}>
+                                                <td className="px-4 py-2 font-medium text-gray-900 dark:text-gray-100 sticky left-0 bg-white dark:bg-gray-800 w-48">{student.name}</td>
+                                                {selectedGradebook.gradeItems.map(item => {
+                                                    const score = selectedGradebook.scores.find(s => s.studentId === student.id && s.gradeItemId === item.id)?.score;
+                                                    return (
+                                                        <td key={item.id} className="px-4 py-2 text-center">
+                                                            <input
+                                                                type="text"
+                                                                inputMode="decimal"
+                                                                value={score === null || score === undefined ? '' : String(score).replace('.', ',')}
+                                                                onChange={(e) => handleScoreChange(student.id, item.id, e.target.value)}
+                                                                disabled={selectedGradebook.isLocked}
+                                                                className={`w-16 p-1 text-center border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 ${selectedGradebook.isLocked ? 'border-gray-200 dark:border-gray-600' : 'border-gray-300 dark:border-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent'} disabled:cursor-not-allowed`}
+                                                            />
+                                                        </td>
+                                                    )
+                                                })}
+                                                {!selectedGradebook.isLocked && (!viewMode || canAdminGrades) && <td></td>}
+                                                <td className="px-4 py-2 text-center font-bold text-gray-900 dark:text-gray-100">{finalScore !== null ? finalScore.toFixed(2) : 'N/A'}</td>
+                                                <td className="px-4 py-2 text-center">
+                                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getDesempenoClass(desempeno)}`}>
+                                                        {desempeno}
+                                                    </span>
+                                                </td>
+                                                 <td className="px-4 py-2 text-center">
+                                                    <button 
+                                                        onClick={() => {
+                                                            setEditingObservation({ studentId: student.id, studentName: student.name, text: observation });
+                                                            setIsObservationModalOpen(true);
+                                                        }}
+                                                        disabled={selectedGradebook.isLocked}
+                                                        className="text-primary dark:text-secondary hover:underline text-xs disabled:text-gray-400 disabled:no-underline"
+                                                    >
+                                                        {observation ? 'Editar' : 'Añadir'}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                             {classStudents.length === 0 && <p className="text-center text-gray-500 py-8">No hay estudiantes en este grupo.</p>}
+                        </div>
+                    </>
+                )}
             </div>
             
-            <div className="overflow-x-auto">
-                <table className="w-full min-w-[1000px] text-sm text-left">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0 z-10">
-                        <tr>
-                            <th scope="col" className="px-4 py-3 min-w-[200px] sticky left-0 bg-gray-100 z-20">Estudiante</th>
-                            {currentGradebook.gradeItems.map(item => (
-                                <th scope="col" key={item.id} className="px-2 py-3 text-center min-w-[150px]">
-                                    <div>{item.name}</div>
-                                    <div className="font-normal text-gray-500">({(item.weight * 100).toFixed(0)}%)</div>
-                                    {!currentGradebook.isLocked && (isPowerUser || currentUser.id === currentGradebook.teacherId) && (
-                                        <div className="flex justify-center gap-2 mt-1">
-                                            <button onClick={() => { setEditingItem(item); setIsItemModalOpen(true); }} className="text-blue-600 hover:text-blue-800 text-xs">Editar</button>
-                                            <button onClick={() => handleDeleteItem(item.id)} className="text-red-600 hover:text-red-800 text-xs">Borrar</button>
-                                        </div>
-                                    )}
-                                </th>
-                            ))}
-                            {!currentGradebook.isLocked && (isPowerUser || currentUser.id === currentGradebook.teacherId) && (
-                                <th scope="col" className="px-2 py-3 text-center align-bottom">
-                                    <button onClick={() => { setEditingItem(null); setIsItemModalOpen(true); }} className="bg-primary text-white rounded-full p-2 hover:bg-primary-focus" title="Añadir ítem">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                                    </button>
-                                </th>
-                            )}
-                            <th scope="col" className="px-4 py-3 text-center min-w-[100px]">Definitiva ({ (totalWeight * 100).toFixed(0) }%)</th>
-                            <th scope="col" className="px-4 py-3 min-w-[200px]">Observaciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredStudents.map(student => {
-                            const finalScore = calculateFinalScoreForSubject(student.id, currentGradebook);
-                            const desempeno = getDesempeno(finalScore);
-                            const observation = currentGradebook.observations[student.id] || '';
-                            const canEdit = !currentGradebook.isLocked && (isPowerUser || currentUser.id === currentGradebook.teacherId);
-                            
-                            return (
-                                <tr key={student.id} className="bg-white border-b hover:bg-gray-50">
-                                    <td className="px-4 py-2 font-medium sticky left-0 bg-white z-10">{student.name}</td>
-                                    {currentGradebook.gradeItems.map(item => {
-                                        const cellId = `${student.id}-${item.id}`;
-                                        const score = currentGradebook.scores.find(s => s.studentId === student.id && s.gradeItemId === item.id)?.score;
-                                        return (
-                                            <td key={item.id} className="px-2 py-0 text-center h-full">
-                                                {editingCell === cellId && canEdit ? (
-                                                    <input 
-                                                        type="text"
-                                                        value={editingValue}
-                                                        onChange={e => setEditingValue(e.target.value)}
-                                                        onBlur={handleScoreBlur}
-                                                        onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-                                                        autoFocus
-                                                        className="w-20 text-center p-2 border border-primary rounded-md bg-blue-50 text-gray-900"
-                                                    />
-                                                ) : (
-                                                    <div onClick={() => canEdit && handleScoreFocus(student.id, item.id, score ?? null)} className={`h-full w-full p-2 ${canEdit ? 'cursor-pointer' : ''} ${score !== null && score < 3.0 ? 'text-red-600 font-semibold' : ''} ${canEdit ? 'bg-blue-50' : ''}`}>
-                                                        {score !== null ? score.toFixed(2) : '-'}
-                                                    </div>
-                                                )}
-                                            </td>
-                                        );
-                                    })}
-                                    {canEdit && <td />}
-                                    <td className={`px-4 py-2 text-center font-bold ${finalScore !== null && finalScore < 3.0 ? 'text-red-600' : ''}`}>
-                                        {finalScore?.toFixed(2) ?? 'N/A'}
-                                        <span className="block text-xs font-normal text-gray-500">{desempeno}</span>
-                                    </td>
-                                    <td className="px-4 py-2">
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-xs text-gray-600 italic truncate" title={observation}>{observation}</p>
-                                            {canEdit && (
-                                                <button onClick={() => setEditingObservation({ studentId: student.id, studentName: student.name, text: observation })} className="text-blue-600 hover:text-blue-800 text-xs font-semibold ml-2 flex-shrink-0">Editar</button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-                 {filteredStudents.length === 0 && <p className="text-center py-8 text-gray-500">No hay estudiantes en este grupo.</p>}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {isItemModalOpen && currentGradebook && (
-        <ItemModal
-          item={editingItem}
-          existingItems={currentGradebook.gradeItems}
-          onClose={() => { setIsItemModalOpen(false); setEditingItem(null); }}
-          onSave={handleSaveItem}
-        />
-      )}
-      {isObservationModalOpen && editingObservation && (
-        <ObservationModal
-            studentName={editingObservation.studentName}
-            observation={editingObservation.text}
-            onClose={() => setEditingObservation(null)}
-            onSave={handleSaveObservation}
-        />
-      )}
-    </div>
-  );
+            {/* Modals */}
+            {isItemModalOpen && selectedGradebook && (
+                <ItemModal item={editingItem} existingItems={selectedGradebook.gradeItems} onClose={() => setIsItemModalOpen(false)} onSave={handleItemSave} />
+            )}
+            {isObservationModalOpen && editingObservation && (
+                <ObservationModal
+                    studentName={editingObservation.studentName}
+                    observation={editingObservation.text}
+                    onClose={() => setIsObservationModalOpen(false)}
+                    onSave={handleObservationSave}
+                />
+            )}
+            
+            {/* Snackbar */}
+            {showSnackbar && (
+                <div className="fixed bottom-6 right-6 bg-gray-800 text-white py-3 px-6 rounded-lg shadow-lg z-50 animate-fade-in-up">
+                    {showSnackbar}
+                </div>
+            )}
+        </div>
+    );
 };
 
 export default Calificaciones;

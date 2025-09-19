@@ -1,11 +1,10 @@
-
-
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import type { Student, Teacher, Incident, Announcement, SubjectGrades } from '../types';
-import { IncidentType, Role } from '../types';
-import { getIncidents, addOrUpdateStudents } from '../db';
+// FIX: Import DocumentType for use in handleImportStudents.
+import { IncidentType, Role, DocumentType } from '../types';
+// FIX: Import addOrUpdateTeachers for use in handleImportStudents.
+import { getIncidents, addOrUpdateStudents, addOrUpdateTeachers } from '../db';
 import DashboardCard from '../components/DashboardCard';
 import ImportStudentsModal from '../components/ImportStudentsModal';
 import StudentList from '../components/StudentList';
@@ -16,9 +15,14 @@ interface RectoryProps {
     students: Student[];
     setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
     teachers: Teacher[];
+    // FIX: Add setTeachers to props to allow updating teacher data.
+    setTeachers: React.Dispatch<React.SetStateAction<Teacher[]>>;
     subjectGradesData: SubjectGrades[];
-    setSubjectGradesData: React.Dispatch<React.SetStateAction<SubjectGrades[]>>;
+    setSubjectGradesData: (updater: React.SetStateAction<SubjectGrades[]>) => Promise<void>;
     currentUser: Teacher;
+    announcements: Announcement[];
+    onUpdateAnnouncements: (announcement: Announcement) => Promise<void>;
+    onShowSystemMessage: (message: string, type?: 'success' | 'error') => void;
 }
 
 type RectoryTab = 'dashboard' | 'communication' | 'lists' | 'calificaciones';
@@ -36,7 +40,7 @@ const MOCK_GRADE_PERFORMANCE = [
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#DA291C', '#8884d8'];
 
 
-const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subjectGradesData, setSubjectGradesData, currentUser }) => {
+const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, setTeachers, subjectGradesData, setSubjectGradesData, currentUser, announcements, onUpdateAnnouncements, onShowSystemMessage }) => {
     const [activeTab, setActiveTab] = useState<RectoryTab>('dashboard');
     const [incidents, setIncidents] = useState<Incident[]>([]);
     const [loading, setLoading] = useState(true);
@@ -48,7 +52,6 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subj
     const [commGrade, setCommGrade] = useState(GRADES[0]);
     const [commGroup, setCommGroup] = useState(GRADE_GROUP_MAP[GRADES[0]][0]);
     const [selectedTeacherId, setSelectedTeacherId] = useState<string>('');
-    const [sentHistory, setSentHistory] = useState<Announcement[]>([]);
     
     // Lists State
     const [listTab, setListTab] = useState<'students' | 'teachers'>('students');
@@ -59,6 +62,12 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subj
     // Student Management State (from Incidents)
     const [studentGradeFilter, setStudentGradeFilter] = useState<string>('all');
     const [studentGroupFilter, setStudentGroupFilter] = useState<string>('all');
+    
+    const sentHistory = useMemo(() => {
+        return announcements
+            .filter(ann => ann.sentBy === "Rectoría")
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }, [announcements]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -79,7 +88,7 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subj
         return Object.entries(counts).map(([name, value]) => ({ name, value }));
     }, [incidents]);
     
-    const handleSendCommunication = (e: React.FormEvent) => {
+    const handleSendCommunication = async (e: React.FormEvent) => {
         e.preventDefault();
         
         let recipients: Announcement['recipients'] = 'all';
@@ -90,12 +99,12 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subj
             alertMessage = `Comunicado enviado a ${commGrade} - Grupo ${commGroup}.`;
         } else if (recipientType === 'individual') {
             if (!selectedTeacherId) {
-                alert("Por favor, selecciona un docente.");
+                onShowSystemMessage("Por favor, selecciona un docente.", 'error');
                 return;
             }
             const teacher = teachers.find(t => t.id === selectedTeacherId);
             alertMessage = `Comunicado enviado a ${teacher?.name}.`;
-            recipients = { grade: 'N/A', group: 'Individual' };
+            recipients = { teacherId: selectedTeacherId }; 
         }
     
         const newAnnouncement: Announcement = {
@@ -106,14 +115,15 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subj
             timestamp: new Date().toISOString(),
             sentBy: "Rectoría",
         };
-        setSentHistory(prev => [newAnnouncement, ...prev]);
+        
+        await onUpdateAnnouncements(newAnnouncement);
         
         setCommTitle('');
         setCommContent('');
         setRecipientType('all');
         setSelectedTeacherId('');
         
-        alert(alertMessage);
+        onShowSystemMessage(alertMessage);
     };
 
     const handleStudentGradeChange = (grade: string) => {
@@ -140,21 +150,80 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subj
         t.name.toLowerCase().includes(teacherSearch.toLowerCase())
     ), [teachers, teacherSearch]);
     
-    const handleImportStudents = async (studentNames: string[], grade: string, group: string) => {
-      const newStudents: Student[] = studentNames.map((name, index) => ({
-          id: Date.now() + index,
-          name,
-          avatarUrl: `https://picsum.photos/seed/${Date.now() + index}/100/100`,
-          grade: grade,
-          group: group,
-          role: Role.STUDENT,
-      }));
-      await addOrUpdateStudents([...students, ...newStudents]);
-      setStudents(prev => [...prev, ...newStudents].sort((a, b) => a.name.localeCompare(b.name)));
-      setIsImportModalOpen(false);
-      setStudentGradeFilter(grade);
-      setStudentGroupFilter(group);
-  };
+    const handleImportStudents = async (
+        newStudentsFromModal: { name: string; id: string }[],
+        grade: string,
+        group: string,
+        homeroomTeacherId?: string
+    ) => {
+        const existingStudentIds = new Set(students.map(s => s.documentNumber));
+        const newStudents: Student[] = [];
+        let skippedCount = 0;
+        let teacherName = '';
+
+        newStudentsFromModal.forEach((s, index) => {
+            if (s.id && existingStudentIds.has(s.id)) {
+                skippedCount++;
+                return; // Skip duplicate
+            }
+    
+            const studentId = s.id ? parseInt(s.id.replace(/\D/g, ''), 10) : Date.now() + index;
+            if (isNaN(studentId)) {
+                skippedCount++;
+                return;
+            }
+    
+            newStudents.push({
+                id: studentId,
+                name: s.name,
+                avatarUrl: `https://picsum.photos/seed/${studentId}/100/100`,
+                grade,
+                group,
+                role: Role.STUDENT,
+                documentNumber: s.id || undefined,
+                documentType: s.id ? DocumentType.TARJETA_IDENTIDAD : undefined,
+            });
+        });
+    
+        const messages: string[] = [];
+
+        if (newStudents.length > 0) {
+            const updatedStudentList = [...students, ...newStudents];
+            await addOrUpdateStudents(updatedStudentList);
+            setStudents(updatedStudentList.sort((a, b) => a.name.localeCompare(b.name)));
+            messages.push(`${newStudents.length} estudiantes importados a ${grade}-${group}.`);
+        }
+    
+        if (homeroomTeacherId) {
+            const updatedTeachers = teachers.map(t => {
+                if (t.assignedGroup?.grade === grade && t.assignedGroup?.group === group && t.id !== homeroomTeacherId) {
+                     return { ...t, isHomeroomTeacher: false, assignedGroup: undefined };
+                }
+                if (t.id === homeroomTeacherId) {
+                    teacherName = t.name;
+                    return { ...t, isHomeroomTeacher: true, assignedGroup: { grade, group } };
+                }
+                return t;
+            });
+            await addOrUpdateTeachers(updatedTeachers);
+            setTeachers(updatedTeachers);
+            if (teacherName) {
+                messages.push(`${teacherName} ha sido asignado como director de grupo.`);
+            }
+        }
+        
+        if (messages.length > 0) {
+             onShowSystemMessage(messages.join(' ') + ' Todos los módulos han sido actualizados.');
+        }
+
+        if (skippedCount > 0) {
+            onShowSystemMessage(`${skippedCount} estudiante(s) omitido(s) por tener un documento ya existente o inválido.`, 'error');
+        }
+    
+        setIsImportModalOpen(false);
+        setStudentGradeFilter(grade);
+        setStudentGroupFilter(group);
+    };
 
     if (loading) {
         return <div className="text-center p-8">Cargando datos de la institución...</div>;
@@ -329,22 +398,25 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, subj
             </div>
 
             <div className={activeTab === 'calificaciones' ? '' : 'hidden'}>
-                 <Calificaciones
+                 <Calificaciones 
                     students={students}
+                    teachers={teachers}
                     subjectGradesData={subjectGradesData}
                     setSubjectGradesData={setSubjectGradesData}
                     currentUser={currentUser}
                 />
             </div>
-
+            
             {isImportModalOpen && (
-                <ImportStudentsModal
-                    onClose={() => setIsImportModalOpen(false)}
-                    onSave={handleImportStudents}
+                <ImportStudentsModal 
+                    teachers={teachers}
+                    onClose={() => setIsImportModalOpen(false)} 
+                    onSave={handleImportStudents} 
                 />
             )}
         </div>
     );
-}
+};
 
+// FIX: Add default export to resolve lazy loading issue.
 export default Rectory;

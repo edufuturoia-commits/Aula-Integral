@@ -88,20 +88,20 @@ const Dashboard: React.FC<DashboardProps> = ({ students, teachers }) => {
     return (
         <div className="space-y-8">
             {birthdays.length > 0 && (
-                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-6 rounded-xl shadow-md mb-8 space-y-4 animate-fade-in">
+                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 dark:bg-yellow-900/50 dark:border-yellow-600 dark:text-yellow-200 p-6 rounded-xl shadow-md mb-8 space-y-4 animate-fade-in">
                     <h2 className="text-xl font-bold flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0c-.454-.303-.977-.454-1.5-.454V5.546c.523 0 1.046-.151 1.5-.454a2.704 2.704 0 013 0 2.704 2.704 0 003 0 2.704 2.704 0 013 0 2.704 2.704 0 003 0c.454.303.977.454 1.5.454v10z" /></svg>
                         ¡Celebraciones de Hoy!
                     </h2>
                     {isLoadingMessages ? (
-                        <p className="text-center text-yellow-700">Generando saludos de cumpleaños...</p>
+                        <p className="text-center text-yellow-700 dark:text-yellow-300">Generando saludos de cumpleaños...</p>
                     ) : (
                         birthdays.map((person, index) => (
-                            <div key={index} className="flex items-start space-x-4 p-4 bg-white/60 rounded-lg">
+                            <div key={index} className="flex items-start space-x-4 p-4 bg-white/60 dark:bg-gray-800/60 rounded-lg">
                                 <img src={person.avatarUrl} alt={person.name} className="w-14 h-14 rounded-full object-cover border-2 border-yellow-400"/>
                                 <div>
-                                    <p className="font-bold text-yellow-900">{person.name} ({person.role})</p>
-                                    <p className="text-sm text-yellow-700 italic">"{birthdayMessages[person.name]}"</p>
+                                    <p className="font-bold text-yellow-900 dark:text-yellow-100">{person.name} ({person.role})</p>
+                                    <p className="text-sm text-yellow-700 dark:text-yellow-300 italic">"{birthdayMessages[person.name]}"</p>
                                 </div>
                             </div>
                         ))
@@ -135,17 +135,17 @@ const Dashboard: React.FC<DashboardProps> = ({ students, teachers }) => {
                 />
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-md">
-                <h2 className="text-xl font-bold mb-4">Análisis de Desempeño por Competencia</h2>
-                <div style={{ width: '100%', height: 400 }}>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Análisis de Desempeño por Competencia</h2>
+                <div style={{ width: '100%', height: 400 }} className="text-gray-500 dark:text-gray-400">
                     <ResponsiveContainer>
                         <BarChart data={MOCK_ASSESSMENT_DATA} margin={{ top: 5, right: 20, left: 0, bottom: 70 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="competency" angle={-45} textAnchor="end" interval={0} tick={{ fontSize: 12 }} />
-                            <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" opacity={0.3}/>
+                            <XAxis dataKey="competency" angle={-45} textAnchor="end" interval={0} tick={{ fontSize: 12, fill: 'currentColor' }} />
+                            <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: 'currentColor' }} />
                             <Tooltip
-                                contentStyle={{ borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
-                                cursor={{ fill: 'rgba(243, 244, 246, 0.5)' }}
+                                contentStyle={{ borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', backgroundColor: 'rgb(255 255 255 / 0.8)' }}
+                                cursor={{ fill: 'rgba(209, 213, 219, 0.3)' }}
                             />
                             <Legend wrapperStyle={{ paddingTop: '40px' }} />
                             <Bar name="Promedio del Curso" dataKey="classAverage" fill="#8884d8" radius={[4, 4, 0, 0]} maxBarSize={40} />

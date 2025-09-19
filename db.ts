@@ -1,5 +1,5 @@
 
-import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades } from './types';
+import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades, Guardian } from './types';
 import { MOCK_STUDENTS, MOCK_TEACHERS, MOCK_RESOURCES, MOCK_STUDENT_ASSESSMENT_RESULTS, MOCK_SUBJECT_GRADES, MOCK_ANNOUNCEMENTS } from './constants';
 
 // --- In-memory store to simulate database ---
@@ -12,11 +12,27 @@ let announcements: Announcement[] = MOCK_ANNOUNCEMENTS;
 let assessments: Assessment[] = []; // No mock data
 let studentResults: StudentAssessmentResult[] = MOCK_STUDENT_ASSESSMENT_RESULTS;
 let subjectGrades: SubjectGrades[] = MOCK_SUBJECT_GRADES;
+let guardians: Guardian[] = [];
 
 const simulateApiCall = <T>(data: T): Promise<T> => 
-    new Promise(resolve => setTimeout(() => resolve(JSON.parse(JSON.stringify(data))), 150));
+    new Promise(resolve => setTimeout(() => {
+        // This check prevents a JSON.parse(undefined) error for functions that have a void return.
+        if (data === undefined) {
+            return resolve(data);
+        }
+        resolve(JSON.parse(JSON.stringify(data)));
+    }, 150));
 
 export const initDB = (): Promise<boolean> => Promise.resolve(true);
+
+// --- Guardian Functions ---
+export const getGuardians = (): Promise<Guardian[]> => simulateApiCall(guardians);
+export const addOrUpdateGuardians = (newGuardians: Guardian[]): Promise<void> => {
+    const guardianMap = new Map(guardians.map(g => [g.id, g]));
+    newGuardians.forEach(g => guardianMap.set(g.id, g));
+    guardians = Array.from(guardianMap.values()).sort((a,b) => a.name.localeCompare(b.name));
+    return simulateApiCall(undefined);
+};
 
 // --- Incident Functions ---
 export const addIncident = (incident: Incident): Promise<Incident> => {

@@ -128,6 +128,7 @@ export interface AttendanceRecord {
     id: string; // e.g., `${studentId}-${date}`
     studentId: number;
     date: string; // YYYY-MM-DD
+    // FIX: Add missing status property
     status: AttendanceStatus;
     // FIX: Added optional synced property to align with usage in AttendanceTaker.
     synced?: boolean;
@@ -185,9 +186,15 @@ export interface Announcement {
   id: string;
   title: string;
   content: string;
-  recipients: 'all' | { grade: string; group: string };
+  recipients: 'all' | 'all_teachers' | 'all_parents' | 'all_students' | { grade: string; group: string } | { teacherId: string };
   timestamp: string;
   sentBy: string;
+}
+
+export enum TeacherStatus {
+  ACTIVE = 'Activo',
+  RETIRED = 'Pensionado',
+  ON_COMMISSION = 'En Comisión',
 }
 
 export interface Teacher {
@@ -200,6 +207,7 @@ export interface Teacher {
   address?: string;
   email?: string;
   phone?: string;
+  status?: TeacherStatus;
   isHomeroomTeacher?: boolean;
   assignedGroup?: {
     grade: string;
@@ -283,6 +291,14 @@ export interface UserRegistrationData {
     phone: string;
     password?: string;
     isDemo?: boolean;
+}
+
+export interface Guardian {
+  id: string; // Cédula or unique ID
+  name: string;
+  email?: string;
+  phone?: string;
+  studentIds: number[]; // Array of IDs of the students they are a guardian for
 }
 
 export interface InboxConversation {

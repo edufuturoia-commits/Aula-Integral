@@ -1,5 +1,4 @@
 
-
 import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
 
 // Components
@@ -7,8 +6,8 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
 // Types and DB
-import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident } from './types';
-import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident } from './db';
+import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian } from './types';
+import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians } from './db';
 
 // Constants
 import { SIDEBAR_ITEMS, MOCK_INSTITUTION_PROFILE, MOCK_CITATIONS } from './constants';
@@ -38,7 +37,7 @@ interface NotificationToastProps {
 
 const NotificationToast: React.FC<NotificationToastProps> = ({ title, message, studentName, onClose }) => {
   return (
-    <div className="fixed top-24 right-6 w-full max-w-sm bg-white shadow-lg rounded-xl p-4 z-[100] animate-slide-in-right border-l-4 border-primary">
+    <div className="fixed top-24 right-6 w-full max-w-sm bg-white dark:bg-gray-800 shadow-lg rounded-xl p-4 z-[100] animate-slide-in-right border-l-4 border-primary">
       <div className="flex items-start">
         <div className="flex-shrink-0 pt-0.5">
           <svg className="h-6 w-6 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
@@ -46,12 +45,53 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ title, message, s
           </svg>
         </div>
         <div className="ml-3 w-0 flex-1">
-          <p className="text-sm font-bold text-gray-900">{title}</p>
-          <p className="mt-1 text-sm text-gray-600"><strong>Estudiante:</strong> {studentName}</p>
-          <p className="mt-1 text-sm text-gray-500">{message}</p>
+          <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{title}</p>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300"><strong>Estudiante:</strong> {studentName}</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{message}</p>
         </div>
         <div className="ml-4 flex-shrink-0 flex">
-          <button onClick={onClose} className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+          <button onClick={onClose} className="bg-white dark:bg-gray-800 rounded-md inline-flex text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+            <span className="sr-only">Cerrar</span>
+            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface SystemToastProps {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
+}
+
+const SystemToast: React.FC<SystemToastProps> = ({ message, type, onClose }) => {
+  const isSuccess = type === 'success';
+  const bgColor = isSuccess ? 'bg-green-100 dark:bg-green-900/50 border-green-500' : 'bg-red-100 dark:bg-red-900/50 border-red-500';
+  const textColor = isSuccess ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200';
+  const icon = isSuccess ? (
+    <svg className="h-6 w-6 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ) : (
+    <svg className="h-6 w-6 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+
+  return (
+    <div className={`fixed top-24 right-6 w-full max-w-sm shadow-lg rounded-xl p-4 z-[100] animate-slide-in-right border-l-4 ${bgColor}`}>
+      <div className="flex items-start">
+        <div className="flex-shrink-0 pt-0.5">{icon}</div>
+        <div className="ml-3 w-0 flex-1">
+          <p className={`text-sm font-bold ${textColor}`}>{isSuccess ? 'Éxito' : 'Error'}</p>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{message}</p>
+        </div>
+        <div className="ml-4 flex-shrink-0 flex">
+          <button onClick={onClose} className="bg-transparent rounded-md inline-flex text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
             <span className="sr-only">Cerrar</span>
             <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -71,6 +111,10 @@ const App: React.FC = () => {
 
   // Main App Page
   const [currentPage, setCurrentPage] = useState<Page>('Dashboard');
+  
+  // Theme state
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'system');
+
 
   // Data States
   const [students, setStudents] = useState<Student[]>([]);
@@ -82,6 +126,8 @@ const App: React.FC = () => {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [citations, setCitations] = useState<Citation[]>(MOCK_CITATIONS);
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [downloadedResourceIds, setDownloadedResourceIds] = useState<Set<string>>(new Set());
   const [institutionProfile, setInstitutionProfile] = useState<InstitutionProfileData>(() => {
     const savedProfile = localStorage.getItem('institutionProfile');
@@ -101,7 +147,7 @@ const App: React.FC = () => {
   
   // Real-time notification state
   const [notification, setNotification] = useState<{ title: string; message: string; studentName: string; } | null>(null);
-
+  const [systemMessage, setSystemMessage] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Effects
   useEffect(() => {
@@ -114,6 +160,18 @@ const App: React.FC = () => {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+  
+  // Effect to apply theme
+  useEffect(() => {
+    const root = window.document.documentElement;
+    const isDark =
+      theme === 'dark' ||
+      (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    root.classList.toggle('dark', isDark);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
 
   // Effect to simulate WebSocket for real-time incident notifications
   useEffect(() => {
@@ -172,13 +230,15 @@ const App: React.FC = () => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const [studentsData, teachersData, assessmentsData, resultsData, gradesData, attendanceData] = await Promise.all([
+        const [studentsData, teachersData, assessmentsData, resultsData, gradesData, attendanceData, announcementsData, guardiansData] = await Promise.all([
           getStudents(),
           getTeachers(),
           getAssessments(),
           getStudentResults(),
           getSubjectGrades(),
           getAllAttendanceRecords(),
+          getAnnouncements(),
+          getGuardians(),
         ]);
         setStudents(studentsData);
         setTeachers(teachersData);
@@ -186,6 +246,8 @@ const App: React.FC = () => {
         setStudentResults(resultsData);
         setSubjectGrades(gradesData);
         setAttendanceRecords(attendanceData);
+        setAnnouncements(announcementsData);
+        setGuardians(guardiansData);
         setCitations(MOCK_CITATIONS);
         await loadIncidents();
         
@@ -208,6 +270,13 @@ const App: React.FC = () => {
   }, [loadResources, loadIncidents]);
 
   // Data Handlers
+  const showSystemMessage = useCallback((message: string, type: 'success' | 'error' = 'success') => {
+    setSystemMessage({ message, type });
+    setTimeout(() => {
+        setSystemMessage(null);
+    }, 5000);
+  }, []);
+
   const handleUpdateUser = async (user: Teacher | Student) => {
     if ('subject' in user) { // Teacher
         const updated = teachers.map(t => t.id === user.id ? user : t);
@@ -266,17 +335,19 @@ const App: React.FC = () => {
     }
     await loadIncidents(); // Refresh state from DB
   };
+  
+  const handleUpdateAnnouncements = async (announcement: Announcement) => {
+    await addAnnouncement(announcement);
+    const announcementsData = await getAnnouncements();
+    setAnnouncements(announcementsData);
+  };
 
   const handleAddOrUpdateAttendanceRecord = async (record: AttendanceRecord) => {
     await addOrUpdateAttendanceRecord(record);
     setAttendanceRecords(prev => {
-      const index = prev.findIndex(r => r.id === record.id);
-      if (index > -1) {
-          const newRecords = [...prev];
-          newRecords[index] = record;
-          return newRecords;
-      }
-      return [...prev, record];
+      const recordsMap = new Map(prev.map(r => [r.id, r]));
+      recordsMap.set(record.id, record);
+      return Array.from(recordsMap.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     });
   };
 
@@ -289,26 +360,32 @@ const App: React.FC = () => {
     });
   };
 
+  const handleSetGuardians = async (newGuardians: Guardian[]) => {
+      await addOrUpdateGuardians(newGuardians);
+      const data = await getGuardians();
+      setGuardians(data);
+  };
+
   // Render Logic
   if (isLoading || !currentUser) {
-    return <div className="flex items-center justify-center h-screen">Cargando aplicación...</div>;
+    return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">Cargando aplicación...</div>;
   }
 
   return (
-    <div className="flex h-screen bg-gray-100 font-sans">
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-900 font-sans">
         <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} currentUser={currentUser} />
         <div className="flex-1 flex flex-col overflow-hidden">
             <Header currentPage={SIDEBAR_ITEMS.find(item => item.name === currentPage)?.label || currentPage} isOnline={isOnline} currentUser={currentUser} />
-            <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto bg-neutral">
-                <Suspense fallback={<div className="flex items-center justify-center h-full">Cargando página...</div>}>
+            <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto bg-neutral dark:bg-gray-800">
+                <Suspense fallback={<div className="flex items-center justify-center h-full text-gray-800 dark:text-gray-200">Cargando página...</div>}>
                     {currentPage === 'Dashboard' && <Dashboard students={students} teachers={teachers} />}
-                    {currentPage === 'Classroom' && (isAdmin || currentUser.role !== Role.STUDENT) && <Classroom isOnline={isOnline} students={students} setStudents={setStudents} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleAddOrUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendance} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} />}
+                    {currentPage === 'Classroom' && (isAdmin || currentUser.role !== Role.STUDENT) && <Classroom isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleAddOrUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendance} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onShowSystemMessage={showSystemMessage} />}
                     {currentPage === 'Assessments' && (isAdmin || currentUser.role !== Role.STUDENT) && <Assessments students={students} assessments={assessments} setAssessments={handleSetAssessments} studentResults={studentResults} />}
                     {currentPage === 'Resources' && <Resources resources={resources} downloadedIds={downloadedResourceIds} onUpdate={loadResources}/>}
                     {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
-                    {currentPage === 'Settings' && (isAdmin || currentUser.role !== Role.STUDENT) && <Settings currentUser={currentUser as Teacher} onUpdateUser={handleUpdateUser as (user: Teacher) => Promise<void>} />}
-                    {currentPage === 'Incidents' && (isAdmin || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR) && <Incidents isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} />}
-                    {currentPage === 'ParentPortal' && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} />}
+                    {currentPage === 'Settings' && (isAdmin || currentUser.role !== Role.STUDENT) && <Settings currentUser={currentUser as Teacher} onUpdateUser={handleUpdateUser as (user: Teacher) => Promise<void>} theme={theme} setTheme={setTheme} />}
+                    {currentPage === 'Incidents' && (isAdmin || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR) && <Incidents isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} guardians={guardians} onUpdateGuardians={handleSetGuardians} onShowSystemMessage={showSystemMessage} />}
+                    {currentPage === 'ParentPortal' && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} />}
                     {currentPage === 'StudentPortal' && (isAdmin || currentUser.role === Role.STUDENT) && <StudentPortal 
                         loggedInUser={currentUser}
                         allStudents={students}
@@ -319,10 +396,11 @@ const App: React.FC = () => {
                         studentResults={studentResults} 
                         onAddResult={handleAddResult}
                         citations={citations}/>}
-                    {currentPage === 'Rectory' && (isAdmin || currentUser.role === Role.RECTOR) && <Rectory students={students} setStudents={setStudents} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher}/>}
+                    {/* FIX: Pass setTeachers to the Rectory component to enable homeroom teacher updates. */}
+                    {currentPage === 'Rectory' && (isAdmin || currentUser.role === Role.RECTOR) && <Rectory students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} onShowSystemMessage={showSystemMessage} />}
                     {currentPage === 'InstitutionProfile' && (isAdmin || currentUser.role === Role.RECTOR) && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile} />}
-                    {currentPage === 'Calificaciones' && (isAdmin || currentUser.role !== Role.STUDENT) && <Calificaciones students={students} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher}/>}
-                    {currentPage === 'Communication' && (isAdmin || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR || currentUser.role === Role.TEACHER) && <Communication currentUser={currentUser as Teacher} />}
+                    {currentPage === 'Calificaciones' && (isAdmin || currentUser.role !== Role.STUDENT) && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher}/>}
+                    {currentPage === 'Communication' && (isAdmin || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR || currentUser.role === Role.TEACHER) && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} />}
                 </Suspense>
             </main>
         </div>
@@ -332,6 +410,13 @@ const App: React.FC = () => {
                 message={notification.message} 
                 studentName={notification.studentName}
                 onClose={() => setNotification(null)}
+            />
+        )}
+        {systemMessage && (
+            <SystemToast
+                message={systemMessage.message}
+                type={systemMessage.type}
+                onClose={() => setSystemMessage(null)}
             />
         )}
     </div>

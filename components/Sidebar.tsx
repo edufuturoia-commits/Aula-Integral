@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import type { Page, Teacher, Student } from '../types';
 import { Role } from '../types';
@@ -48,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentU
             className={`flex items-center p-3 rounded-lg transition-colors duration-200 ${
               currentPage === item.name
                 ? 'bg-primary-focus text-white'
-                : 'text-gray-300 hover:bg-primary-focus hover:text-white'
+                : 'text-gray-300 hover:bg-primary-focus hover:text-white dark:text-gray-400 dark:hover:text-white'
             }`}
           >
             <item.icon className="h-6 w-6" />
@@ -56,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentU
           </a>
         ))}
       </nav>
-      <div className="p-4 text-center text-xs text-gray-400 hidden lg:block">
+      <div className="p-4 text-center text-xs text-gray-400 dark:text-gray-500 hidden lg:block">
         <p>Copyright - EduFuturo</p>
         <p>Educadores que Trascienden</p>
       </div>

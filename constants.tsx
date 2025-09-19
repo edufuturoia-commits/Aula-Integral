@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Page, Student, AssessmentData, Question, SubjectArea, Competency, Resource, StudentAssessmentResult, ParentMessage, Citation, User, Announcement, Teacher, CoordinationMessage, InstitutionProfileData, EventPoster, SubjectGrades, InboxConversation } from './types';
-import { ResourceType, CitationStatus, IncidentType, AttendanceStatus, DocumentType, Role, AcademicPeriod } from './types';
+import { ResourceType, CitationStatus, IncidentType, AttendanceStatus, DocumentType, Role, AcademicPeriod, TeacherStatus } from './types';
 
 // --- ICONS ---
 
@@ -168,6 +168,7 @@ export const MOCK_COORDINATOR_USER: Teacher = {
     dateOfBirth: '1980-02-20',
     password: '987654321',
     passwordChanged: true,
+    status: TeacherStatus.ACTIVE,
     notifications: {
         newIncident: true,
         weeklySummary: true,
@@ -186,6 +187,7 @@ const MOCK_ADMIN_USER: Teacher = {
     dateOfBirth: '1980-01-01',
     password: 'admin',
     passwordChanged: true,
+    status: TeacherStatus.ACTIVE,
     notifications: {
         newIncident: true,
         weeklySummary: true,
@@ -204,6 +206,7 @@ const MOCK_RECTOR_USER: Teacher = {
     dateOfBirth: '1975-11-10',
     password: 'rector',
     passwordChanged: true,
+    status: TeacherStatus.ACTIVE,
     notifications: {
         newIncident: true,
         weeklySummary: true,
@@ -228,6 +231,7 @@ export const MOCK_TEACHERS: Teacher[] = [
         assignedGroup: { grade: '11º', group: 'A' },
         password: '1037612345',
         passwordChanged: true,
+        status: TeacherStatus.ACTIVE,
     },
     {
         id: '1037612346',
@@ -240,6 +244,7 @@ export const MOCK_TEACHERS: Teacher[] = [
         dateOfBirth: '1985-04-10',
         password: '1037612346',
         passwordChanged: true,
+        status: TeacherStatus.ACTIVE,
     },
     {
         id: '1037612347',
@@ -252,6 +257,7 @@ export const MOCK_TEACHERS: Teacher[] = [
         dateOfBirth: '1992-08-25',
         password: '1037612347',
         passwordChanged: true,
+        status: TeacherStatus.ACTIVE,
     },
 ];
 
@@ -319,6 +325,20 @@ export const MOCK_INBOX_CONVERSATIONS: InboxConversation[] = [
         { sender: 'self', text: 'Hola Ana María, necesito por favor el reporte de notas del 11-A para el cierre de período. Plazo máximo mañana.', timestamp: 'Ayer'},
         { sender: 'participant', text: 'Hola Coordinación. Claro que sí, ya casi lo termino. Se lo envío hoy en la tarde.', timestamp: 'Ayer'},
         { sender: 'self', text: 'Listo, quedo atento. Gracias.', timestamp: 'Ayer'},
+    ]
+  },
+   {
+    id: 'student-3',
+    participantId: 3,
+    participantName: 'Carlos Martínez',
+    participantAvatar: 'https://picsum.photos/seed/student3/100/100',
+    participantRole: Role.STUDENT,
+    lastMessage: 'Sí, señor. Entendido.',
+    timestamp: 'Hace 2 horas',
+    unread: false,
+    conversation: [
+        { sender: 'self', text: 'Carlos, por favor preséntate en coordinación a la salida.', timestamp: 'Hace 2 horas'},
+        { sender: 'participant', text: 'Sí, señor. Entendido.', timestamp: 'Hace 2 horas'},
     ]
   },
 ];

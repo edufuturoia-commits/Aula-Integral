@@ -1,17 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { Teacher, InboxConversation } from '../types';
+import type { Teacher, Student, InboxConversation } from '../types';
 import { MOCK_INBOX_CONVERSATIONS, MOCK_TEACHER_INBOX_CONVERSATIONS } from '../constants';
 import { Role } from '../types';
+import NewConversationModal from '../components/NewConversationModal';
 
 interface CommunicationProps {
   currentUser: Teacher;
+  students: Student[];
+  teachers: Teacher[];
 }
 
-const Communication: React.FC<CommunicationProps> = ({ currentUser }) => {
+const Communication: React.FC<CommunicationProps> = ({ currentUser, students, teachers }) => {
     const [conversations, setConversations] = useState<InboxConversation[]>([]);
     const [selectedConversation, setSelectedConversation] = useState<InboxConversation | null>(null);
     const [newMessage, setNewMessage] = useState('');
     const chatContainerRef = useRef<HTMLDivElement>(null);
+    const [isNewConvoModalOpen, setIsNewConvoModalOpen] = useState(false);
+
 
     useEffect(() => {
         let initialConversations: InboxConversation[] = [];
@@ -76,12 +81,47 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser }) => {
         setNewMessage('');
     };
 
+    const handleStartConversation = (participant: { id: string | number; name: string; avatarUrl: string; role: Role; }) => {
+        const participantIdStr = String(participant.id);
+        const convoIdPrefix = participant.role === Role.STUDENT ? 'parent' : (participant.role === Role.TEACHER ? 'teacher' : 'coordination');
+        const existingConvoId = `${convoIdPrefix}-${participantIdStr}`;
+        const existingConvo = conversations.find(c => c.id === existingConvoId);
+
+        if (existingConvo) {
+            handleSelectConversation(existingConvo);
+        } else {
+            const newConvo: InboxConversation = {
+                id: existingConvoId,
+                participantId: participant.id,
+                participantName: participant.role === Role.STUDENT ? `Acudiente de ${participant.name}` : participant.name,
+                participantAvatar: participant.avatarUrl,
+                participantRole: participant.role,
+                lastMessage: 'Inicia la conversación...',
+                timestamp: 'Ahora',
+                unread: false,
+                conversation: []
+            };
+            setConversations(prev => [newConvo, ...prev]);
+            setSelectedConversation(newConvo);
+        }
+        setIsNewConvoModalOpen(false);
+    };
+
     return (
         <div className="flex h-[calc(100vh-112px)] bg-white rounded-xl shadow-md overflow-hidden">
             {/* Conversation List */}
             <div className="w-full md:w-1/3 border-r border-gray-200 flex flex-col">
-                <div className="p-4 border-b">
+                <div className="p-4 border-b flex justify-between items-center">
                     <h2 className="text-xl font-bold text-gray-800">Bandeja de Entrada</h2>
+                    <button
+                        onClick={() => setIsNewConvoModalOpen(true)}
+                        className="p-2 rounded-full text-primary hover:bg-primary/10 transition-colors"
+                        title="Nueva Conversación"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </button>
                 </div>
                 <ul className="overflow-y-auto flex-1">
                     {conversations.map(convo => (
@@ -151,10 +191,18 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser }) => {
                     <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                         <h3 className="mt-4 text-lg font-semibold text-gray-700">Selecciona una conversación</h3>
-                        <p className="text-gray-500 mt-1">Elige una conversación de la lista para ver los mensajes.</p>
+                        <p className="text-gray-500 mt-1">Elige una conversación de la lista o crea una nueva para empezar a chatear.</p>
                     </div>
                 )}
             </div>
+             {isNewConvoModalOpen && (
+                <NewConversationModal
+                    students={students}
+                    teachers={teachers}
+                    onClose={() => setIsNewConvoModalOpen(false)}
+                    onStartConversation={handleStartConversation}
+                />
+            )}
         </div>
     );
 };

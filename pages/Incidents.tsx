@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades } from '../types';
-import { IncidentType, AttendanceStatus, CitationStatus, Role } from '../types';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades, Guardian } from '../types';
+import { IncidentType, AttendanceStatus, CitationStatus, Role, DocumentType, TeacherStatus } from '../types';
 // FIX: Import 'getAnnouncements' and 'getTeachers' to resolve undefined function errors.
-import { addAnnouncement, addOrUpdateTeachers, addOrUpdateStudents, getAnnouncements, getTeachers } from '../db';
+import { addOrUpdateTeachers, addOrUpdateStudents, getTeachers } from '../db';
 import { GRADES, GROUPS, GRADE_GROUP_MAP } from '../constants';
 import CitationModal from '../components/CitationModal';
 import CancelCitationModal from '../components/CancelCitationModal';
@@ -14,6 +14,8 @@ import IncidentModal from '../components/IncidentModal';
 import EditStudentModal from '../components/EditStudentModal';
 import Calificaciones from './Calificaciones';
 import EditCitationModal from '../components/EditCitationModal';
+import AddStudentModal from '../components/AddStudentModal';
+import ImportGuardiansModal from '../components/ImportGuardiansModal';
 
 
 type EnrichedAttendanceRecord = AttendanceRecord & { student: Student };
@@ -99,15 +101,15 @@ const downloadFile = (content: string, filename: string, mimeType: string) => {
 
 
 // --- Component ---
-type CoordinationTab = 'incidents' | 'attendance' | 'citations' | 'comunicados' | 'teacher_management' | 'student_management' | 'calificaciones';
+type CoordinationTab = 'incidents' | 'attendance' | 'citations' | 'comunicados' | 'community_management' | 'calificaciones';
+type CommunitySubTab = 'teachers' | 'students' | 'parents';
 
 const TABS: { id: CoordinationTab; label: string }[] = [
     { id: 'incidents', label: 'Historial de Incidencias' },
     { id: 'attendance', label: 'Reportes de Asistencia' },
     { id: 'citations', label: 'Gestión de Citaciones' },
     { id: 'comunicados', label: 'Comunicados' },
-    { id: 'teacher_management', label: 'Gestión de Docentes' },
-    { id: 'student_management', label: 'Gestión de Estudiantes' },
+    { id: 'community_management', label: 'Gestión Comunitaria' },
     { id: 'calificaciones', label: 'Calificaciones' },
 ];
 
@@ -119,12 +121,17 @@ interface IncidentsProps {
     setTeachers: React.Dispatch<React.SetStateAction<Teacher[]>>;
     currentUser: Teacher;
     subjectGradesData: SubjectGrades[];
-    setSubjectGradesData: React.Dispatch<React.SetStateAction<SubjectGrades[]>>;
+    setSubjectGradesData: (updater: React.SetStateAction<SubjectGrades[]>) => Promise<void>;
     allAttendanceRecords: AttendanceRecord[];
     citations: Citation[];
     onUpdateCitations: React.Dispatch<React.SetStateAction<Citation[]>>;
     incidents: Incident[];
     onUpdateIncidents: (action: 'add' | 'update' | 'delete', data: Incident | string) => Promise<void>;
+    announcements: Announcement[];
+    onUpdateAnnouncements: (announcement: Announcement) => Promise<void>;
+    guardians: Guardian[];
+    onUpdateGuardians: (guardians: Guardian[]) => Promise<void>;
+    onShowSystemMessage: (message: string, type?: 'success' | 'error') => void;
 }
 
 const getAttendanceStatusTextColor = (status: AttendanceStatus): string => {
@@ -150,10 +157,10 @@ const getCitationStatusClass = (status: CitationStatus) => {
 };
 
 
-const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, teachers, setTeachers, currentUser, subjectGradesData, setSubjectGradesData, allAttendanceRecords, citations, onUpdateCitations, incidents, onUpdateIncidents }) => {
-    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-    const [loading, setLoading] = useState(true);
+const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, teachers, setTeachers, currentUser, subjectGradesData, setSubjectGradesData, allAttendanceRecords, citations, onUpdateCitations, incidents, onUpdateIncidents, announcements, onUpdateAnnouncements, guardians, onUpdateGuardians, onShowSystemMessage }) => {
+    const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<CoordinationTab>('incidents');
+    const [activeCommunityTab, setActiveCommunityTab] = useState<CommunitySubTab>('teachers');
     
     // Incident state
     const [incidentSearch, setIncidentSearch] = useState('');
@@ -180,44 +187,49 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
     const [editingCitation, setEditingCitation] = useState<Citation | null>(null);
 
     // Announcement state
-    const [commRecipientType, setCommRecipientType] = useState<'all' | 'group' | 'individual'>('all');
-    const [commTitle, setCommTitle] = useState('');
-    const [commContent, setCommContent] = useState('');
-    const [commGrade, setCommGrade] = useState(GRADES[0]);
-    const [commGroup, setCommGroup] = useState(GRADE_GROUP_MAP[GRADES[0]][0]);
-    const [commSelectedTeacherId, setCommSelectedTeacherId] = useState<string>('');
-    
+    const [announcementRecipient, setAnnouncementRecipient] = useState<'all_teachers' | 'all_parents' | 'all_students' | 'group'>('all_teachers');
+    const [announcementTitle, setAnnouncementTitle] = useState('');
+    const [announcementContent, setAnnouncementContent] = useState('');
+    const [announcementGrade, setAnnouncementGrade] = useState(GRADES[0]);
+    const [announcementGroup, setAnnouncementGroup] = useState(GRADE_GROUP_MAP[GRADES[0]][0]);
+
     // Teacher state
+    const [teacherSearch, setTeacherSearch] = useState('');
     const [isImportTeachersModalOpen, setIsImportTeachersModalOpen] = useState(false);
     const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
-    
+    const [teacherActionMenu, setTeacherActionMenu] = useState<string | null>(null);
+    const teacherMenuRef = useRef<HTMLDivElement>(null);
+
     // Student Management State
     const [studentGradeFilter, setStudentGradeFilter] = useState<string>('all');
     const [studentGroupFilter, setStudentGroupFilter] = useState<string>('all');
     const [isImportStudentsModalOpen, setIsImportStudentsModalOpen] = useState(false);
+    const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
     const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
     const [selectedStudentForIncident, setSelectedStudentForIncident] = useState<Student | null>(null);
-    const [showSnackbar, setShowSnackbar] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
     const [isEditStudentModalOpen, setIsEditStudentModalOpen] = useState(false);
     const [studentToEdit, setStudentToEdit] = useState<Student | null>(null);
+    
+    // Guardian Management State
+    const [isImportGuardiansModalOpen, setIsImportGuardiansModalOpen] = useState(false);
 
     const studentMap = useMemo(() => new Map<number, Student>(students.map(s => [s.id, s])), [students]);
-
-    const showSyncMessage = (message: string) => {
-        setShowSnackbar({ message, visible: true });
-        setTimeout(() => setShowSnackbar({ message: '', visible: false }), 4000);
-    }
-
-    const loadData = async () => {
-        setLoading(true);
-        const announcementsData = await getAnnouncements();
-        setAnnouncements(announcementsData);
-        setLoading(false);
-    };
-
+    
+    const sentAnnouncements = useMemo(() => {
+        return announcements
+            .filter(ann => ann.sentBy.includes('Coordinación') || ann.sentBy.includes('Rectoría'))
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }, [announcements]);
+    
     useEffect(() => {
-        loadData();
-    }, []);
+        const handleClickOutside = (event: MouseEvent) => {
+            if (teacherMenuRef.current && !teacherMenuRef.current.contains(event.target as Node)) {
+                setTeacherActionMenu(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [teacherMenuRef]);
 
     const displayedIncidents = useMemo(() => {
         return incidents.filter(inc => {
@@ -301,14 +313,14 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
         if (action === 'delete') {
             if (window.confirm("¿Estás seguro de que quieres eliminar esta incidencia permanentemente?")) {
                 await onUpdateIncidents('delete', incident.id);
-                showSyncMessage("Incidencia eliminada.");
+                onShowSystemMessage("Incidencia eliminada.");
             }
         } else if (action === 'archive') {
             await onUpdateIncidents('update', { ...incident, archived: !incident.archived });
-            showSyncMessage(incident.archived ? "Incidencia desarchivada." : "Incidencia archivada.");
+            onShowSystemMessage(incident.archived ? "Incidencia desarchivada." : "Incidencia archivada.");
         } else if (action === 'attend') {
             await onUpdateIncidents('update', { ...incident, attended: true });
-            showSyncMessage("Incidencia marcada como atendida.");
+            onShowSystemMessage("Incidencia marcada como atendida.");
         }
     };
 
@@ -336,53 +348,47 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
         }
     };
     
-    const handleSendAnnouncement = async (e: React.FormEvent) => {
+     const handleSendAnnouncement = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        if (!commTitle.trim() || !commContent.trim()) {
-            alert('El título y el contenido del comunicado no pueden estar vacíos.');
+        if (!announcementTitle.trim() || !announcementContent.trim()) {
+            onShowSystemMessage("El título y el contenido no pueden estar vacíos.", 'error');
             return;
         }
 
         let recipients: Announcement['recipients'] = 'all';
-        let alertMessage = "Comunicado enviado a toda la comunidad.";
+        let recipientDescription = "Comunidad General";
 
-        if (commRecipientType === 'group') {
-            recipients = { grade: commGrade, group: commGroup };
-            alertMessage = `Comunicado enviado a ${commGrade} - Grupo ${commGroup}.`;
-        } else if (commRecipientType === 'individual') {
-            if (!commSelectedTeacherId) {
-                alert("Por favor, selecciona un docente.");
-                return;
-            }
-            const teacher = teachers.find(t => t.id === commSelectedTeacherId);
-            alertMessage = `Comunicado enviado a ${teacher?.name}.`;
-            recipients = { grade: 'N/A', group: 'Individual' };
+        switch (announcementRecipient) {
+            case 'all_teachers':
+                recipientDescription = "Todos los Docentes";
+                // In a real backend, you'd target a 'teachers' group
+                break;
+            case 'all_parents':
+                recipientDescription = "Todos los Acudientes";
+                break;
+            case 'all_students':
+                recipientDescription = "Todos los Estudiantes";
+                break;
+            case 'group':
+                recipients = { grade: announcementGrade, group: announcementGroup };
+                recipientDescription = `Grupo ${announcementGrade}-${announcementGroup}`;
+                break;
         }
-    
-        const announcementToSend: Announcement = {
+
+        const newAnnouncement: Announcement = {
             id: `ann_coord_${Date.now()}`,
-            title: commTitle,
-            content: commContent,
-            recipients,
+            title: announcementTitle,
+            content: announcementContent,
+            recipients: recipients,
             timestamp: new Date().toISOString(),
-            sentBy: currentUser.name,
+            sentBy: `Coordinación (${recipientDescription})`,
         };
-        
-        try {
-            await addAnnouncement(announcementToSend);
-            await loadData();
-            
-            setCommTitle('');
-            setCommContent('');
-            setCommRecipientType('all');
-            setCommSelectedTeacherId('');
-            
-            alert(alertMessage);
-        } catch (error) {
-            console.error('Failed to send announcement:', error);
-            alert('Hubo un error al enviar el comunicado.');
-        }
+
+        await onUpdateAnnouncements(newAnnouncement);
+
+        setAnnouncementTitle('');
+        setAnnouncementContent('');
+        onShowSystemMessage('Comunicado enviado exitosamente.');
     };
 
     const handleSaveCitations = (newCitations: Citation[]) => {
@@ -409,73 +415,54 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
     const handleDeleteCitation = (citationId: string) => {
         if (window.confirm("¿Estás seguro de que quieres eliminar esta citación? Esta acción no se puede deshacer y requerirá crear una nueva.")) {
             onUpdateCitations(prev => prev.filter(c => c.id !== citationId));
-            showSyncMessage("Citación eliminada.");
+            onShowSystemMessage("Citación eliminada.");
         }
     };
     
     const handleSaveEditedCitation = (updatedCitation: Citation) => {
-        // When a citation is edited after a reschedule request, it should go back to PENDING
-        // so the parent has to confirm the new details.
         const citationToSave = { ...updatedCitation, status: CitationStatus.PENDING };
         onUpdateCitations(prev => prev.map(c => (c.id === citationToSave.id ? citationToSave : c)));
         setEditingCitation(null);
-        showSyncMessage("Citación actualizada. El acudiente debe confirmar los nuevos detalles.");
+        onShowSystemMessage("Citación actualizada. El acudiente debe confirmar los nuevos detalles.");
     };
+    
+    const filteredTeachers = useMemo(() => teachers.filter(t => 
+        t.name.toLowerCase().includes(teacherSearch.toLowerCase())
+    ), [teachers, teacherSearch]);
     
     const handleSaveTeachers = async (newTeachers: Teacher[]) => {
         try {
-            const validTeachers: Teacher[] = [];
-            const seenIds = new Set<string>();
-            const seenEmails = new Set<string>();
-    
-            for (const teacher of newTeachers) {
-                const teacherCopy = { ...teacher }; // create a mutable copy
-
-                if (!teacherCopy.email || teacherCopy.email.trim() === '') {
-                    teacherCopy.email = undefined;
-                }
-
-                const isDuplicateId = !teacherCopy.id || typeof teacherCopy.id !== 'string' || teacherCopy.id.trim() === '' || seenIds.has(teacherCopy.id);
-                const isDuplicateEmail = teacherCopy.email && seenEmails.has(teacherCopy.email);
-
-                if (!isDuplicateId && !isDuplicateEmail) {
-                    const teacherWithAuth: Teacher = {
-                        ...teacherCopy,
-                        password: teacherCopy.id, 
-                        passwordChanged: false, 
-                    };
-                    validTeachers.push(teacherWithAuth);
-                    seenIds.add(teacherCopy.id);
-                    if (teacherCopy.email) {
-                        seenEmails.add(teacherCopy.email);
-                    }
-                } else {
-                    console.warn(`Skipping teacher with invalid or duplicate data: ${teacherCopy.name}`);
-                }
+            if (newTeachers.length === 0) {
+                onShowSystemMessage("No se encontraron docentes para importar en el archivo.", 'error');
+                setIsImportTeachersModalOpen(false);
+                return;
             }
+
+            const existingTeachers = await getTeachers();
+            const teacherMap = new Map(existingTeachers.map(t => [t.id, t]));
+
+            // Add or update teachers from the imported list
+            newTeachers.forEach(teacher => {
+                // Ensure required fields for new teachers are present
+                const teacherToSave: Teacher = {
+                    ...teacher,
+                    password: teacher.id, // Default password is the ID
+                    passwordChanged: false,
+                    role: Role.TEACHER, // Ensure role is set
+                    email: (!teacher.email || teacher.email.trim() === '') ? undefined : teacher.email
+                };
+                teacherMap.set(teacherToSave.id, teacherToSave);
+            });
             
-            if (newTeachers.length > 0 && validTeachers.length !== newTeachers.length) {
-                const skippedCount = newTeachers.length - validTeachers.length;
-                showSyncMessage(`${skippedCount} docente(s) omitido(s) por datos duplicados o inválidos (Cédula/Email).`);
-            }
-    
-            if (validTeachers.length > 0) {
-                const existingTeachers = await getTeachers();
-                const teacherMap = new Map(existingTeachers.map(t => [t.id, t]));
-                validTeachers.forEach(t => teacherMap.set(t.id, t)); // Upsert logic
-                
-                const updatedTeachersList = Array.from(teacherMap.values());
-
-                await addOrUpdateTeachers(updatedTeachersList);
-                setTeachers(updatedTeachersList.sort((a,b) => a.name.localeCompare(b.name)));
-                showSyncMessage(`${validTeachers.length} docente(s) importado(s) y/o actualizado(s) exitosamente.`);
-            } else if (newTeachers.length > 0) {
-                 alert("No se pudo importar ningún docente. Asegúrese de que cada docente en el archivo tenga una Cédula y Email únicos y válidos.");
-            }
+            const updatedTeachersList = Array.from(teacherMap.values());
+            await addOrUpdateTeachers(updatedTeachersList);
+            setTeachers(updatedTeachersList.sort((a,b) => a.name.localeCompare(b.name)));
+            
+            onShowSystemMessage(`${newTeachers.length} docente(s) han sido importados/actualizados exitosamente.`);
             
         } catch (error) {
             console.error("Failed to save teachers:", error);
-            alert("Ocurrió un error al guardar los docentes.");
+            onShowSystemMessage("Ocurrió un error al guardar los docentes.", 'error');
         } finally {
             setIsImportTeachersModalOpen(false);
         }
@@ -486,24 +473,111 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
         await addOrUpdateTeachers(updatedTeachers);
         setTeachers(updatedTeachers);
         setEditingTeacher(null);
-        showSyncMessage("Datos del docente actualizados.");
+        onShowSystemMessage("Datos del docente actualizados.");
+    };
+
+    const handleTeacherStatusChange = async (teacher: Teacher, status: TeacherStatus) => {
+        const updatedTeachers = teachers.map(t => t.id === teacher.id ? { ...t, status } : t);
+        await addOrUpdateTeachers(updatedTeachers);
+        setTeachers(updatedTeachers);
+        setTeacherActionMenu(null);
+        onShowSystemMessage(`Estado de ${teacher.name} actualizado a "${status}".`);
     };
     
+    const handleDeleteTeacher = (teacher: Teacher) => {
+        if (window.confirm(`¿Estás seguro de que quieres eliminar a ${teacher.name}? Esta acción no se puede deshacer.`)) {
+            const updatedTeachers = teachers.filter(t => t.id !== teacher.id);
+            addOrUpdateTeachers(updatedTeachers).then(() => {
+                setTeachers(updatedTeachers);
+                onShowSystemMessage(`${teacher.name} ha sido eliminado.`);
+            });
+        }
+        setTeacherActionMenu(null);
+    };
+
+    const getStatusBadge = (status?: TeacherStatus) => {
+        if (!status || status === TeacherStatus.ACTIVE) return null;
+        const baseClasses = "text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full";
+        let colorClasses = "";
+        switch(status) {
+            case TeacherStatus.RETIRED:
+                colorClasses = "bg-gray-200 text-gray-800";
+                break;
+            case TeacherStatus.ON_COMMISSION:
+                colorClasses = "bg-blue-200 text-blue-800";
+                break;
+        }
+        return <span className={`${baseClasses} ${colorClasses}`}>{status}</span>
+    }
+    
     // --- Student Management Functions ---
-    const handleImportStudents = async (studentNames: string[], grade: string, group: string) => {
-        const newStudents: Student[] = studentNames.map((name, index) => ({
-            id: Date.now() + index,
-            name,
-            avatarUrl: `https://picsum.photos/seed/${Date.now() + index}/100/100`,
-            grade,
-            group,
-            role: Role.STUDENT,
-        }));
-        const updatedStudentList = [...students, ...newStudents];
-        await addOrUpdateStudents(updatedStudentList);
-        setStudents(updatedStudentList.sort((a, b) => a.name.localeCompare(b.name)));
+    const handleImportStudents = async (
+        newStudentsFromModal: { name: string; id: string }[],
+        grade: string,
+        group: string,
+        homeroomTeacherId?: string
+    ) => {
+        const existingStudentIds = new Set(students.map(s => s.documentNumber));
+        const newStudents: Student[] = [];
+        let skippedCount = 0;
+    
+        newStudentsFromModal.forEach((s, index) => {
+            if (s.id && existingStudentIds.has(s.id)) {
+                skippedCount++;
+                return; // Skip duplicate
+            }
+    
+            const studentId = s.id ? parseInt(s.id.replace(/\D/g, ''), 10) : Date.now() + index;
+            if (isNaN(studentId)) {
+                skippedCount++;
+                return;
+            }
+    
+            newStudents.push({
+                id: studentId,
+                name: s.name,
+                avatarUrl: `https://picsum.photos/seed/${studentId}/100/100`,
+                grade,
+                group,
+                role: Role.STUDENT,
+                documentNumber: s.id || undefined,
+                documentType: s.id ? DocumentType.TARJETA_IDENTIDAD : undefined,
+            });
+        });
+    
+        if (skippedCount > 0) {
+            onShowSystemMessage(`${skippedCount} estudiante(s) omitido(s) por tener un documento ya existente o inválido.`, 'error');
+        }
+    
+        if (newStudents.length > 0) {
+            const updatedStudentList = [...students, ...newStudents];
+            await addOrUpdateStudents(updatedStudentList);
+            setStudents(updatedStudentList.sort((a, b) => a.name.localeCompare(b.name)));
+            onShowSystemMessage(`${newStudents.length} estudiantes importados a ${grade}-${group}. Todos los módulos actualizados.`);
+        }
+    
+        if (homeroomTeacherId) {
+            let teacherName = '';
+            const updatedTeachers = teachers.map(t => {
+                // Unassign any other teacher who might have been assigned to this group before
+                if (t.assignedGroup?.grade === grade && t.assignedGroup?.group === group && t.id !== homeroomTeacherId) {
+                     return { ...t, isHomeroomTeacher: false, assignedGroup: undefined };
+                }
+                // Assign the new teacher
+                if (t.id === homeroomTeacherId) {
+                    teacherName = t.name;
+                    return { ...t, isHomeroomTeacher: true, assignedGroup: { grade, group } };
+                }
+                return t;
+            });
+            await addOrUpdateTeachers(updatedTeachers);
+            setTeachers(updatedTeachers);
+            if (teacherName) {
+                onShowSystemMessage(`${teacherName} ha sido asignado como director de grupo.`);
+            }
+        }
+    
         setIsImportStudentsModalOpen(false);
-        showSyncMessage(`${newStudents.length} estudiantes importados a ${grade}-${group}.`);
     };
 
     const handleOpenIncidentModal = (student: Student) => {
@@ -515,7 +589,7 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
         await onUpdateIncidents('add', { ...incident, synced: isOnline });
         setIsIncidentModalOpen(false);
         setSelectedStudentForIncident(null);
-        showSyncMessage("Incidencia guardada exitosamente.");
+        onShowSystemMessage("Incidencia guardada exitosamente.");
     };
     
     const handleOpenEditStudentModal = (student: Student) => {
@@ -529,9 +603,30 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
         setStudents(updatedStudentList);
         setIsEditStudentModalOpen(false);
         setStudentToEdit(null);
-        showSyncMessage("Datos del estudiante actualizados.");
+        onShowSystemMessage("Datos del estudiante actualizados en todos los módulos.");
     };
     
+    const handleSaveNewStudent = async (newStudentData: { name: string; grade: string; group: string }) => {
+        const newStudent: Student = {
+            id: Date.now(),
+            name: newStudentData.name,
+            avatarUrl: `https://picsum.photos/seed/${Date.now()}/100/100`,
+            grade: newStudentData.grade,
+            group: newStudentData.group,
+            role: Role.STUDENT,
+        };
+        const updatedStudents = [...students, newStudent];
+        await addOrUpdateStudents(updatedStudents);
+        setStudents(updatedStudents.sort((a, b) => a.name.localeCompare(b.name)));
+        setIsAddStudentModalOpen(false);
+        onShowSystemMessage(`${newStudent.name} ha sido añadido y todos los módulos se han actualizado.`);
+    };
+
+    const handleStudentGradeChange = (grade: string) => {
+        setStudentGradeFilter(grade);
+        setStudentGroupFilter('all');
+    };
+
     const availableGroupsForStudentMgmt = useMemo(() => {
         if (studentGradeFilter === 'all' || !GRADE_GROUP_MAP[studentGradeFilter]) {
             return ['all', ...GROUPS];
@@ -546,6 +641,23 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
           return matchesGrade && matchesGroup;
       });
     }, [students, studentGradeFilter, studentGroupFilter]);
+
+    const handleSaveGuardians = async (newGuardians: Guardian[]) => {
+        const guardianMap = new Map(guardians.map(g => [g.id, g]));
+        newGuardians.forEach(g => {
+            const existing = guardianMap.get(g.id);
+            if (existing) {
+                // Merge student IDs, avoiding duplicates
+                const updatedStudentIds = Array.from(new Set([...existing.studentIds, ...g.studentIds]));
+                guardianMap.set(g.id, { ...existing, ...g, studentIds: updatedStudentIds });
+            } else {
+                guardianMap.set(g.id, g);
+            }
+        });
+        await onUpdateGuardians(Array.from(guardianMap.values()));
+        onShowSystemMessage(`${newGuardians.length} acudiente(s) importados/actualizados.`);
+        setIsImportGuardiansModalOpen(false);
+    };
 
     if (loading) {
         return <div className="text-center p-8">Cargando datos de coordinación...</div>;
@@ -728,41 +840,209 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
             </div>
 
              <div className={activeTab === 'comunicados' ? '' : 'hidden'}>
-                {/* Communication Tab Content will be added here */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-1 bg-white p-6 rounded-xl shadow-md">
+                        <h3 className="text-lg font-bold mb-4">Nuevo Comunicado</h3>
+                        <form onSubmit={handleSendAnnouncement} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Destinatarios</label>
+                                <select value={announcementRecipient} onChange={e => setAnnouncementRecipient(e.target.value as any)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                                    <option value="all_teachers">Todos los Docentes</option>
+                                    <option value="all_parents">Todos los Acudientes</option>
+                                    <option value="all_students">Todos los Estudiantes</option>
+                                    <option value="group">Grupo Específico (Estudiantes y Acudientes)</option>
+                                </select>
+                            </div>
+                            {announcementRecipient === 'group' && (
+                                <div className="grid grid-cols-2 gap-2">
+                                    <select value={announcementGrade} onChange={e => setAnnouncementGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                                        {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+                                    </select>
+                                    <select value={announcementGroup} onChange={e => setAnnouncementGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                                        {(GRADE_GROUP_MAP[announcementGrade] || []).map(g => <option key={g} value={g}>{g}</option>)}
+                                    </select>
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                                <input type="text" value={announcementTitle} onChange={e => setAnnouncementTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" required />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Contenido del Mensaje</label>
+                                <textarea rows={8} value={announcementContent} onChange={e => setAnnouncementContent(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900" required></textarea>
+                            </div>
+                            <button type="submit" className="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus">Enviar Comunicado</button>
+                        </form>
+                    </div>
+                    <div className="md:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                        <h3 className="text-lg font-bold mb-4">Historial de Comunicados Enviados</h3>
+                        <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
+                            {sentAnnouncements.length > 0 ? sentAnnouncements.map(ann => (
+                                <div key={ann.id} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                                    <div className="flex justify-between items-start">
+                                        <h4 className="font-semibold text-primary">{ann.title}</h4>
+                                        <span className="text-xs text-gray-500">{new Date(ann.timestamp).toLocaleDateString('es-CO')}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{ann.content}</p>
+                                    <p className="text-xs text-gray-500 mt-2 pt-2 border-t">
+                                        <strong>Enviado por:</strong> {ann.sentBy}
+                                    </p>
+                                </div>
+                            )) : (
+                                <p className="text-center text-gray-500 py-8">No se han enviado comunicados.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div className={activeTab === 'teacher_management' ? '' : 'hidden'}>
-                {/* Teacher Management Tab Content will be added here */}
+            <div className={activeTab === 'community_management' ? '' : 'hidden'}>
+                <div className="bg-white p-6 rounded-xl shadow-md">
+                    <div className="mb-6 border-b border-gray-200">
+                        <nav className="-mb-px flex space-x-8" aria-label="Community Tabs">
+                            <button
+                                onClick={() => setActiveCommunityTab('teachers')}
+                                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeCommunityTab === 'teachers' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                            >
+                                Gestión de Docentes
+                            </button>
+                            <button
+                                onClick={() => setActiveCommunityTab('students')}
+                                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeCommunityTab === 'students' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                            >
+                                Gestión de Estudiantes
+                            </button>
+                            <button
+                                onClick={() => setActiveCommunityTab('parents')}
+                                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeCommunityTab === 'parents' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                            >
+                                Gestión de Acudientes
+                            </button>
+                        </nav>
+                    </div>
+
+                    <div className={activeCommunityTab === 'teachers' ? '' : 'hidden'}>
+                        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                            <h2 className="text-xl font-bold text-gray-800">Docentes ({teachers.length})</h2>
+                            <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
+                                <input
+                                    type="text"
+                                    placeholder="Buscar docente..."
+                                    value={teacherSearch}
+                                    onChange={e => setTeacherSearch(e.target.value)}
+                                    className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
+                                />
+                                <button
+                                    onClick={() => setIsImportTeachersModalOpen(true)}
+                                    className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors flex items-center space-x-2 flex-shrink-0"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                    <span className="hidden sm:inline">Importar Docentes</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
+                            {filteredTeachers.length > 0 ? (
+                                filteredTeachers.map(teacher => (
+                                    <div key={teacher.id} className="bg-gray-50 rounded-lg shadow p-4 flex items-center space-x-4">
+                                        <img src={teacher.avatarUrl} alt={teacher.name} className="w-16 h-16 rounded-full object-cover"/>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <p className="font-bold text-gray-800">{teacher.name}</p>
+                                                {getStatusBadge(teacher.status)}
+                                            </div>
+                                            <p className="text-sm text-gray-500">{teacher.subject}</p>
+                                            {teacher.isHomeroomTeacher && <p className="text-xs text-primary mt-1">Director de Grupo: {teacher.assignedGroup?.grade}-{teacher.assignedGroup?.group}</p>}
+                                        </div>
+                                        <div className="relative" ref={teacher.id === teacherActionMenu ? teacherMenuRef : null}>
+                                            <button onClick={() => setTeacherActionMenu(prev => (prev === teacher.id ? null : teacher.id))} className="p-2 rounded-full text-gray-500 hover:bg-gray-200">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
+                                            </button>
+                                            {teacherActionMenu === teacher.id && (
+                                                <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-20 border animate-fade-in" style={{ animationDuration: '150ms' }}>
+                                                    <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); setEditingTeacher(teacher); setTeacherActionMenu(null); }} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
+                                                        {(!teacher.status || teacher.status === TeacherStatus.ACTIVE) && <>
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); handleTeacherStatusChange(teacher, TeacherStatus.RETIRED); }} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Marcar como Pensionado</a>
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); handleTeacherStatusChange(teacher, TeacherStatus.ON_COMMISSION); }} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Marcar en Comisión</a>
+                                                        </>}
+                                                        {(teacher.status === TeacherStatus.RETIRED || teacher.status === TeacherStatus.ON_COMMISSION) &&
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); handleTeacherStatusChange(teacher, TeacherStatus.ACTIVE); }} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Reactivar Docente</a>
+                                                        }
+                                                        <div className="border-t my-1"></div>
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); handleDeleteTeacher(teacher); }} className="block px-4 py-2 text-sm text-red-700 hover:bg-red-50">Eliminar Docente</a>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-center text-gray-500 py-8">No se encontraron docentes.</p>
+                            )}
+                        </div>
+                    </div>
+                    <div className={activeCommunityTab === 'students' ? '' : 'hidden'}>
+                         <StudentList
+                            students={filteredStudentsForList}
+                            onImportClick={() => setIsImportStudentsModalOpen(true)}
+                            onAddStudentClick={() => setIsAddStudentModalOpen(true)}
+                            onReportIncident={handleOpenIncidentModal}
+                            onEditStudent={handleOpenEditStudentModal}
+                            grades={['all', ...GRADES]}
+                            selectedGrade={studentGradeFilter}
+                            onGradeChange={handleStudentGradeChange}
+                            groups={availableGroupsForStudentMgmt}
+                            selectedGroup={studentGroupFilter}
+                            onGroupChange={setStudentGroupFilter}
+                        />
+                    </div>
+                    <div className={activeCommunityTab === 'parents' ? '' : 'hidden'}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold">Gestión de Acudientes ({guardians.length})</h3>
+                            <button onClick={() => setIsImportGuardiansModalOpen(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                <span>Importar y Vincular</span>
+                            </button>
+                        </div>
+                         <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
+                            {guardians.map(guardian => {
+                                const linkedStudents = guardian.studentIds.map(id => studentMap.get(id)?.name).filter(Boolean);
+                                return (
+                                    <div key={guardian.id} className="bg-gray-50 rounded-lg p-4">
+                                        <p className="font-bold">{guardian.name}</p>
+                                        <p className="text-sm text-gray-600">ID: {guardian.id} | Tel: {guardian.phone || 'N/A'}</p>
+                                        <p className="text-sm text-gray-600">Estudiantes: <span className="font-medium text-primary">{linkedStudents.join(', ') || 'Ninguno vinculado'}</span></p>
+                                    </div>
+                                )
+                            })}
+                             {guardians.length === 0 && <p className="text-center text-gray-500 py-8">No hay acudientes registrados.</p>}
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div className={activeTab === 'student_management' ? '' : 'hidden'}>
-                {/* Student Management Tab Content will be added here */}
-            </div>
-            
+
              <div className={activeTab === 'calificaciones' ? '' : 'hidden'}>
-                <Calificaciones
+                 <Calificaciones
                     students={students}
+                    teachers={teachers}
                     subjectGradesData={subjectGradesData}
                     setSubjectGradesData={setSubjectGradesData}
                     currentUser={currentUser}
-                    viewMode="full"
                 />
             </div>
-            
+
             {/* Modals */}
-            {isCitationModalOpen && <CitationModal students={students} onClose={() => setIsCitationModalOpen(false)} onSave={handleSaveCitations} currentUser={currentUser} />}
+            {isCitationModalOpen && <CitationModal students={filteredStudentsForList} onClose={() => setIsCitationModalOpen(false)} onSave={handleSaveCitations} currentUser={currentUser} />}
             {isCancelModalOpen && citationToCancel && <CancelCitationModal onClose={() => setIsCancelModalOpen(false)} onConfirm={handleConfirmCancelCitation} />}
             {editingCitation && <EditCitationModal citation={editingCitation} onClose={() => setEditingCitation(null)} onSave={handleSaveEditedCitation} />}
             {isImportTeachersModalOpen && <ImportTeachersModal onClose={() => setIsImportTeachersModalOpen(false)} onSave={handleSaveTeachers} />}
             {editingTeacher && <EditTeacherModal teacher={editingTeacher} onClose={() => setEditingTeacher(null)} onSave={handleSaveTeacherEdit} />}
-            {isImportStudentsModalOpen && <ImportStudentsModal onClose={() => setIsImportStudentsModalOpen(false)} onSave={handleImportStudents} />}
-            {isIncidentModalOpen && <IncidentModal student={selectedStudentForIncident} students={students} onClose={() => setIsIncidentModalOpen(false)} onSave={handleSaveIncident} reporterName={currentUser.name} />}
+            {isImportStudentsModalOpen && <ImportStudentsModal teachers={teachers} onClose={() => setIsImportStudentsModalOpen(false)} onSave={handleImportStudents} />}
+            {isAddStudentModalOpen && <AddStudentModal onClose={() => setIsAddStudentModalOpen(false)} onSave={handleSaveNewStudent} />}
+            {isIncidentModalOpen && <IncidentModal student={selectedStudentForIncident} students={students} onClose={() => { setIsIncidentModalOpen(false); setSelectedStudentForIncident(null); }} onSave={handleSaveIncident} reporterName={currentUser.name} />}
             {isEditStudentModalOpen && studentToEdit && <EditStudentModal student={studentToEdit} onClose={() => setIsEditStudentModalOpen(false)} onSave={handleSaveStudentEdit} />}
-             {showSnackbar.visible && (
-                <div className="fixed bottom-6 right-6 bg-gray-800 text-white py-3 px-6 rounded-lg shadow-lg animate-fade-in-up">
-                {showSnackbar.message}
-                </div>
-            )}
+            {isImportGuardiansModalOpen && <ImportGuardiansModal students={students} onClose={() => setIsImportGuardiansModalOpen(false)} onSave={handleSaveGuardians} />}
         </div>
     );
 };
