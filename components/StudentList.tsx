@@ -15,25 +15,25 @@ const StudentCard: React.FC<StudentCardProps> = ({ student, onSelect, onEdit, on
     return (
         <div 
             onClick={isClickable ? onSelect : undefined} 
-            className={`bg-white rounded-lg shadow p-4 flex items-center space-x-4 ${isClickable ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
+            className={`bg-white dark:bg-gray-900 rounded-lg shadow p-4 flex items-center space-x-4 ${isClickable ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
         >
             <img src={student.avatarUrl} alt={student.name} className="w-16 h-16 rounded-full object-cover"/>
             <div className="flex-1">
-                <p className="font-bold text-gray-800">{student.name}</p>
-                <p className="text-sm text-gray-500">{student.grade} - Grupo {student.group}</p>
-                {student.lastIncident && <p className="text-xs text-amber-600 mt-1">Última incidencia: {student.lastIncident}</p>}
+                <p className="font-bold text-gray-800 dark:text-gray-100">{student.name}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{student.grade} - Grupo {student.group}</p>
+                {student.lastIncident && <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Última incidencia: {student.lastIncident}</p>}
             </div>
             {hasButtons ? (
                 <div className="flex items-center space-x-2">
                     {onReportIncident && (
-                        <button onClick={onReportIncident} className="p-2 rounded-full text-amber-600 hover:bg-amber-100" title="Reportar Incidencia">
+                        <button onClick={onReportIncident} className="p-2 rounded-full text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50" title="Reportar Incidencia">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                             </svg>
                         </button>
                     )}
                     {onEdit && (
-                        <button onClick={onEdit} className="p-2 rounded-full text-blue-600 hover:bg-blue-100" title="Editar Estudiante">
+                        <button onClick={onEdit} className="p-2 rounded-full text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/50" title="Editar Estudiante">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
                                 <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
@@ -74,14 +74,14 @@ const StudentList: React.FC<StudentListProps> = ({ students, onSelectStudent, on
     );
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-md">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
             <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                 <h2 className="text-xl font-bold text-gray-800">Estudiantes ({students.length})</h2>
+                 <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Estudiantes ({students.length})</h2>
                  <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
                     <select
                         value={selectedGrade}
                         onChange={(e) => onGradeChange(e.target.value)}
-                        className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900"
+                        className="w-full sm:w-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
                     >
                         {grades.map(grade => (
                             <option key={grade} value={grade}>{grade === 'all' ? 'Todos los Grados' : grade}</option>
@@ -90,7 +90,7 @@ const StudentList: React.FC<StudentListProps> = ({ students, onSelectStudent, on
                      <select
                         value={selectedGroup}
                         onChange={(e) => onGroupChange(e.target.value)}
-                        className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900"
+                        className="w-full sm:w-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
                     >
                         {groups.map(group => (
                             <option key={group} value={group}>{group === 'all' ? 'Todos los Grupos' : group}</option>
@@ -101,7 +101,7 @@ const StudentList: React.FC<StudentListProps> = ({ students, onSelectStudent, on
                         placeholder="Buscar estudiante..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full sm:w-auto p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
+                        className="w-full sm:w-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
                     />
                     {onImportClick && (
                          <button 
@@ -136,7 +136,7 @@ const StudentList: React.FC<StudentListProps> = ({ students, onSelectStudent, on
                         />
                     ))
                 ) : (
-                    <p className="text-center text-gray-500 py-8">No se encontraron estudiantes.</p>
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">No se encontraron estudiantes.</p>
                 )}
             </div>
         </div>

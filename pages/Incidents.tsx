@@ -2,6 +2,7 @@
 
 
 
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades, Guardian } from '../types';
 import { IncidentType, AttendanceStatus, CitationStatus, Role, DocumentType, TeacherStatus, IncidentStatus } from '../types';
@@ -20,6 +21,8 @@ import Calificaciones from './Calificaciones';
 import EditCitationModal from '../components/EditCitationModal';
 import AddStudentModal from '../components/AddStudentModal';
 import ImportGuardiansModal from '../components/ImportGuardiansModal';
+import AddTeacherModal from '../components/AddTeacherModal';
+import AddGuardianModal from '../components/AddGuardianModal';
 
 
 type EnrichedAttendanceRecord = AttendanceRecord & { student: Student };
@@ -200,6 +203,7 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
     // Teacher state
     const [teacherSearch, setTeacherSearch] = useState('');
     const [isImportTeachersModalOpen, setIsImportTeachersModalOpen] = useState(false);
+    const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
     const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
     const [teacherActionMenu, setTeacherActionMenu] = useState<string | null>(null);
     const teacherMenuRef = useRef<HTMLDivElement>(null);
@@ -216,6 +220,7 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
     
     // Guardian Management State
     const [isImportGuardiansModalOpen, setIsImportGuardiansModalOpen] = useState(false);
+    const [isAddGuardianModalOpen, setIsAddGuardianModalOpen] = useState(false);
 
     const studentMap = useMemo(() => new Map<number, Student>(students.map(s => [s.id, s])), [students]);
     
@@ -573,6 +578,28 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
         setIsImportTeachersModalOpen(false);
     };
     
+    const handleSaveNewTeacher = async (teacherData: Omit<Teacher, 'avatarUrl' | 'role' | 'passwordChanged'>) => {
+        const existingTeacher = teachers.find(t => t.id === teacherData.id);
+        if (existingTeacher) {
+            onShowSystemMessage(`Ya existe un docente con la cédula ${teacherData.id}.`, 'error');
+            return;
+        }
+
+        const newTeacher: Teacher = {
+            ...teacherData,
+            avatarUrl: `https://picsum.photos/seed/teacher${Date.now()}/100/100`,
+            role: Role.TEACHER,
+            passwordChanged: false,
+            password: teacherData.id,
+        };
+
+        const updatedTeachers = [...teachers, newTeacher];
+        await addOrUpdateTeachers(updatedTeachers);
+        setTeachers(updatedTeachers.sort((a,b) => a.name.localeCompare(b.name)));
+        setIsAddTeacherModalOpen(false);
+        onShowSystemMessage(`El docente ${newTeacher.name} ha sido añadido exitosamente.`, 'success');
+    };
+
     const handleSaveEditedTeacher = async (updatedTeacher: Teacher) => {
         const updatedTeachers = teachers.map(t => t.id === updatedTeacher.id ? updatedTeacher : t);
         await addOrUpdateTeachers(updatedTeachers);
@@ -594,6 +621,24 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
         await onUpdateGuardians(newGuardians);
         setIsImportGuardiansModalOpen(false);
         onShowSystemMessage(`${newGuardians.length} acudiente(s) importado(s) y vinculado(s) exitosamente.`);
+    };
+    
+    const handleSaveNewGuardian = async (guardianData: { id: string; name: string; email: string; phone: string }) => {
+        const existingGuardian = guardians.find(g => g.id === guardianData.id);
+        if (existingGuardian) {
+            onShowSystemMessage(`Ya existe un acudiente con la cédula ${guardianData.id}.`, 'error');
+            return;
+        }
+        
+        const newGuardian: Guardian = {
+            ...guardianData,
+            studentIds: [],
+        };
+        
+        const updatedGuardians = [...guardians, newGuardian];
+        await onUpdateGuardians(updatedGuardians);
+        setIsAddGuardianModalOpen(false);
+        onShowSystemMessage(`El acudiente ${newGuardian.name} ha sido añadido exitosamente.`, 'success');
     };
 
     return (
@@ -808,10 +853,16 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                         <div>
                              <div className="flex flex-col md:flex-row gap-4 mb-4">
                                 <input type="text" placeholder="Buscar docente por nombre..." value={teacherSearch} onChange={e => setTeacherSearch(e.target.value)} className="flex-grow p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 placeholder-gray-500" />
-                                <button onClick={() => setIsImportTeachersModalOpen(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus flex items-center justify-center space-x-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                                    <span>Importar Docentes</span>
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => setIsAddTeacherModalOpen(true)} className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 flex items-center justify-center space-x-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                                        <span>Añadir</span>
+                                    </button>
+                                    <button onClick={() => setIsImportTeachersModalOpen(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus flex items-center justify-center space-x-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                        <span>Importar</span>
+                                    </button>
+                                </div>
                             </div>
                             <div className="max-h-[60vh] overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {teachers.filter(t => t.name.toLowerCase().includes(teacherSearch.toLowerCase())).map(t => (
@@ -858,10 +909,14 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                     )}
                     {activeCommunityTab === 'parents' && (
                         <div className="space-y-4">
-                            <div className="flex justify-end">
+                            <div className="flex justify-end gap-2">
+                                <button onClick={() => setIsAddGuardianModalOpen(true)} className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 flex items-center justify-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                                    <span>Añadir</span>
+                                </button>
                                 <button onClick={() => setIsImportGuardiansModalOpen(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus flex items-center justify-center space-x-2">
                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                                    <span>Importar y Vincular Acudientes</span>
+                                    <span>Importar y Vincular</span>
                                 </button>
                             </div>
                             <div className="max-h-[60vh] overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -898,11 +953,13 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
             {isCancelModalOpen && citationToCancel && <CancelCitationModal onClose={() => setIsCancelModalOpen(false)} onConfirm={handleConfirmCancelCitation} />}
             {editingCitation && <EditCitationModal citation={editingCitation} onClose={() => setEditingCitation(null)} onSave={handleSaveEditedCitation} />}
             {isImportTeachersModalOpen && <ImportTeachersModal onClose={() => setIsImportTeachersModalOpen(false)} onSave={handleImportTeachers} />}
+            {isAddTeacherModalOpen && <AddTeacherModal onClose={() => setIsAddTeacherModalOpen(false)} onSave={handleSaveNewTeacher} />}
             {editingTeacher && <EditTeacherModal teacher={editingTeacher} onClose={() => setEditingTeacher(null)} onSave={handleSaveEditedTeacher} />}
             {isImportStudentsModalOpen && <ImportStudentsModal teachers={teachers} onClose={() => setIsImportStudentsModalOpen(false)} onSave={handleImportStudents} />}
             {isAddStudentModalOpen && <AddStudentModal onClose={() => setIsAddStudentModalOpen(false)} onSave={handleSaveNewStudent} />}
             {isIncidentModalOpen && <IncidentModal student={selectedStudentForIncident} students={students} onClose={() => setIsIncidentModalOpen(false)} onSave={handleSaveIncident} reporter={currentUser} />}
             {isEditStudentModalOpen && studentToEdit && <EditStudentModal student={studentToEdit} onClose={() => setIsEditStudentModalOpen(false)} onSave={handleSaveEditedStudent} />}
+            {isAddGuardianModalOpen && <AddGuardianModal onClose={() => setIsAddGuardianModalOpen(false)} onSave={handleSaveNewGuardian} />}
             {isImportGuardiansModalOpen && <ImportGuardiansModal students={students} onClose={() => setIsImportGuardiansModalOpen(false)} onSave={handleImportGuardians} />}
         </div>
     );

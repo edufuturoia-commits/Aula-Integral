@@ -137,30 +137,30 @@ const AssessmentCreator: React.FC<AssessmentCreatorProps> = ({ onSave, onCancel 
     };
     
     return (
-        <div className="bg-white p-8 rounded-xl shadow-lg animate-fade-in">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Creador de Evaluaciones con IA</h2>
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg animate-fade-in">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Creador de Evaluaciones con IA</h2>
             
             {step === 1 && (
                 <div>
-                    <h3 className="text-lg font-semibold mb-2">Paso 1: Define los Parámetros</h3>
+                    <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">Paso 1: Define los Parámetros</h3>
                     <div className="space-y-4">
-                         <input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 text-gray-900" placeholder="Título de la Evaluación (Ej: Examen de Biología Celular)"/>
+                         <input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" placeholder="Título de la Evaluación (Ej: Examen de Biología Celular)"/>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <select value={area} onChange={e => setArea(e.target.value as SubjectArea)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 text-gray-900">
+                            <select value={area} onChange={e => setArea(e.target.value as SubjectArea)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                                 {SUBJECT_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
                             </select>
-                            <select value={grade} onChange={e => setGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 text-gray-900">
+                            <select value={grade} onChange={e => setGrade(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                                 {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                             </select>
-                             <select value={competency} onChange={e => setCompetency(e.target.value as Competency)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 text-gray-900">
+                             <select value={competency} onChange={e => setCompetency(e.target.value as Competency)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                                 {COMPETENCIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input type="text" value={topic} onChange={e => setTopic(e.target.value)} className="md:col-span-2 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 text-gray-900" placeholder="Tema Específico (Ej: La Célula y sus Partes)"/>
+                            <input type="text" value={topic} onChange={e => setTopic(e.target.value)} className="md:col-span-2 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" placeholder="Tema Específico (Ej: La Célula y sus Partes)"/>
                             <div>
-                                <label className="block text-sm text-gray-500 mb-1">Nº de Preguntas</label>
-                                <input type="number" value={numQuestions} onChange={e => setNumQuestions(Math.max(1, parseInt(e.target.value, 10)))} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 text-gray-900"/>
+                                <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Nº de Preguntas</label>
+                                <input type="number" value={numQuestions} onChange={e => setNumQuestions(Math.max(1, parseInt(e.target.value, 10)))} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"/>
                             </div>
                         </div>
                     </div>
@@ -175,14 +175,14 @@ const AssessmentCreator: React.FC<AssessmentCreatorProps> = ({ onSave, onCancel 
             
             {step === 2 && (
                 <div>
-                    <h3 className="text-lg font-semibold mb-4">Paso 2: Revisa la Evaluación Generada</h3>
-                    <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Paso 2: Revisa la Evaluación Generada</h3>
+                    <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 border dark:border-gray-700 rounded-lg p-4">
                         {generatedQuestions.map((q, index) => (
-                            <div key={q.id} className="p-3 bg-gray-50 rounded-md">
-                                <p className="font-semibold">{index + 1}. {q.text}</p>
+                            <div key={q.id} className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-md">
+                                <p className="font-semibold text-gray-800 dark:text-gray-100">{index + 1}. {q.text}</p>
                                 <ul className="mt-2 space-y-1 pl-4">
                                     {q.options?.map((opt, optIndex) => (
-                                        <li key={optIndex} className={`text-sm ${optIndex === q.correctAnswer ? 'text-green-700 font-bold' : 'text-gray-700'}`}>
+                                        <li key={optIndex} className={`text-sm ${optIndex === q.correctAnswer ? 'text-green-700 dark:text-green-400 font-bold' : 'text-gray-700 dark:text-gray-300'}`}>
                                             {String.fromCharCode(65 + optIndex)}. {opt} {optIndex === q.correctAnswer && '(Correcta)'}
                                         </li>
                                     ))}
@@ -191,16 +191,16 @@ const AssessmentCreator: React.FC<AssessmentCreatorProps> = ({ onSave, onCancel 
                         ))}
                     </div>
                     <div className="flex justify-between items-center mt-6">
-                        <button onClick={() => setStep(1)} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors">Atrás</button>
+                        <button onClick={() => setStep(1)} className="px-6 py-2 rounded-md text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">Atrás</button>
                         <div>
-                             <button onClick={handleDownloadPdf} className="mr-4 px-6 py-2 rounded-md text-primary bg-blue-100 hover:bg-blue-200 transition-colors">Descargar PDF</button>
+                             <button onClick={handleDownloadPdf} className="mr-4 px-6 py-2 rounded-md text-primary dark:text-blue-200 bg-blue-100 dark:bg-blue-900/50 hover:bg-blue-200 dark:hover:bg-blue-900/80 transition-colors">Descargar PDF</button>
                              <button onClick={handleSave} className="px-6 py-2 rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors">Guardar Evaluación</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            <button onClick={onCancel} className="mt-8 text-sm text-gray-500 hover:text-gray-800">
+            <button onClick={onCancel} className="mt-8 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
                 Cancelar y volver
             </button>
         </div>

@@ -173,7 +173,8 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
     setActionMenuOpen(null);
     if (window.confirm("¿Estás seguro de que quieres declinar esta incidencia? No aparecerá más en tu lista de activas y se notificará a coordinación.")) {
         try {
-            await onUpdateIncidents('update', { ...incident, status: IncidentStatus.DECLINED });
+            const updatedIncident = { ...incident, status: IncidentStatus.DECLINED };
+            await onUpdateIncidents('update', updatedIncident);
             onShowSystemMessage("Incidencia declinada exitosamente.");
         } catch (error) {
             console.error("Failed to decline incident:", error);
@@ -191,11 +192,9 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   const handleSaveIncident = async (incidentData: Incident) => {
     try {
         if (editingIncident) {
-            // It's an update, merge new data with existing incident, keeping the original ID.
-            await onUpdateIncidents('update', { ...editingIncident, ...incidentData, id: editingIncident.id });
+            await onUpdateIncidents('update', incidentData);
             onShowSystemMessage("Incidencia actualizada correctamente.");
         } else {
-            // It's a new incident.
             await onUpdateIncidents('add', { ...incidentData, status: IncidentStatus.ACTIVE });
             onShowSystemMessage("Incidencia guardada. Coordinación ha sido notificada.");
         }

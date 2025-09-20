@@ -102,25 +102,25 @@ const ResourceCreator: React.FC<ResourceCreatorProps> = ({ onSave, onCancel }) =
     };
     
     return (
-        <div className="bg-white p-8 rounded-xl shadow-lg">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Generador de Recursos con IA</h2>
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Generador de Recursos con IA</h2>
             
             {step === 1 && (
                 <div>
-                    <h3 className="text-lg font-semibold mb-2">Paso 1: Describe el Recurso</h3>
+                    <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">Paso 1: Describe el Recurso</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <select value={area} onChange={e => setArea(e.target.value as SubjectArea)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900">
+                        <select value={area} onChange={e => setArea(e.target.value as SubjectArea)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                             {SUBJECT_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
                         </select>
-                        <select value={grade} onChange={e => setGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900">
+                        <select value={grade} onChange={e => setGrade(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                             {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                         </select>
-                         <select value={resourceType} onChange={e => setResourceType(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900">
+                         <select value={resourceType} onChange={e => setResourceType(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                             {GENERATABLE_RESOURCE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                     </div>
                     <div className="mb-6">
-                         <input type="text" value={topic} onChange={e => setTopic(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500" placeholder="Tema específico (Ej: El sistema solar, Los verbos regulares)"/>
+                         <input type="text" value={topic} onChange={e => setTopic(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400" placeholder="Tema específico (Ej: El sistema solar, Los verbos regulares)"/>
                     </div>
                     {generationError && <p className="text-red-600 text-center mb-4">{generationError}</p>}
                     <div className="text-right">
@@ -133,50 +133,50 @@ const ResourceCreator: React.FC<ResourceCreatorProps> = ({ onSave, onCancel }) =
             
             {step === 2 && (
                 <div>
-                    <h3 className="text-lg font-semibold mb-4">Paso 2: Revisa y Edita el Contenido</h3>
+                    <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Paso 2: Revisa y Edita el Contenido</h3>
                     <div className="space-y-4">
                         <div>
-                            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título</label>
                             <input 
                                 type="text" 
                                 id="title" 
                                 name="title"
                                 value={generatedContent.title} 
                                 onChange={handleContentChange}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500" 
+                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400" 
                             />
                         </div>
                          <div>
-                            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Descripción Breve</label>
+                            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción Breve</label>
                             <textarea 
                                 id="description"
                                 name="description"
                                 rows={2}
                                 value={generatedContent.description}
                                 onChange={handleContentChange}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
+                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
                             ></textarea>
                         </div>
                         <div>
-                            <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">Contenido Principal</label>
+                            <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contenido Principal</label>
                             <textarea
                               id="content"
                               name="content"
                               rows={10}
                               value={generatedContent.content}
                               onChange={handleContentChange}
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 text-gray-900 placeholder-gray-500"
+                              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
                             ></textarea>
                         </div>
                     </div>
                     <div className="flex justify-between items-center mt-6">
-                        <button onClick={() => setStep(1)} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors">Atrás</button>
+                        <button onClick={() => setStep(1)} className="px-6 py-2 rounded-md text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">Atrás</button>
                         <button onClick={handleSave} className="px-6 py-2 rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors">Guardar Recurso</button>
                     </div>
                 </div>
             )}
 
-            <button onClick={onCancel} className="mt-8 text-sm text-gray-500 hover:text-gray-800">
+            <button onClick={onCancel} className="mt-8 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
                 Cancelar y volver a la biblioteca
             </button>
         </div>

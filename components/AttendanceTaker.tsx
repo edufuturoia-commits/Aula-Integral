@@ -19,12 +19,12 @@ interface AttendanceTakerProps {
 
 const getStatusClass = (status: AttendanceStatus) => {
     switch(status) {
-        case AttendanceStatus.PRESENT: return { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-500' };
-        case AttendanceStatus.ABSENT: return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-500' };
-        case AttendanceStatus.TARDY: return { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-500' };
-        case AttendanceStatus.EXCUSED: return { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-500' };
-        case AttendanceStatus.SPECIAL_PERMIT: return { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-500' };
-        default: return { bg: 'bg-gray-100', text: 'text-gray-800', border: 'border-gray-500' };
+        case AttendanceStatus.PRESENT: return { bg: 'bg-green-100 dark:bg-green-900/50', text: 'text-green-800 dark:text-green-200', border: 'border-green-500 dark:border-green-600', icon: 'text-green-600 dark:text-green-400' };
+        case AttendanceStatus.ABSENT: return { bg: 'bg-red-100 dark:bg-red-900/50', text: 'text-red-800 dark:text-red-200', border: 'border-red-500 dark:border-red-600', icon: 'text-red-600 dark:text-red-400' };
+        case AttendanceStatus.TARDY: return { bg: 'bg-yellow-100 dark:bg-yellow-900/50', text: 'text-yellow-800 dark:text-yellow-200', border: 'border-yellow-500 dark:border-yellow-600', icon: 'text-yellow-600 dark:text-yellow-400' };
+        case AttendanceStatus.EXCUSED: return { bg: 'bg-blue-100 dark:bg-blue-900/50', text: 'text-blue-800 dark:text-blue-200', border: 'border-blue-500 dark:border-blue-600', icon: 'text-blue-600 dark:text-blue-400' };
+        case AttendanceStatus.SPECIAL_PERMIT: return { bg: 'bg-purple-100 dark:bg-purple-900/50', text: 'text-purple-800 dark:text-purple-200', border: 'border-purple-500 dark:border-purple-600', icon: 'text-purple-600 dark:text-purple-400' };
+        default: return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-200', border: 'border-gray-500 dark:border-gray-600', icon: 'text-gray-600 dark:text-gray-400' };
     }
 }
 
@@ -81,42 +81,42 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, isOnline, a
 
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-md">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <h2 className="text-xl font-bold text-gray-800">Control de Asistencia</h2>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Control de Asistencia</h2>
                 <div className="flex items-center gap-4 flex-wrap justify-center">
-                     <button onClick={() => markAllAs(AttendanceStatus.PRESENT)} className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors">
+                     <button onClick={() => markAllAs(AttendanceStatus.PRESENT)} className="text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold py-2 px-4 rounded-lg transition-colors">
                         Marcar todos como Presentes
                     </button>
                     <input 
                         type="date"
                         value={selectedDate}
                         onChange={e => setSelectedDate(e.target.value)}
-                        className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900"
+                        className="p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200"
                     />
                 </div>
             </div>
 
             <div className="flex justify-center gap-4 md:gap-6 mb-6 text-center flex-wrap">
                 <div>
-                    <p className="text-2xl font-bold text-green-600">{summary[AttendanceStatus.PRESENT]}</p>
-                    <p className="text-sm font-medium text-gray-500">Presentes</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{summary[AttendanceStatus.PRESENT]}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Presentes</p>
                 </div>
                  <div>
-                    <p className="text-2xl font-bold text-red-600">{summary[AttendanceStatus.ABSENT]}</p>
-                    <p className="text-sm font-medium text-gray-500">Ausentes</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">{summary[AttendanceStatus.ABSENT]}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Ausentes</p>
                 </div>
                  <div>
-                    <p className="text-2xl font-bold text-yellow-600">{summary[AttendanceStatus.TARDY]}</p>
-                    <p className="text-sm font-medium text-gray-500">Tardes</p>
+                    <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{summary[AttendanceStatus.TARDY]}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Tardes</p>
                 </div>
                 <div>
-                    <p className="text-2xl font-bold text-blue-600">{summary[AttendanceStatus.EXCUSED]}</p>
-                    <p className="text-sm font-medium text-gray-500">Excusas</p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{summary[AttendanceStatus.EXCUSED]}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Excusas</p>
                 </div>
                 <div>
-                    <p className="text-2xl font-bold text-purple-600">{summary[AttendanceStatus.SPECIAL_PERMIT]}</p>
-                    <p className="text-sm font-medium text-gray-500">Permisos</p>
+                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{summary[AttendanceStatus.SPECIAL_PERMIT]}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Permisos</p>
                 </div>
             </div>
 
@@ -130,8 +130,8 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, isOnline, a
                             <div className="flex items-center gap-4">
                                 <img src={student.avatarUrl} alt={student.name} className="w-12 h-12 rounded-full object-cover" />
                                 <div>
-                                    <p className="font-bold text-gray-800">{student.name}</p>
-                                    <p className="text-sm text-gray-500">{student.grade} - Grupo {student.group}</p>
+                                    <p className="font-bold text-gray-800 dark:text-gray-100">{student.name}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">{student.grade} - Grupo {student.group}</p>
                                 </div>
                             </div>
                             <div className="flex gap-1">
@@ -139,12 +139,12 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, isOnline, a
                                     const isActive = currentStatus === status;
                                     const classes = getStatusClass(status);
                                     return (
-                                        <button key={status} onClick={() => handleStatusChange(student.id, status)} className={`p-2 rounded-full transition-colors ${isActive ? `${classes.bg} ${classes.text} ring-2 ring-offset-2 ${classes.border}` : 'text-gray-400 hover:bg-gray-200'}`} title={status}>
-                                            {status === AttendanceStatus.PRESENT && <CheckCircleIcon className={isActive ? 'text-green-600' : ''} />}
-                                            {status === AttendanceStatus.ABSENT && <XCircleIcon className={isActive ? 'text-red-600' : ''} />}
-                                            {status === AttendanceStatus.TARDY && <ClockIcon className={isActive ? 'text-yellow-600' : ''} />}
-                                            {status === AttendanceStatus.EXCUSED && <DocumentTextIcon className={isActive ? 'text-blue-600' : ''} />}
-                                            {status === AttendanceStatus.SPECIAL_PERMIT && <ShieldCheckIcon className={isActive ? 'text-purple-600' : ''} />}
+                                        <button key={status} onClick={() => handleStatusChange(student.id, status)} className={`p-2 rounded-full transition-colors ${isActive ? `${classes.bg} ${classes.text} ring-2 ring-offset-2 dark:ring-offset-gray-800 ${classes.border}` : 'text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'}`} title={status}>
+                                            {status === AttendanceStatus.PRESENT && <CheckCircleIcon className={isActive ? classes.icon : ''} />}
+                                            {status === AttendanceStatus.ABSENT && <XCircleIcon className={isActive ? classes.icon : ''} />}
+                                            {status === AttendanceStatus.TARDY && <ClockIcon className={isActive ? classes.icon : ''} />}
+                                            {status === AttendanceStatus.EXCUSED && <DocumentTextIcon className={isActive ? classes.icon : ''} />}
+                                            {status === AttendanceStatus.SPECIAL_PERMIT && <ShieldCheckIcon className={isActive ? classes.icon : ''} />}
                                         </button>
                                     )
                                 })}
@@ -153,7 +153,7 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, isOnline, a
                     )
                 })}
                  {students.length === 0 && (
-                    <p className="text-center text-gray-500 py-8">No hay estudiantes en el grado/grupo seleccionado.</p>
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">No hay estudiantes en el grado/grupo seleccionado.</p>
                 )}
             </div>
         </div>

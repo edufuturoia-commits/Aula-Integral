@@ -1,10 +1,24 @@
-
 import React, { useState, useEffect } from 'react';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar } from 'recharts';
 import DashboardCard from '../components/DashboardCard';
 import { MOCK_ASSESSMENT_DATA } from '../constants';
 import type { AssessmentData, Student, Teacher } from '../types';
 import { GoogleGenAI } from "@google/genai";
+
+// Custom Tooltip for Recharts
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="p-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+        <p className="label font-bold text-gray-800 dark:text-gray-100">{`${label}`}</p>
+        {payload.map((pld: any, index: number) => (
+          <p key={index} style={{ color: pld.fill }} className="text-sm font-medium">{`${pld.name}: ${pld.value}`}</p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 
 interface DashboardProps {
@@ -144,7 +158,7 @@ const Dashboard: React.FC<DashboardProps> = ({ students, teachers }) => {
                             <XAxis dataKey="competency" angle={-45} textAnchor="end" interval={0} tick={{ fontSize: 12, fill: 'currentColor' }} />
                             <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: 'currentColor' }} />
                             <Tooltip
-                                contentStyle={{ borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', backgroundColor: 'rgb(255 255 255 / 0.8)' }}
+                                content={<CustomTooltip />}
                                 cursor={{ fill: 'rgba(209, 213, 219, 0.3)' }}
                             />
                             <Legend wrapperStyle={{ paddingTop: '40px' }} />
