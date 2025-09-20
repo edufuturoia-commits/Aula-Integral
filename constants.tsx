@@ -134,7 +134,7 @@ export const GRADE_GROUP_MAP: Record<string, string[]> = {
 export const GRADES = Object.keys(GRADE_GROUP_MAP);
 export const GROUPS = [...new Set(Object.values(GRADE_GROUP_MAP).flat())];
 
-export const SUBJECT_AREAS: SubjectArea[] = ['Matemáticas', 'Lengua Castellana', 'Inglés', 'Biología', 'Química', 'Física', 'Historia', 'Geografía', 'Constitución Política y Democracia', 'Educación Artística', 'Música', 'Educación Ética y en Valores Humanos', 'Filosofía', 'Educación Física', 'Educación Religiosa', 'Tecnología e Informática', 'Convivencia', 'Administración'];
+export const SUBJECT_AREAS: SubjectArea[] = ['Matemáticas', 'Lengua Castellana', 'Inglés', 'Biología', 'Química', 'Física', 'Historia', 'Geografía', 'Constitución Política y Democracia', 'Educación Artística', 'Música', 'Educación Ética y en Valores Humanos', 'Filosofía', 'Educación Física', 'Educación Religiosa', 'Tecnología e Informática', 'Convivencia', 'Todas', 'Coordinadores', 'Administrativos'];
 export const COMPETENCIES: Competency[] = ['Comprensión Lectora', 'Resolución de Problemas', 'Pensamiento Crítico', 'Competencias Ciudadanas', 'Comunicación Escrita', 'Análisis Científico', 'Expresión Artística', 'Competencia Digital', 'Pensamiento Histórico', 'Bilingüismo', 'Competencia Motriz'];
 export const RESOURCE_TYPES: ResourceType[] = [ResourceType.PDF, ResourceType.Video, ResourceType.Image, ResourceType.Document];
 export const SCHOOL_LOCATIONS = ['Salón de Clases', 'Patio de Recreo', 'Baños', 'Pasillos', 'Comedor Escolar', 'Biblioteca', 'Sala de Informática', 'Laboratorio', 'Afueras de la Institución', 'Otro'];
@@ -162,7 +162,7 @@ export const MOCK_COORDINATOR_USER: Teacher = {
     name: 'Carlos Mendoza',
     role: Role.COORDINATOR,
     avatarUrl: 'https://picsum.photos/seed/coordinator/100/100',
-    subject: 'Convivencia',
+    subject: 'Coordinadores',
     email: 'coordinacion@institucion.edu.co',
     phone: '3019876543',
     dateOfBirth: '1980-02-20',
@@ -181,7 +181,7 @@ const MOCK_ADMIN_USER: Teacher = {
     name: 'Administrador del Sistema',
     role: Role.ADMIN,
     avatarUrl: 'https://picsum.photos/seed/admin/100/100',
-    subject: 'Administración',
+    subject: 'Administrativos',
     email: 'admin@institucion.edu.co',
     phone: '3001112233',
     dateOfBirth: '1980-01-01',
@@ -200,7 +200,7 @@ const MOCK_RECTOR_USER: Teacher = {
     name: 'Armando Paredes',
     role: Role.RECTOR,
     avatarUrl: 'https://picsum.photos/seed/rector/100/100',
-    subject: 'Administración',
+    subject: 'Administrativos',
     email: 'rector@institucion.edu.co',
     phone: '3021112233',
     dateOfBirth: '1975-11-10',

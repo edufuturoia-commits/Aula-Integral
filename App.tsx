@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
 
 // Components
@@ -399,7 +400,7 @@ const App: React.FC = () => {
                     {/* FIX: Pass setTeachers to the Rectory component to enable homeroom teacher updates. */}
                     {currentPage === 'Rectory' && (isAdmin || currentUser.role === Role.RECTOR) && <Rectory students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} onShowSystemMessage={showSystemMessage} />}
                     {currentPage === 'InstitutionProfile' && (isAdmin || currentUser.role === Role.RECTOR) && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile} />}
-                    {currentPage === 'Calificaciones' && (isAdmin || currentUser.role !== Role.STUDENT) && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher}/>}
+                    {currentPage === 'Calificaciones' && (isAdmin || currentUser.role !== Role.STUDENT) && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} onShowSystemMessage={showSystemMessage}/>}
                     {currentPage === 'Communication' && (isAdmin || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR || currentUser.role === Role.TEACHER) && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} />}
                 </Suspense>
             </main>

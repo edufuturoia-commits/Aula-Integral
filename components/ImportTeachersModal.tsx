@@ -108,7 +108,7 @@ const ImportTeachersModal: React.FC<ImportTeachersModalProps> = ({ onClose, onSa
 1.  **Extracción Literal de Nombres**: La regla más importante es que los **Nombres y Apellidos** deben ser extraídos **LITERALMENTE** y **SIN NINGUNA MODIFICACIÓN**. Copia el texto tal cual aparece, incluyendo mayúsculas, minúsculas, tildes o la falta de ellas. No corrijas, no abrevies, no completes ni alteres los nombres bajo ninguna circunstancia. La fidelidad al documento original es la máxima prioridad.
 2.  **Manejo de Cédula/ID**: Extrae el número de Cédula o Identificación. Si no se encuentra, **DEBES GENERAR** un ID temporal único (ej: 'temp_12345'). El campo de la cédula no puede quedar vacío.
 3.  **Campos Opcionales**: Si no encuentras información para Fecha de Nacimiento, Dirección, Email o Móvil, deja el campo como un string vacío.
-4.  **Área Educativa**: El 'areaEducativa' debe ser uno de los siguientes valores: ${subjectList}. Si el área no se especifica en el documento, asigna 'Matemáticas' por defecto.
+4.  **Área Educativa**: El 'areaEducativa' debe ser uno de los siguientes valores: ${subjectList}. Intenta deducir la materia correcta. Si parece ser un profesor de primaria (enseña múltiples materias básicas), asigna 'Todas'. Si el cargo es de coordinador, asigna 'Coordinadores'. Si es administrativo, asigna 'Administrativos'. Si no es claro, asigna 'Matemáticas' por defecto.
 
 **Formato de Salida:**
 Devuelve un array JSON de objetos. Cada objeto debe tener las siguientes propiedades: "cedula", "nombresYApellidos", "fechaDeNacimiento", "areaEducativa", "direccion", "email", "movil".`;

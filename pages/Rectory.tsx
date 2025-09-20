@@ -404,6 +404,7 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, setT
                     subjectGradesData={subjectGradesData}
                     setSubjectGradesData={setSubjectGradesData}
                     currentUser={currentUser}
+                    onShowSystemMessage={onShowSystemMessage}
                 />
             </div>
             

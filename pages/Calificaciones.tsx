@@ -150,9 +150,10 @@ interface CalificacionesProps {
   setSubjectGradesData: (updater: React.SetStateAction<SubjectGrades[]>) => Promise<void>;
   currentUser: Teacher;
   viewMode?: 'teacher'; // Optional prop for specific views
+  onShowSystemMessage: (message: string, type?: 'success' | 'error') => void;
 }
 
-const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, subjectGradesData, setSubjectGradesData, currentUser, viewMode }) => {
+const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, subjectGradesData, setSubjectGradesData, currentUser, viewMode, onShowSystemMessage }) => {
     // --- State Management ---
     const [selectedPeriod, setSelectedPeriod] = useState<AcademicPeriod>(ACADEMIC_PERIODS[0]);
     const [selectedSubject, setSelectedSubject] = useState<SubjectArea | null>(null);
@@ -164,6 +165,9 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
     
     const [editingObservation, setEditingObservation] = useState<{ studentId: number; studentName: string; text: string } | null>(null);
     const [isObservationModalOpen, setIsObservationModalOpen] = useState(false);
+    
+    // New state for robust grade input
+    const [editingCell, setEditingCell] = useState<{ studentId: number; itemId: string; value: string } | null>(null);
     
     const tableContainerRef = useRef<HTMLDivElement>(null);
     const [showSnackbar, setShowSnackbar] = useState('');
@@ -265,6 +269,33 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
     }, [students, selectedGrade, selectedGroup]);
 
     // --- Handlers for Data Mutation ---
+    const handleCreateGradebook = async () => {
+        if (!selectedPeriod || !selectedSubject || !selectedGrade || !selectedGroup) {
+            onShowSystemMessage("Por favor, selecciona todas las opciones para crear una planilla.", 'error');
+            return;
+        }
+
+        const newGradebook: SubjectGrades = {
+            id: `${selectedSubject}-${selectedGrade}-${selectedGroup}-${selectedPeriod}`,
+            subject: selectedSubject,
+            grade: selectedGrade,
+            group: selectedGroup,
+            period: selectedPeriod,
+            teacherId: currentUser.id,
+            gradeItems: [],
+            scores: [],
+            observations: {},
+            isLocked: false,
+        };
+
+        await setSubjectGradesData(prev => {
+            if (prev.some(sg => sg.id === newGradebook.id)) {
+                return prev;
+            }
+            return [...prev, newGradebook];
+        });
+        onShowSystemMessage(`Planilla para ${selectedSubject} (${selectedGrade}-${selectedGroup}) creada exitosamente.`);
+    };
 
     const handleUpdateGradebook = useCallback(async (updatedGradebook: SubjectGrades) => {
         await setSubjectGradesData(prev =>
@@ -272,13 +303,8 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
         );
     }, [setSubjectGradesData]);
     
-    const handleScoreChange = (studentId: number, gradeItemId: string, newScore: string) => {
-        if (!selectedGradebook || selectedGradebook.isLocked) return;
-
-        const scoreValue = newScore === '' ? null : parseFloat(newScore.replace(',', '.'));
-        if (scoreValue !== null && (isNaN(scoreValue) || scoreValue < 0 || scoreValue > 5)) {
-            return;
-        }
+    const saveScoreChange = (studentId: number, gradeItemId: string, scoreValue: number | null) => {
+        if (!selectedGradebook) return;
 
         const updatedScores = [...selectedGradebook.scores];
         const scoreIndex = updatedScores.findIndex(s => s.studentId === studentId && s.gradeItemId === gradeItemId);
@@ -290,6 +316,43 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
         }
         
         handleUpdateGradebook({ ...selectedGradebook, scores: updatedScores });
+    };
+    
+    const handleEditingInputChange = (rawValue: string) => {
+        if (!editingCell) return;
+        
+        let sanitizedValue = rawValue.replace('.', ',');
+        
+        if ((sanitizedValue.match(/,/g) || []).length > 1) return;
+        sanitizedValue = sanitizedValue.replace(/[^0-9,]/g, '');
+
+        const parts = sanitizedValue.split(',');
+        if (parts[1] && parts[1].length > 1) return;
+        
+        const numericValue = parseFloat(sanitizedValue.replace(',', '.'));
+        if (!isNaN(numericValue)) {
+            if (numericValue > 5) return;
+            if (numericValue === 5 && parts[1] && parseInt(parts[1], 10) > 0) return;
+        }
+
+        setEditingCell({ ...editingCell, value: sanitizedValue });
+    };
+
+    const handleInputBlur = () => {
+        if (!editingCell) return;
+        const { studentId, itemId, value } = editingCell;
+        
+        let finalScore: number | null = null;
+        if (value.trim() !== '') {
+            let scoreValue = parseFloat(value.trim().replace(',', '.'));
+            if (!isNaN(scoreValue)) {
+                scoreValue = Math.max(0, Math.min(5, scoreValue));
+                finalScore = scoreValue;
+            }
+        }
+        
+        saveScoreChange(studentId, itemId, finalScore);
+        setEditingCell(null);
     };
 
     const handleItemSave = (item: GradeItem) => {
@@ -335,21 +398,6 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
         await handleUpdateGradebook(updatedGradebook);
         setShowSnackbar(`La planilla ha sido ${locked ? 'CERRADA' : 'ABIERTA'}.`);
         setTimeout(() => setShowSnackbar(''), 3000);
-    };
-
-    const handleBulkLock = async (lock: boolean) => {
-        const action = lock ? 'cerrar' : 'abrir';
-        const confirmation = window.confirm(`¿Estás seguro de que quieres ${action} TODAS las planillas? Los docentes ${lock ? 'no podrán' : 'podrán'} modificar notas y observaciones.`);
-
-        if (confirmation) {
-            const updatedGrades = subjectGradesData.map(gb => ({
-                ...gb,
-                isLocked: lock,
-            }));
-            await setSubjectGradesData(updatedGrades);
-            setShowSnackbar(`Todas las planillas han sido ${lock ? 'cerradas' : 'abiertas'}.`);
-            setTimeout(() => setShowSnackbar(''), 3000);
-        }
     };
 
     const getGradeSelectorOptions = () => {
@@ -401,7 +449,7 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
                         <p className="text-gray-500 dark:text-gray-400">No hay una planilla de calificaciones configurada para esta selección.</p>
                         {(!viewMode || canAdminGrades) && (
                             <button
-                                onClick={() => alert("Función para crear nueva planilla no implementada.")}
+                                onClick={handleCreateGradebook}
                                 className="mt-4 px-4 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-primary-focus"
                                 disabled={!selectedGrade || !selectedGroup || !selectedSubject}
                             >
@@ -435,18 +483,11 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
                             </div>
                             
                             {canAdminGrades && viewMode !== 'teacher' && (
-                                <div className="flex items-center space-x-4">
-                                    <div className="flex items-center space-x-2">
-                                        <button onClick={() => handleBulkLock(true)} className="bg-red-500 text-white font-semibold py-1 px-3 rounded-lg hover:bg-red-600 text-sm flex items-center gap-1"><LockClosedIcon className="h-4 w-4" /> Cerrar Todas</button>
-                                        <button onClick={() => handleBulkLock(false)} className="bg-green-500 text-white font-semibold py-1 px-3 rounded-lg hover:bg-green-600 text-sm flex items-center gap-1"><LockOpenIcon className="h-4 w-4" /> Abrir Todas</button>
-                                    </div>
-                                    <div className="w-px h-8 bg-gray-300 dark:bg-gray-600"></div>
-                                    <div className="flex items-center space-x-2">
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{selectedGradebook.isLocked ? "Planilla Cerrada" : "Planilla Abierta"}</span>
-                                        <button onClick={() => handleLockToggle(!selectedGradebook.isLocked)} className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${selectedGradebook.isLocked ? 'bg-red-500' : 'bg-green-500'}`}>
-                                            <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${selectedGradebook.isLocked ? 'translate-x-1' : 'translate-x-6'}`} />
-                                        </button>
-                                    </div>
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{selectedGradebook.isLocked ? "Planilla Cerrada" : "Planilla Abierta"}</span>
+                                    <button onClick={() => handleLockToggle(!selectedGradebook.isLocked)} className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${selectedGradebook.isLocked ? 'bg-red-500' : 'bg-green-500'}`}>
+                                        <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${selectedGradebook.isLocked ? 'translate-x-1' : 'translate-x-6'}`} />
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -488,18 +529,39 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
                                         const { finalScore } = calculateFinalScore(student.id, selectedGradebook);
                                         const desempeno = getDesempeno(finalScore);
                                         const observation = selectedGradebook.observations[student.id] || '';
+                                        
                                         return (
                                             <tr key={student.id}>
                                                 <td className="px-4 py-2 font-medium text-gray-900 dark:text-gray-100 sticky left-0 bg-white dark:bg-gray-800 w-48">{student.name}</td>
                                                 {selectedGradebook.gradeItems.map(item => {
+                                                    const isEditingThisCell = editingCell?.studentId === student.id && editingCell?.itemId === item.id;
                                                     const score = selectedGradebook.scores.find(s => s.studentId === student.id && s.gradeItemId === item.id)?.score;
+                                                    
+                                                    let displayValue = '';
+                                                    if (isEditingThisCell) {
+                                                        displayValue = editingCell.value;
+                                                    } else if (score !== null && score !== undefined) {
+                                                        displayValue = score.toFixed(1).replace('.', ',');
+                                                    }
+
                                                     return (
                                                         <td key={item.id} className="px-4 py-2 text-center">
                                                             <input
                                                                 type="text"
                                                                 inputMode="decimal"
-                                                                value={score === null || score === undefined ? '' : String(score).replace('.', ',')}
-                                                                onChange={(e) => handleScoreChange(student.id, item.id, e.target.value)}
+                                                                value={displayValue}
+                                                                onFocus={() => {
+                                                                    if (selectedGradebook.isLocked) return;
+                                                                    setEditingCell({
+                                                                        studentId: student.id,
+                                                                        itemId: item.id,
+                                                                        // FIX: Called toFixed on a string. Should be called on the number.
+                                                                        value: score === null || score === undefined ? '' : score.toFixed(1).replace('.', ','),
+                                                                    });
+                                                                }}
+                                                                onChange={(e) => handleEditingInputChange(e.target.value)}
+                                                                onBlur={handleInputBlur}
+                                                                onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                                                                 disabled={selectedGradebook.isLocked}
                                                                 className={`w-16 p-1 text-center border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 ${selectedGradebook.isLocked ? 'border-gray-200 dark:border-gray-600' : 'border-gray-300 dark:border-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent'} disabled:cursor-not-allowed`}
                                                             />

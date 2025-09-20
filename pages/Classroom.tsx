@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import StudentList from '../components/StudentList';
 import IncidentModal from '../components/IncidentModal';
@@ -115,7 +113,6 @@ const ChatModal: React.FC<{
 };
 
 
-// FIX: The component was missing its return statement and the function body was incomplete.
 const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, teachers, currentUser, subjectGradesData, setSubjectGradesData, attendanceRecords, onUpdateAttendance, onBulkUpdateAttendance, incidents, onUpdateIncidents, announcements, onShowSystemMessage }) => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -126,14 +123,8 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   const [citationToCancel, setCitationToCancel] = useState<Citation | null>(null);
   const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [groupFilter, setGroupFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'students' | 'comunicaciones' | 'attendance' | 'manual' | 'events' | 'calificaciones'>('students');
-  const [rightPanelTab, setRightPanelTab] = useState<'incidents' | 'messages' | 'citations' | 'coordination'>('incidents');
-  const [parentMessages, setParentMessages] = useState<ParentMessage[]>(MOCK_PARENT_MESSAGES);
-  const [activeChat, setActiveChat] = useState<ParentMessage | null>(null);
-  const [citations, setCitations] = useState<Citation[]>(MOCK_CITATIONS);
-  const [coordinationConversation, setCoordinationConversation] = useState<CoordinationMessage[]>(MOCK_MESSAGE_HISTORY);
-  const [newCoordinationMessage, setNewCoordinationMessage] = useState('');
-  const coordinationChatRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'calificaciones' | 'manual' | 'events'>('students');
+  const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
 
   const availableGrades = useMemo(() => ['all', ...GRADES], []);
   const availableGroups = useMemo(() => {
@@ -142,21 +133,6 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
     }
     return ['all', ...GRADE_GROUP_MAP[gradeFilter]];
   }, [gradeFilter]);
-  
-  const teacherAnnouncements = useMemo(() => {
-    return announcements
-        .filter(ann => {
-            if (ann.recipients === 'all' || ann.recipients === 'all_teachers') {
-                return true;
-            }
-            if (typeof ann.recipients === 'object' && 'teacherId' in ann.recipients) {
-                return ann.recipients.teacherId === currentUser.id;
-            }
-            return false;
-        })
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [announcements, currentUser.id]);
-
 
   const handleGradeChange = (grade: string) => {
     setGradeFilter(grade);
@@ -176,32 +152,47 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
       .filter(inc => inc.teacherName === currentUser.name && !inc.archived)
       .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), 
   [incidents, currentUser.name]);
-  
-  const sortedCitations = useMemo(() => citations.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()), [citations]);
-
-  useEffect(() => {
-    if (coordinationChatRef.current) {
-        coordinationChatRef.current.scrollTop = coordinationChatRef.current.scrollHeight;
-    }
-  }, [coordinationConversation]);
-
 
   const openModalForStudent = (student: Student) => {
     setSelectedStudent(student);
     setIsModalOpen(true);
   };
+  
+  const handleOpenEditModal = (incident: Incident) => {
+    setEditingIncident(incident);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteIncident = async (incidentId: string) => {
+    if (window.confirm("¿Estás seguro de que quieres eliminar esta incidencia? Esta acción no se puede deshacer y se eliminará de la vista de coordinación.")) {
+        try {
+            await onUpdateIncidents('delete', incidentId);
+            onShowSystemMessage("Incidencia eliminada exitosamente.");
+        } catch (error) {
+            console.error("Failed to delete incident:", error);
+            onShowSystemMessage("Error al eliminar la incidencia.", 'error');
+        }
+    }
+  };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedStudent(null);
+    setEditingIncident(null);
   };
-
-  const handleSaveIncident = async (incident: Incident) => {
+  
+  const handleSaveIncident = async (incidentData: Incident) => {
     try {
-        await onUpdateIncidents('add', { ...incident, attended: false });
+        if (editingIncident) {
+            // It's an update, merge new data with existing incident, keeping the original ID.
+            await onUpdateIncidents('update', { ...editingIncident, ...incidentData, id: editingIncident.id });
+            onShowSystemMessage("Incidencia actualizada correctamente.");
+        } else {
+            // It's a new incident.
+            await onUpdateIncidents('add', { ...incidentData, attended: false });
+            onShowSystemMessage("Incidencia guardada. Coordinación ha sido notificada.");
+        }
         handleCloseModal();
-        onShowSystemMessage("Incidencia guardada. Coordinación ha sido notificada.");
-        setRightPanelTab('incidents');
     } catch (error) {
         console.error("Failed to save incident:", error);
         onShowSystemMessage("Error: No se pudo guardar la incidencia. Revisa tu conexión.", 'error');
@@ -209,9 +200,9 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   };
   
   const handleSaveCitations = (newCitations: Citation[]) => {
-    setCitations(prev => [...prev, ...newCitations]);
+    // This state is local to Incidents page, but we keep the handler signature for consistency
     setIsCitationModalOpen(false);
-    onShowSystemMessage(`${newCitations.length} citacion(es) enviada(s) exitosamente.`);
+    onShowSystemMessage(`${newCitations.length} citacion(es) enviada(s) exitosamente (simulación).`);
   };
 
   const handleOpenCancelModal = (citation: Citation) => {
@@ -220,15 +211,11 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   };
 
   const handleConfirmCancelCitation = (reason: string) => {
+    // This state is local to Incidents page, but we keep the handler signature for consistency
     if (!citationToCancel) return;
-    setCitations(prev => prev.map(c => 
-        c.id === citationToCancel.id 
-        ? { ...c, status: CitationStatus.CANCELLED, cancellationReason: reason }
-        : c
-    ));
     setIsCancelModalOpen(false);
     setCitationToCancel(null);
-    onShowSystemMessage("Citación cancelada exitosamente.");
+    onShowSystemMessage("Citación cancelada exitosamente (simulación).");
   };
   
   const handleSendGroupMessage = (message: string) => {
@@ -236,7 +223,6 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
     onShowSystemMessage("Mensaje grupal enviado a todos los acudientes.");
   };
 
-  // FIX: The student object was incomplete, missing avatarUrl, grade, group, and role.
   const handleSaveNewStudent = async (newStudentData: { name: string; grade: string; group: string }) => {
     const newStudent: Student = {
         id: Date.now(),
@@ -253,15 +239,13 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
     onShowSystemMessage(`${newStudent.name} ha sido añadido exitosamente.`, 'success');
   };
 
-  // The rest of the component's JSX was missing. It has been reconstructed based on the available state and props.
   return (
     <div className="flex flex-col lg:flex-row gap-6 h-full">
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Tabs */}
         <div className="border-b border-gray-200 dark:border-gray-700 mb-4 flex-shrink-0">
           <nav className="-mb-px flex space-x-6 overflow-x-auto">
-            {(['students', 'attendance', 'calificaciones', 'comunicaciones', 'manual', 'events'] as const).map(tab => (
+            {(['students', 'attendance', 'calificaciones', 'manual', 'events'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -273,7 +257,6 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
           </nav>
         </div>
 
-        {/* Content based on activeTab */}
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'students' && (
             <StudentList
@@ -305,21 +288,57 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
               setSubjectGradesData={setSubjectGradesData}
               currentUser={currentUser}
               viewMode="teacher"
+              onShowSystemMessage={onShowSystemMessage}
             />
           )}
           {activeTab === 'manual' && <ManualViewer />}
           {activeTab === 'events' && <EventPostersViewer />}
-          {/* Communications Tab is part of the right panel logic in this layout */}
+        </div>
+      </div>
+
+      {/* Right side panel for incident management */}
+      <div className="w-full lg:w-96 flex-shrink-0">
+        <div className="bg-white p-6 rounded-xl shadow-md h-full flex flex-col">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-3">Gestión de Incidencias</h3>
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                {myReportedIncidents.length > 0 ? (
+                    myReportedIncidents.map(inc => (
+                        <div key={inc.id} className="p-4 border rounded-lg bg-gray-50">
+                            <p className="font-bold text-primary">{inc.studentName}</p>
+                            <p className="text-sm text-gray-600 font-semibold">{inc.type}</p>
+                            <p className="text-xs text-gray-500">{new Date(inc.timestamp).toLocaleString()}</p>
+                            <p className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">{inc.notes}</p>
+                            <div className="flex justify-end gap-3 mt-3">
+                                <button onClick={() => handleOpenEditModal(inc)} className="text-xs font-semibold text-blue-600 hover:underline">Editar</button>
+                                <button onClick={() => handleDeleteIncident(inc.id)} className="text-xs font-semibold text-red-600 hover:underline">Eliminar</button>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="text-center text-gray-500 py-8 flex flex-col items-center">
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                       <p className="mt-2">No has reportado incidencias.</p>
+                       <p className="text-xs mt-1">Usa el botón de alerta en la lista de estudiantes para registrar una.</p>
+                    </div>
+                )}
+            </div>
         </div>
       </div>
       
-       {/* Modals will be rendered here */}
-      {isModalOpen && <IncidentModal student={selectedStudent} students={students} onClose={handleCloseModal} onSave={handleSaveIncident} reporterName={`Prof. ${currentUser.name}`} />}
+      {isModalOpen && (
+          <IncidentModal
+            student={selectedStudent}
+            incident={editingIncident}
+            students={students}
+            onClose={handleCloseModal}
+            onSave={handleSaveIncident}
+            reporterName={`Prof. ${currentUser.name}`}
+          />
+      )}
       {isAddStudentModalOpen && <AddStudentModal onClose={() => setIsAddStudentModalOpen(false)} onSave={handleSaveNewStudent} />}
       {isCitationModalOpen && <CitationModal students={filteredStudents} onClose={() => setIsCitationModalOpen(false)} onSave={handleSaveCitations} currentUser={currentUser} />}
       {isGroupMessageModalOpen && <GroupMessageModal onClose={() => setIsGroupMessageModalOpen(false)} onSend={handleSendGroupMessage} />}
       {isCancelModalOpen && citationToCancel && <CancelCitationModal onClose={() => setIsCancelModalOpen(false)} onConfirm={handleConfirmCancelCitation} />}
-      {activeChat && <ChatModal chat={activeChat} onClose={() => setActiveChat(null)} onUpdateConversation={() => {}} currentUser={currentUser} />}
     </div>
   );
 };
