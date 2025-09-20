@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import type { Student, Teacher, Incident, Announcement, SubjectGrades } from '../types';
 // FIX: Import DocumentType for use in handleImportStudents.
-import { IncidentType, Role, DocumentType } from '../types';
+// FIX: Import IncidentStatus to filter incidents correctly.
+import { IncidentType, Role, DocumentType, IncidentStatus } from '../types';
 // FIX: Import addOrUpdateTeachers for use in handleImportStudents.
 import { getIncidents, addOrUpdateStudents, addOrUpdateTeachers } from '../db';
 import DashboardCard from '../components/DashboardCard';
@@ -73,7 +74,8 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, setT
         const loadData = async () => {
             setLoading(true);
             const allIncidents = await getIncidents();
-            setIncidents(allIncidents.filter(inc => !inc.archived));
+            // FIX: The 'archived' property does not exist on the 'Incident' type. Filtering should be done using the 'status' property with the 'IncidentStatus.ARCHIVED' enum value.
+            setIncidents(allIncidents.filter(inc => inc.status !== IncidentStatus.ARCHIVED));
             setLoading(false);
         };
         loadData();

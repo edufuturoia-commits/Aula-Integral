@@ -114,7 +114,7 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('Dashboard');
   
   // Theme state
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'system');
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
 
   // Data States

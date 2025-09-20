@@ -1,7 +1,8 @@
 
+
 import React, { useState, useMemo } from 'react';
-import type { Student, Incident } from '../types';
-import { IncidentType } from '../types';
+import type { Student, Incident, Teacher } from '../types';
+import { IncidentType, Role, IncidentStatus } from '../types';
 import { SCHOOL_LOCATIONS } from '../constants';
 
 interface IncidentModalProps {
@@ -10,10 +11,10 @@ interface IncidentModalProps {
   students: Student[];
   onClose: () => void;
   onSave: (incident: Incident) => void;
-  reporterName: string;
+  reporter: Teacher;
 }
 
-const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, incident, students, onClose, onSave, reporterName }) => {
+const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, incident, students, onClose, onSave, reporter }) => {
   const [incidentType, setIncidentType] = useState<IncidentType>(incident?.type || IncidentType.CONVIVENCIA_ESCOLAR);
   const [otherTypeDescription, setOtherTypeDescription] = useState(incident?.otherTypeDescription || '');
   const [isVictim, setIsVictim] = useState(incident?.isVictim || false);
@@ -74,12 +75,23 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, 
         notes,
         timestamp: incident?.timestamp || new Date().toISOString(),
         synced: false,
-        teacherName: reporterName,
+        teacherName: reporter.name,
         location,
-        archived: incident?.archived || false,
+        status: incident?.status || IncidentStatus.ACTIVE,
     };
     onSave(newIncident);
   };
+
+    const getDisplayReporterName = () => {
+        switch(reporter.role) {
+            case Role.TEACHER: return `Prof. ${reporter.name}`;
+            case Role.COORDINATOR: return `Coord. ${reporter.name}`;
+            case Role.RECTOR: return `Rector ${reporter.name}`;
+            case Role.ADMIN: return `Admin. ${reporter.name}`;
+            default: return reporter.name;
+        }
+    };
+    const displayReporterName = getDisplayReporterName();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -120,8 +132,8 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, 
               )}
             </div>
              <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{reporterName.startsWith('Prof.') ? 'Docente que Reporta' : 'Reportado por'}</label>
-              <p className="mt-1 p-2 border border-gray-300 bg-gray-200 dark:bg-gray-700 dark:border-gray-600 rounded-md text-gray-800 dark:text-gray-200">{reporterName}</p>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{reporter.role === Role.TEACHER ? 'Docente que Reporta' : 'Reportado por'}</label>
+              <p className="mt-1 p-2 border border-gray-300 bg-gray-200 dark:bg-gray-700 dark:border-gray-600 rounded-md text-gray-800 dark:text-gray-200">{displayReporterName}</p>
             </div>
           </div>
 

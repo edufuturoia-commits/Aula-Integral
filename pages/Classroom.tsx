@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import StudentList from '../components/StudentList';
 import IncidentModal from '../components/IncidentModal';
@@ -7,8 +9,8 @@ import CitationModal from '../components/CitationModal';
 import GroupMessageModal from '../components/GroupMessageModal';
 import CancelCitationModal from '../components/CancelCitationModal';
 import AddStudentModal from '../components/AddStudentModal'; // Import new modal
-import type { Student, Incident, ParentMessage, Citation, CoordinationMessage, Teacher, SubjectGrades, AttendanceRecord, Announcement } from '../types';
-import { CitationStatus, Role } from '../types';
+import type { Student, Incident, ParentMessage, Citation, CoordinationMessage, Teacher, SubjectGrades, AttendanceRecord, Announcement, IncidentType } from '../types';
+import { CitationStatus, Role, IncidentStatus } from '../types';
 import { addOrUpdateStudents } from '../db';
 import { GRADES, GROUPS, MOCK_PARENT_MESSAGES, MOCK_CITATIONS, MOCK_MESSAGE_HISTORY, MOCK_COORDINATOR_USER, GRADE_GROUP_MAP } from '../constants';
 import AttendanceTaker from '../components/AttendanceTaker';
@@ -34,82 +36,68 @@ interface ClassroomProps {
   onShowSystemMessage: (message: string, type?: 'success' | 'error') => void;
 }
 
+// --- Icons ---
 const MoreVertIcon: React.FC<{className?: string}> = ({className}) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${className}`} viewBox="0 0 20 20" fill="currentColor">
         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
     </svg>
 );
 
-const ChatModal: React.FC<{
-  chat: ParentMessage;
-  onClose: () => void;
-  onUpdateConversation: (studentId: number, newConversation: ParentMessage['conversation']) => void;
-  currentUser: Teacher;
-}> = ({ chat, onClose, onUpdateConversation, currentUser }) => {
-    const [newMessage, setNewMessage] = useState('');
-    const [currentConversation, setCurrentConversation] = useState(chat.conversation);
-    const chatContainerRef = useRef<HTMLDivElement>(null);
+const ConvivenciaIcon: React.FC<{className?: string}> = ({className}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
+    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015.537 4.931l-3.537.442A5.001 5.001 0 011 16v-1a6.97 6.97 0 00-1.5-4.33A5 5 0 016 11z" />
+  </svg>
+);
 
-    useEffect(() => {
-        if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
-    }, [currentConversation]);
+const UniformeIcon: React.FC<{className?: string}> = ({className}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
+    <path d="M5.5 3.5A2.5 2.5 0 018 1h4a2.5 2.5 0 012.5 2.5V5h-9V3.5z" />
+    <path fillRule="evenodd" d="M3 6a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V6zm3.5 1a.5.5 0 01.5.5v1.372l3.36 1.68a.5.5 0 00.28 0l3.36-1.68V7.5a.5.5 0 011 0v1.517a1.5 1.5 0 01-.842 1.35l-4 2a1.5 1.5 0 01-1.316 0l-4-2A1.5 1.5 0 015 9.017V7.5a.5.5 0 01.5-.5z" clipRule="evenodd" />
+  </svg>
+);
 
-    const handleSendMessage = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newMessage.trim()) return;
+const DanosIcon: React.FC<{className?: string}> = ({className}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
+    <path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V5.236a1 1 0 00-1.447-.894l-4 2A1 1 0 0011 7.236V17zM4 6a2 2 0 012-2h2.553a1 1 0 01.894.447l1.447 2.894a1 1 0 010 1.109l-1.447 2.894A1 1 0 018.553 14H6a2 2 0 01-2-2V6z" />
+  </svg>
+);
 
-        const teacherMessage = {
-            sender: 'teacher' as const,
-            text: newMessage,
-            timestamp: 'Ahora'
-        };
+const AcosoIcon: React.FC<{className?: string}> = ({className}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.083-4.418A7.001 7.001 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM4.76 11.362A.75.75 0 014 10.5v-1a.75.75 0 011.5 0v1c0 .197-.079.384-.21.524l-1.28 1.281a.75.75 0 01-1.06-1.061l1.28-1.281zM10 8a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 8zm4.76 3.362a.75.75 0 00-1.06-1.061l-1.28 1.281A.75.75 0 0012.21 12.1l1.28-1.28a.75.75 0 001.27 1.06l-1.28 1.281a.75.75 0 001.06 1.061l1.28-1.28z" clipRule="evenodd" />
+  </svg>
+);
 
-        const updatedConversation = [...currentConversation, teacherMessage];
-        setCurrentConversation(updatedConversation);
-        onUpdateConversation(chat.studentId, updatedConversation);
-        setNewMessage('');
-    };
+const IncumplimientoIcon: React.FC<{className?: string}> = ({className}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+  </svg>
+);
 
-    return (
-         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg mx-4 flex flex-col h-[70vh]" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b flex items-center space-x-3 min-w-0">
-                     <img src={chat.studentAvatar} alt={chat.studentName} className="w-10 h-10 rounded-full flex-shrink-0" />
-                     <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bold">Chat con Acudiente de</h3>
-                        <p className="text-sm text-gray-600 break-words">{chat.studentName}</p>
-                     </div>
-                </div>
-                <div ref={chatContainerRef} className="flex-1 p-6 space-y-4 overflow-y-auto bg-gray-50">
-                    {currentConversation.map((msg, index) => (
-                        <div key={index} className={`flex items-end gap-2 ${msg.sender === 'teacher' ? 'justify-end' : ''}`}>
-                             {msg.sender === 'parent' && <img src={chat.studentAvatar} className="w-8 h-8 rounded-full" alt="parent" />}
-                            <div className={`max-w-md p-3 rounded-xl ${msg.sender === 'teacher' ? 'bg-primary text-white rounded-br-none' : 'bg-gray-200 text-gray-800 rounded-bl-none'}`}>
-                                <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
-                                <p className="text-xs opacity-70 mt-1 text-right">{msg.timestamp}</p>
-                            </div>
-                            {msg.sender === 'teacher' && <img src={currentUser.avatarUrl} className="w-8 h-8 rounded-full" alt="teacher" />}
-                        </div>
-                    ))}
-                </div>
-                <form onSubmit={handleSendMessage} className="p-4 border-t bg-white flex items-center gap-4">
-                    <textarea
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); }}}
-                        placeholder="Escribe una respuesta..."
-                        className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-gray-50 text-gray-900 placeholder-gray-500"
-                        rows={1}
-                    />
-                    <button type="submit" className="bg-primary text-white rounded-full p-3 hover:bg-primary-focus transition-colors disabled:bg-gray-300" disabled={!newMessage.trim()}>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
-                    </button>
-                </form>
-            </div>
-        </div>
-    );
+const FaltasAcademicasIcon: React.FC<{className?: string}> = ({className}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clipRule="evenodd" />
+    <path d="M15 7h2a1 1 0 011 1v8a1 1 0 01-1 1h-2v-2h1v-6h-1V7z" />
+  </svg>
+);
+
+const OtroIcon: React.FC<{className?: string}> = ({className}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+  </svg>
+);
+
+const IncidentTypeIcon: React.FC<{type: IncidentType, className?: string}> = ({ type, className = "h-5 w-5" }) => {
+    switch (type) {
+        case 'Convivencia Escolar': return <ConvivenciaIcon className={className} />;
+        case 'Uso inapropiado del uniforme': return <UniformeIcon className={className} />;
+        case 'Daños a la infraestructura': return <DanosIcon className={className} />;
+        case 'Acoso y ciberacoso': return <AcosoIcon className={className} />;
+        case 'Incumplimiento': return <IncumplimientoIcon className={className} />;
+        case 'Faltas Académicas': return <FaltasAcademicasIcon className={className} />;
+        case 'Otro': return <OtroIcon className={className} />;
+        default: return <OtroIcon className={className} />;
+    }
 };
 
 
@@ -125,6 +113,23 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   const [groupFilter, setGroupFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'calificaciones' | 'manual' | 'events'>('students');
   const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
+  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const actionMenuRef = useRef<HTMLDivElement>(null);
+
+
+  const studentMap = useMemo(() => new Map(students.map(s => [s.id, s])), [students]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+        if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+            setActionMenuOpen(null);
+        }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const availableGrades = useMemo(() => ['all', ...GRADES], []);
   const availableGroups = useMemo(() => {
@@ -149,7 +154,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   
   const myReportedIncidents = useMemo(() => 
     incidents
-      .filter(inc => inc.teacherName === currentUser.name && !inc.archived)
+      .filter(inc => inc.teacherName === currentUser.name && inc.status === IncidentStatus.ACTIVE)
       .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), 
   [incidents, currentUser.name]);
 
@@ -161,16 +166,18 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   const handleOpenEditModal = (incident: Incident) => {
     setEditingIncident(incident);
     setIsModalOpen(true);
+    setActionMenuOpen(null);
   };
 
-  const handleDeleteIncident = async (incidentId: string) => {
-    if (window.confirm("¿Estás seguro de que quieres eliminar esta incidencia? Esta acción no se puede deshacer y se eliminará de la vista de coordinación.")) {
+  const handleDeclineIncident = async (incident: Incident) => {
+    setActionMenuOpen(null);
+    if (window.confirm("¿Estás seguro de que quieres declinar esta incidencia? No aparecerá más en tu lista de activas y se notificará a coordinación.")) {
         try {
-            await onUpdateIncidents('delete', incidentId);
-            onShowSystemMessage("Incidencia eliminada exitosamente.");
+            await onUpdateIncidents('update', { ...incident, status: IncidentStatus.DECLINED });
+            onShowSystemMessage("Incidencia declinada exitosamente.");
         } catch (error) {
-            console.error("Failed to delete incident:", error);
-            onShowSystemMessage("Error al eliminar la incidencia.", 'error');
+            console.error("Failed to decline incident:", error);
+            onShowSystemMessage("Error al declinar la incidencia.", 'error');
         }
     }
   };
@@ -189,7 +196,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
             onShowSystemMessage("Incidencia actualizada correctamente.");
         } else {
             // It's a new incident.
-            await onUpdateIncidents('add', { ...incidentData, attended: false });
+            await onUpdateIncidents('add', { ...incidentData, status: IncidentStatus.ACTIVE });
             onShowSystemMessage("Incidencia guardada. Coordinación ha sido notificada.");
         }
         handleCloseModal();
@@ -249,7 +256,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`capitalize whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                className={`capitalize whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab ? 'border-primary text-primary dark:text-secondary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
               >
                 {tab === 'students' ? 'Mis Estudiantes' : tab}
               </button>
@@ -296,34 +303,77 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
         </div>
       </div>
 
-      {/* Right side panel for incident management */}
-      <div className="w-full lg:w-96 flex-shrink-0">
-        <div className="bg-white p-6 rounded-xl shadow-md h-full flex flex-col">
-            <h3 className="text-xl font-bold text-gray-800 mb-4 border-b pb-3">Gestión de Incidencias</h3>
-            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-                {myReportedIncidents.length > 0 ? (
-                    myReportedIncidents.map(inc => (
-                        <div key={inc.id} className="p-4 border rounded-lg bg-gray-50">
-                            <p className="font-bold text-primary">{inc.studentName}</p>
-                            <p className="text-sm text-gray-600 font-semibold">{inc.type}</p>
-                            <p className="text-xs text-gray-500">{new Date(inc.timestamp).toLocaleString()}</p>
-                            <p className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">{inc.notes}</p>
-                            <div className="flex justify-end gap-3 mt-3">
-                                <button onClick={() => handleOpenEditModal(inc)} className="text-xs font-semibold text-blue-600 hover:underline">Editar</button>
-                                <button onClick={() => handleDeleteIncident(inc.id)} className="text-xs font-semibold text-red-600 hover:underline">Eliminar</button>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="text-center text-gray-500 py-8 flex flex-col items-center">
-                       <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                       <p className="mt-2">No has reportado incidencias.</p>
-                       <p className="text-xs mt-1">Usa el botón de alerta en la lista de estudiantes para registrar una.</p>
-                    </div>
-                )}
-            </div>
+      {/* Right side panel for incident management, only shown on students tab */}
+      {activeTab === 'students' && (
+        <div className="w-full lg:w-96 flex-shrink-0">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md h-full flex flex-col">
+              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-3 flex justify-between items-center">
+                  <span>Gestión de Incidencias</span>
+                  <span className="text-base font-medium bg-primary/10 text-primary dark:bg-secondary/20 dark:text-secondary px-2 py-1 rounded-md">{myReportedIncidents.length}</span>
+              </h3>
+              <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                  {myReportedIncidents.length > 0 ? (
+                      myReportedIncidents.map(inc => {
+                        const student = studentMap.get(inc.studentId);
+                        return (
+                          <div key={inc.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 space-y-3">
+                              {/* Card Header */}
+                              <div className="flex justify-between items-start">
+                                  <div className="flex items-center gap-3">
+                                      <img 
+                                        src={student?.avatarUrl || `https://picsum.photos/seed/${inc.studentId}/100/100`} 
+                                        alt={inc.studentName} 
+                                        className="w-10 h-10 rounded-full object-cover" 
+                                      />
+                                      <div>
+                                          <p className="font-bold text-gray-800 dark:text-gray-100">{inc.studentName}</p>
+                                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            {new Date(inc.timestamp).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
+                                          </p>
+                                      </div>
+                                  </div>
+                                  <div className="relative" ref={actionMenuRef}>
+                                      <button 
+                                        onClick={() => setActionMenuOpen(actionMenuOpen === inc.id ? null : inc.id)}
+                                        className="p-1 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        aria-haspopup="true"
+                                        aria-expanded={actionMenuOpen === inc.id}
+                                      >
+                                          <MoreVertIcon />
+                                      </button>
+                                      {actionMenuOpen === inc.id && (
+                                          <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
+                                              <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                                                  <a href="#" onClick={(e) => { e.preventDefault(); handleOpenEditModal(inc); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" role="menuitem">Editar</a>
+                                                  <a href="#" onClick={(e) => { e.preventDefault(); handleDeclineIncident(inc); }} className="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800" role="menuitem">Declinar</a>
+                                              </div>
+                                          </div>
+                                      )}
+                                  </div>
+                              </div>
+
+                              {/* Card Body */}
+                              <div>
+                                  <div className="flex items-center gap-2 mb-2">
+                                      <IncidentTypeIcon type={inc.type as IncidentType} className="h-5 w-5 text-primary dark:text-secondary" />
+                                      <span className="text-sm font-semibold text-primary dark:text-secondary">{inc.type}</span>
+                                  </div>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-md">{inc.notes}</p>
+                              </div>
+                          </div>
+                        )
+                      })
+                  ) : (
+                      <div className="text-center text-gray-500 dark:text-gray-400 py-8 flex flex-col items-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                         <p className="mt-2 font-medium">Todo en orden</p>
+                         <p className="text-xs mt-1">No has reportado incidencias activas. Usa el botón de alerta en la lista de estudiantes para registrar una.</p>
+                      </div>
+                  )}
+              </div>
+          </div>
         </div>
-      </div>
+      )}
       
       {isModalOpen && (
           <IncidentModal
@@ -332,7 +382,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
             students={students}
             onClose={handleCloseModal}
             onSave={handleSaveIncident}
-            reporterName={`Prof. ${currentUser.name}`}
+            reporter={currentUser}
           />
       )}
       {isAddStudentModalOpen && <AddStudentModal onClose={() => setIsAddStudentModalOpen(false)} onSave={handleSaveNewStudent} />}

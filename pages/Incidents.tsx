@@ -1,6 +1,10 @@
+
+
+
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades, Guardian } from '../types';
-import { IncidentType, AttendanceStatus, CitationStatus, Role, DocumentType, TeacherStatus } from '../types';
+import { IncidentType, AttendanceStatus, CitationStatus, Role, DocumentType, TeacherStatus, IncidentStatus } from '../types';
 // FIX: Import 'getAnnouncements' and 'getTeachers' to resolve undefined function errors.
 import { addOrUpdateTeachers, addOrUpdateStudents, getTeachers } from '../db';
 import { GRADES, GROUPS, GRADE_GROUP_MAP } from '../constants';
@@ -233,7 +237,9 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
 
     const displayedIncidents = useMemo(() => {
         return incidents.filter(inc => {
-            const matchesView = incidentView === 'active' ? !inc.archived : inc.archived;
+            const matchesView = incidentView === 'active' 
+                ? inc.status !== IncidentStatus.ARCHIVED 
+                : inc.status === IncidentStatus.ARCHIVED;
             if (!matchesView) return false;
 
             const matchesSearch =
@@ -316,10 +322,11 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                 onShowSystemMessage("Incidencia eliminada.");
             }
         } else if (action === 'archive') {
-            await onUpdateIncidents('update', { ...incident, archived: !incident.archived });
-            onShowSystemMessage(incident.archived ? "Incidencia desarchivada." : "Incidencia archivada.");
+            const newStatus = incident.status === IncidentStatus.ARCHIVED ? IncidentStatus.ACTIVE : IncidentStatus.ARCHIVED;
+            await onUpdateIncidents('update', { ...incident, status: newStatus });
+            onShowSystemMessage(incident.status === IncidentStatus.ARCHIVED ? "Incidencia desarchivada." : "Incidencia archivada.");
         } else if (action === 'attend') {
-            await onUpdateIncidents('update', { ...incident, attended: true });
+            await onUpdateIncidents('update', { ...incident, status: IncidentStatus.ATTENDED });
             onShowSystemMessage("Incidencia marcada como atendida.");
         }
     };
@@ -530,7 +537,7 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
     };
     
     const handleSaveIncident = async (incident: Incident) => {
-        await onUpdateIncidents('add', { ...incident, attended: false });
+        await onUpdateIncidents('add', { ...incident, status: IncidentStatus.ACTIVE });
         setIsIncidentModalOpen(false);
         setSelectedStudentForIncident(null);
         onShowSystemMessage("Incidencia guardada exitosamente.");
@@ -626,7 +633,10 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                     </div>
                     <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                         {displayedIncidents.map(inc => (
-                            <div key={inc.id} className={`p-4 border rounded-lg ${inc.attended ? 'bg-green-50' : 'bg-white'}`}>
+                            <div key={inc.id} className={`p-4 border rounded-lg ${
+                                inc.status === IncidentStatus.ATTENDED ? 'bg-green-50 border-green-200' : 
+                                inc.status === IncidentStatus.DECLINED ? 'bg-yellow-50 border-yellow-200' : 'bg-white'
+                            }`}>
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <p className="font-bold text-primary">{inc.studentName}</p>
@@ -634,8 +644,11 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                                         <p className="text-xs text-gray-500">Reportado por: {inc.teacherName} en {inc.location}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        {!inc.attended && incidentView === 'active' && <button onClick={() => handleIncidentAction('attend', inc)} className="text-xs bg-green-500 text-white font-bold py-1 px-2 rounded-full hover:bg-green-600">Marcar como Atendida</button>}
-                                        <button onClick={() => handleIncidentAction('archive', inc)} className="text-xs font-semibold text-blue-600 hover:underline">{inc.archived ? 'Desarchivar' : 'Archivar'}</button>
+                                        {inc.status === IncidentStatus.DECLINED && <span className="text-xs font-bold text-yellow-800 bg-yellow-200 px-2 py-1 rounded-full">Declinada por docente</span>}
+                                        {inc.status === IncidentStatus.ATTENDED && <span className="text-xs font-bold text-green-800 bg-green-200 px-2 py-1 rounded-full">Atendida</span>}
+
+                                        {inc.status === IncidentStatus.ACTIVE && <button onClick={() => handleIncidentAction('attend', inc)} className="text-xs bg-green-500 text-white font-bold py-1 px-2 rounded-full hover:bg-green-600">Marcar como Atendida</button>}
+                                        <button onClick={() => handleIncidentAction('archive', inc)} className="text-xs font-semibold text-blue-600 hover:underline">{inc.status === IncidentStatus.ARCHIVED ? 'Desarchivar' : 'Archivar'}</button>
                                         <button onClick={() => handleIncidentAction('delete', inc)} className="text-xs font-semibold text-red-600 hover:underline">Eliminar</button>
                                     </div>
                                 </div>
@@ -748,72 +761,91 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                             </select>
                             {announcementRecipient === 'group' && (
                                 <div className="grid grid-cols-2 gap-2">
-                                    <select value={announcementGrade} onChange={e => setAnnouncementGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50">{GRADES.map(g=><option key={g} value={g}>{g}</option>)}</select>
-                                    <select value={announcementGroup} onChange={e => setAnnouncementGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50">{(GRADE_GROUP_MAP[announcementGrade] || []).map(g=><option key={g} value={g}>{g}</option>)}</select>
+                                    <select value={announcementGrade} onChange={e => setAnnouncementGrade(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50">
+                                        {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+                                    </select>
+                                    <select value={announcementGroup} onChange={e => setAnnouncementGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50">
+                                        {(GRADE_GROUP_MAP[announcementGrade] || []).map(g => <option key={g} value={g}>{g}</option>)}
+                                    </select>
                                 </div>
                             )}
-                            <input type="text" placeholder="Título" value={announcementTitle} onChange={e => setAnnouncementTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50"/>
-                            <textarea rows={6} placeholder="Contenido del comunicado..." value={announcementContent} onChange={e => setAnnouncementContent(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50"></textarea>
-                            <button type="submit" className="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus">Enviar</button>
+                            <input type="text" value={announcementTitle} onChange={e => setAnnouncementTitle(e.target.value)} placeholder="Título del Comunicado" className="w-full p-2 border border-gray-300 rounded-md bg-gray-50" required />
+                            <textarea rows={5} value={announcementContent} onChange={e => setAnnouncementContent(e.target.value)} placeholder="Contenido del comunicado..." className="w-full p-2 border border-gray-300 rounded-md bg-gray-50" required></textarea>
+                            <button type="submit" className="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus">Enviar Comunicado</button>
                         </form>
                     </div>
                     <div className="md:col-span-2 bg-white p-6 rounded-xl shadow-md">
-                         <h3 className="text-lg font-bold mb-4">Historial de Enviados</h3>
-                         <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-                                {sentAnnouncements.map(ann => (
-                                    <div key={ann.id} className="p-4 border rounded-lg bg-gray-50">
-                                         <div className="flex justify-between items-start">
-                                             <h4 className="font-semibold text-primary">{ann.title}</h4>
-                                             <span className="text-xs text-gray-500">{new Date(ann.timestamp).toLocaleDateString()}</span>
-                                         </div>
-                                         <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{ann.content}</p>
-                                         <p className="text-sm text-gray-500 mt-1">Enviado a: {ann.sentBy.split('(')[1]?.replace(')', '') || ann.sentBy}</p>
+                        <h3 className="text-lg font-bold mb-4">Historial de Comunicados</h3>
+                        <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                           {sentAnnouncements.map(ann => (
+                                <div key={ann.id} className="p-4 border rounded-lg bg-gray-50">
+                                    <div className="flex justify-between items-start">
+                                        <h4 className="font-semibold text-primary">{ann.title}</h4>
+                                        <span className="text-xs text-gray-500">{new Date(ann.timestamp).toLocaleDateString()}</span>
                                     </div>
-                                ))}
-                                {sentAnnouncements.length === 0 && <p className="text-center text-gray-500 py-8">No hay comunicados enviados.</p>}
-                            </div>
+                                    <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{ann.content}</p>
+                                    <p className="text-xs text-gray-500 mt-2 pt-2 border-t"><strong>Enviado a:</strong> {ann.sentBy.split('(')[1]?.replace(')', '') || 'Comunidad General'}</p>
+                                </div>
+                           ))}
+                           {sentAnnouncements.length === 0 && <p className="text-center text-gray-500 py-8">No hay comunicados enviados.</p>}
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div className={activeTab === 'community_management' ? '' : 'hidden'}>
                 <div className="bg-white p-6 rounded-xl shadow-md">
-                    <div className="border-b border-gray-200">
-                        <nav className="-mb-px flex space-x-8">
-                            <button onClick={() => setActiveCommunityTab('teachers')} className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm ${activeCommunityTab === 'teachers' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Gestión de Docentes</button>
-                            <button onClick={() => setActiveCommunityTab('students')} className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm ${activeCommunityTab === 'students' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Gestión de Estudiantes</button>
-                            <button onClick={() => setActiveCommunityTab('parents')} className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm ${activeCommunityTab === 'parents' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Gestión de Acudientes</button>
-                        </nav>
-                    </div>
-
-                    <div className={activeCommunityTab === 'teachers' ? 'mt-6' : 'hidden'}>
-                        <div className="flex justify-between items-center mb-4">
-                            <input type="text" value={teacherSearch} onChange={e => setTeacherSearch(e.target.value)} placeholder="Buscar por nombre..." className="w-1/3 p-2 border border-gray-300 rounded-md bg-gray-50"/>
-                            <button onClick={() => setIsImportTeachersModalOpen(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus">Importar Docentes con IA</button>
-                        </div>
-                        <div className="max-h-[60vh] overflow-y-auto pr-2">
-                           {teachers.filter(t=>t.name.toLowerCase().includes(teacherSearch.toLowerCase())).map(t => (
-                               <div key={t.id} className="p-3 border rounded-lg flex justify-between items-center bg-gray-50 mb-2">
-                                   <div className="flex items-center gap-3">
-                                       <img src={t.avatarUrl} alt={t.name} className="w-10 h-10 rounded-full"/>
-                                       <div>
-                                           <p className="font-semibold">{t.name}</p>
-                                           <p className="text-xs text-gray-500">{t.subject} {t.isHomeroomTeacher ? `- Dir. ${t.assignedGroup?.grade}-${t.assignedGroup?.group}` : ''}</p>
-                                       </div>
-                                   </div>
-                                   <div className="flex items-center gap-2">
-                                       <button onClick={() => setEditingTeacher(t)} className="text-xs font-semibold text-blue-600 hover:underline">Editar</button>
-                                       <button onClick={() => handleDeleteTeacher(t.id)} className="text-xs font-semibold text-red-600 hover:underline">Eliminar</button>
-                                   </div>
-                               </div>
-                           ))}
+                    <div className="flex justify-between items-center mb-4">
+                        <div className="border-b border-gray-200">
+                             <nav className="-mb-px flex space-x-8">
+                                <button onClick={() => setActiveCommunityTab('teachers')} className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm ${activeCommunityTab === 'teachers' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Docentes</button>
+                                <button onClick={() => setActiveCommunityTab('students')} className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm ${activeCommunityTab === 'students' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Estudiantes</button>
+                                <button onClick={() => setActiveCommunityTab('parents')} className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm ${activeCommunityTab === 'parents' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Acudientes</button>
+                            </nav>
                         </div>
                     </div>
-                    <div className={activeCommunityTab === 'students' ? 'mt-6' : 'hidden'}>
-                        <StudentList 
+                     {activeCommunityTab === 'teachers' && (
+                        <div>
+                             <div className="flex flex-col md:flex-row gap-4 mb-4">
+                                <input type="text" placeholder="Buscar docente por nombre..." value={teacherSearch} onChange={e => setTeacherSearch(e.target.value)} className="flex-grow p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900 placeholder-gray-500" />
+                                <button onClick={() => setIsImportTeachersModalOpen(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus flex items-center justify-center space-x-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                    <span>Importar Docentes</span>
+                                </button>
+                            </div>
+                            <div className="max-h-[60vh] overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {teachers.filter(t => t.name.toLowerCase().includes(teacherSearch.toLowerCase())).map(t => (
+                                    <div key={t.id} className="p-3 border rounded-lg flex items-center justify-between bg-gray-50">
+                                        <div className="flex items-center space-x-3">
+                                            <img src={t.avatarUrl} alt={t.name} className="w-10 h-10 rounded-full" />
+                                            <div>
+                                                <p className="font-semibold">{t.name}</p>
+                                                <p className="text-sm text-gray-500">{t.isHomeroomTeacher ? `Dir. Grupo ${t.assignedGroup?.grade}-${t.assignedGroup?.group}` : t.subject}</p>
+                                            </div>
+                                        </div>
+                                         <div className="relative" ref={teacherMenuRef}>
+                                            <button onClick={() => setTeacherActionMenu(teacherActionMenu === t.id ? null : t.id)} className="p-1 rounded-full text-gray-500 hover:bg-gray-200">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
+                                            </button>
+                                            {teacherActionMenu === t.id && (
+                                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
+                                                    <div className="py-1" role="menu" aria-orientation="vertical">
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); setEditingTeacher(t); setTeacherActionMenu(null); }} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Editar</a>
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); handleDeleteTeacher(t.id); setTeacherActionMenu(null); }} className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100" role="menuitem">Eliminar</a>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                     {activeCommunityTab === 'students' && (
+                         <StudentList 
                             students={filteredStudents}
-                            onImportClick={() => setIsImportStudentsModalOpen(true)}
                             onAddStudentClick={() => setIsAddStudentModalOpen(true)}
+                            onImportClick={() => setIsImportStudentsModalOpen(true)}
                             onEditStudent={handleOpenEditStudentModal}
                             onReportIncident={handleOpenIncidentModal}
                             grades={['all', ...GRADES]}
@@ -823,20 +855,30 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                             selectedGroup={studentGroupFilter}
                             onGroupChange={setStudentGroupFilter}
                         />
-                    </div>
-                    <div className={activeCommunityTab === 'parents' ? 'mt-6' : 'hidden'}>
-                         <div className="flex justify-end mb-4">
-                             <button onClick={() => setIsImportGuardiansModalOpen(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus">Importar Acudientes con IA</button>
-                         </div>
-                         <div className="max-h-[60vh] overflow-y-auto pr-2">
-                            {guardians.length > 0 ? guardians.map(g => (
-                                <div key={g.id} className="p-3 border rounded-lg bg-gray-50 mb-2">
-                                    <p className="font-semibold">{g.name} <span className="text-xs text-gray-500">(ID: {g.id})</span></p>
-                                    <p className="text-sm text-gray-600">Estudiantes a cargo: {g.studentIds.map(id => studentMap.get(id)?.name).filter(Boolean).join(', ') || 'Ninguno'}</p>
-                                </div>
-                            )) : <p className="text-center text-gray-500 py-8">No hay acudientes registrados.</p>}
-                         </div>
-                    </div>
+                    )}
+                    {activeCommunityTab === 'parents' && (
+                        <div className="space-y-4">
+                            <div className="flex justify-end">
+                                <button onClick={() => setIsImportGuardiansModalOpen(true)} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus flex items-center justify-center space-x-2">
+                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                    <span>Importar y Vincular Acudientes</span>
+                                </button>
+                            </div>
+                            <div className="max-h-[60vh] overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {guardians.map(g => {
+                                    const linkedStudents = g.studentIds.map(id => studentMap.get(id)?.name).filter(Boolean);
+                                    return (
+                                        <div key={g.id} className="p-3 border rounded-lg bg-gray-50">
+                                            <p className="font-semibold">{g.name}</p>
+                                            <p className="text-sm text-gray-500">{g.email || 'Sin email'} - {g.phone || 'Sin teléfono'}</p>
+                                            <p className="text-xs text-blue-600 mt-1"><strong>Estudiantes:</strong> {linkedStudents.join(', ') || 'Ninguno vinculado'}</p>
+                                        </div>
+                                    )
+                                })}
+                                 {guardians.length === 0 && <p className="text-center text-gray-500 py-8 md:col-span-2">No hay acudientes registrados. Importa un listado para comenzar.</p>}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -850,19 +892,17 @@ const Incidents: React.FC<IncidentsProps> = ({ isOnline, students, setStudents, 
                     onShowSystemMessage={onShowSystemMessage}
                 />
             </div>
-            
+
+            {/* Modals */}
             {isCitationModalOpen && <CitationModal students={students} onClose={() => setIsCitationModalOpen(false)} onSave={handleSaveCitations} currentUser={currentUser} />}
             {isCancelModalOpen && citationToCancel && <CancelCitationModal onClose={() => setIsCancelModalOpen(false)} onConfirm={handleConfirmCancelCitation} />}
             {editingCitation && <EditCitationModal citation={editingCitation} onClose={() => setEditingCitation(null)} onSave={handleSaveEditedCitation} />}
-            
             {isImportTeachersModalOpen && <ImportTeachersModal onClose={() => setIsImportTeachersModalOpen(false)} onSave={handleImportTeachers} />}
             {editingTeacher && <EditTeacherModal teacher={editingTeacher} onClose={() => setEditingTeacher(null)} onSave={handleSaveEditedTeacher} />}
-            
             {isImportStudentsModalOpen && <ImportStudentsModal teachers={teachers} onClose={() => setIsImportStudentsModalOpen(false)} onSave={handleImportStudents} />}
             {isAddStudentModalOpen && <AddStudentModal onClose={() => setIsAddStudentModalOpen(false)} onSave={handleSaveNewStudent} />}
-            {isIncidentModalOpen && selectedStudentForIncident && <IncidentModal student={selectedStudentForIncident} students={students} onClose={() => {setIsIncidentModalOpen(false); setSelectedStudentForIncident(null)}} onSave={handleSaveIncident} reporterName={`Coord. ${currentUser.name}`} />}
-            {isEditStudentModalOpen && studentToEdit && <EditStudentModal student={studentToEdit} onClose={() => {setIsEditStudentModalOpen(false); setStudentToEdit(null)}} onSave={handleSaveEditedStudent} />}
-
+            {isIncidentModalOpen && <IncidentModal student={selectedStudentForIncident} students={students} onClose={() => setIsIncidentModalOpen(false)} onSave={handleSaveIncident} reporter={currentUser} />}
+            {isEditStudentModalOpen && studentToEdit && <EditStudentModal student={studentToEdit} onClose={() => setIsEditStudentModalOpen(false)} onSave={handleSaveEditedStudent} />}
             {isImportGuardiansModalOpen && <ImportGuardiansModal students={students} onClose={() => setIsImportGuardiansModalOpen(false)} onSave={handleImportGuardians} />}
         </div>
     );

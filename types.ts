@@ -39,6 +39,14 @@ export enum IncidentType {
   OTRO = 'Otro',
 }
 
+export enum IncidentStatus {
+  ACTIVE = 'Activa',
+  DECLINED = 'Declinada',
+  ATTENDED = 'Atendida',
+  ARCHIVED = 'Archivada',
+}
+
+
 export interface Incident {
   id: string;
   studentId: number;
@@ -50,8 +58,7 @@ export interface Incident {
   timestamp: string;
   teacherName: string;
   location: string;
-  archived?: boolean;
-  attended?: boolean;
+  status: IncidentStatus;
   // FIX: Added optional synced property to align with usage in IncidentModal and Incidents pages.
   synced?: boolean;
 }

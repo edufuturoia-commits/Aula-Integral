@@ -563,7 +563,7 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
                                                                 onBlur={handleInputBlur}
                                                                 onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                                                                 disabled={selectedGradebook.isLocked}
-                                                                className={`w-16 p-1 text-center border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 ${selectedGradebook.isLocked ? 'border-gray-200 dark:border-gray-600' : 'border-gray-300 dark:border-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent'} disabled:cursor-not-allowed`}
+                                                                className={`w-16 p-1 text-center border rounded-md bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-200 ${selectedGradebook.isLocked ? 'border-gray-200 dark:border-gray-600' : 'border-gray-300 dark:border-gray-500 focus:ring-2 focus:ring-primary focus:border-transparent'} disabled:cursor-not-allowed disabled:bg-gray-200`}
                                                             />
                                                         </td>
                                                     )
