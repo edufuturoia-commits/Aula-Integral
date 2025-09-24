@@ -44,35 +44,35 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ user, onPassw
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md mx-4 animate-zoom-in">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Cambio de Contraseña Requerido</h2>
-        <p className="text-gray-600 mb-6">Por seguridad, debes cambiar tu contraseña inicial antes de continuar.</p>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-md mx-4 animate-zoom-in">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Cambio de Contraseña Requerido</h2>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">Por seguridad, debes cambiar tu contraseña inicial antes de continuar.</p>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">Nueva Contraseña</label>
+            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nueva Contraseña</label>
             <input
               type="password"
               id="newPassword"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 text-gray-900"
+              className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
               required
             />
           </div>
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirmar Nueva Contraseña</label>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirmar Nueva Contraseña</label>
             <input
               type="password"
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 text-gray-900"
+              className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
               required
             />
           </div>
           
-          {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+          {error && <p className="text-red-600 dark:text-red-400 text-sm text-center">{error}</p>}
 
           <div className="pt-4">
             <button

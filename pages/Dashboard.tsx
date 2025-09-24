@@ -9,7 +9,7 @@ import { GoogleGenAI } from "@google/genai";
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="p-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+      <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
         <p className="label font-bold text-gray-800 dark:text-gray-100">{`${label}`}</p>
         {payload.map((pld: any, index: number) => (
           <p key={index} style={{ color: pld.fill }} className="text-sm font-medium">{`${pld.name}: ${pld.value}`}</p>
@@ -71,6 +71,7 @@ const Dashboard: React.FC<DashboardProps> = ({ students, teachers }) => {
                             model: 'gemini-2.5-flash',
                             contents: prompt,
                         });
+                        // FIX: Changed response.text() to response.text to correctly access the Gemini API response text.
                         return { name: person.name, message: response.text };
                     });
 

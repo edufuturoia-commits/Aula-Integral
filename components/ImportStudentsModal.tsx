@@ -145,46 +145,46 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onSa
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
           <div className="flex justify-between items-center mb-6 flex-shrink-0">
-            <h2 className="text-2xl font-bold text-gray-800">Importar Estudiantes desde Archivo</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Importar Estudiantes desde Archivo</h2>
+            <button onClick={onClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 text-3xl">&times;</button>
           </div>
           
           {step === 1 && (
             <div className="flex-1">
-              <p className="text-gray-600 mb-4">Selecciona el curso, un director de grupo (opcional) y sube el listado de estudiantes en formato PDF o Excel.</p>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">Selecciona el curso, un director de grupo (opcional) y sube el listado de estudiantes en formato PDF o Excel.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Grado</label>
-                        <select value={grade} onChange={e => handleGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grado</label>
+                        <select value={grade} onChange={e => handleGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                           {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Grupo</label>
-                        <select value={group} onChange={e => setGroup(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grupo</label>
+                        <select value={group} onChange={e => setGroup(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                           {availableGroups.map(g => <option key={g} value={g}>{g}</option>)}
                         </select>
                     </div>
                   </div>
                    <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Asignar Director de Grupo (Opcional)</label>
-                    <select value={homeroomTeacherId} onChange={e => setHomeroomTeacherId(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Asignar Director de Grupo (Opcional)</label>
+                    <select value={homeroomTeacherId} onChange={e => setHomeroomTeacherId(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                       <option value="">No asignar</option>
                       {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </select>
                   </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Archivo de Estudiantes</label>
-                <input type="file" onChange={handleFileChange} accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Archivo de Estudiantes</label>
+                <input type="file" onChange={handleFileChange} accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
               </div>
-              {file && <p className="text-sm text-gray-500 mt-2">Archivo seleccionado: <strong>{file.name}</strong></p>}
-              {error && <p className="text-red-600 text-sm text-center mt-2">{error}</p>}
+              {file && <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Archivo seleccionado: <strong>{file.name}</strong></p>}
+              {error && <p className="text-red-600 dark:text-red-400 text-sm text-center mt-2">{error}</p>}
               <div className="flex justify-end space-x-4 mt-8">
-                 <button type="button" onClick={onClose} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors">Cancelar</button>
+                 <button type="button" onClick={onClose} className="px-6 py-2 rounded-md text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">Cancelar</button>
                  <button onClick={handleExtract} disabled={isExtracting || !file} className="px-6 py-2 rounded-md text-white bg-primary hover:bg-primary-focus transition-colors flex items-center disabled:bg-gray-400">
                     {isExtracting && <Spinner />}
                     {isExtracting ? 'Extrayendo...' : 'Extraer Datos'}
@@ -195,27 +195,27 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onSa
 
           {step === 2 && (
             <div className="flex-1 flex flex-col overflow-hidden">
-                <p className="text-gray-600 mb-4 flex-shrink-0">Se encontraron <strong>{extractedStudents.length}</strong> estudiantes. Revisa y corrige los datos antes de importar a <strong>{grade} - Grupo {group}</strong>.</p>
-                <div className="flex-1 overflow-y-auto pr-2 border-t border-b -mx-8 px-8 py-4">
+                <p className="text-gray-600 dark:text-gray-300 mb-4 flex-shrink-0">Se encontraron <strong>{extractedStudents.length}</strong> estudiantes. Revisa y corrige los datos antes de importar a <strong>{grade} - Grupo {group}</strong>.</p>
+                <div className="flex-1 overflow-y-auto pr-2 border-t border-b dark:border-gray-700 -mx-8 px-8 py-4">
                     <table className="w-full text-sm">
-                        <thead className="sticky top-0 bg-gray-100">
-                            <tr className="text-left text-gray-500">
+                        <thead className="sticky top-0 bg-gray-100 dark:bg-gray-700">
+                            <tr className="text-left text-gray-500 dark:text-gray-400">
                                 <th className="p-2 w-1/3">ID / Documento</th>
                                 <th className="p-2 w-2/3">Nombre Completo</th>
                             </tr>
                         </thead>
                         <tbody>
                             {extractedStudents.map((student, index) => (
-                                <tr key={index} className="border-b">
-                                    <td className="p-2"><input type="text" value={student.id} onChange={(e) => handleStudentDataChange(index, 'id', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
-                                    <td className="p-2"><input type="text" value={student.name} onChange={(e) => handleStudentDataChange(index, 'name', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
+                                <tr key={index} className="border-b dark:border-gray-700">
+                                    <td className="p-2"><input type="text" value={student.id} onChange={(e) => handleStudentDataChange(index, 'id', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
+                                    <td className="p-2"><input type="text" value={student.name} onChange={(e) => handleStudentDataChange(index, 'name', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
                 <div className="flex justify-between items-center mt-6 flex-shrink-0">
-                    <button type="button" onClick={() => setStep(1)} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors">Atrás</button>
+                    <button type="button" onClick={() => setStep(1)} className="px-6 py-2 rounded-md text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">Atrás</button>
                     <button onClick={handleSave} className="px-6 py-2 rounded-md text-white bg-primary hover:bg-primary-focus transition-colors">
                         Confirmar e Importar {extractedStudents.length} Estudiantes
                     </button>

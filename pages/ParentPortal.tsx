@@ -9,12 +9,12 @@ import NewParentConversationModal from '../components/NewParentConversationModal
 // Duplicating this helper function here for simplicity
 const getCitationStatusClass = (status: CitationStatus) => {
     switch (status) {
-        case CitationStatus.CONFIRMED: return 'bg-green-100 text-green-800';
-        case CitationStatus.PENDING: return 'bg-yellow-100 text-yellow-800';
-        case CitationStatus.COMPLETED: return 'bg-blue-100 text-blue-800';
-        case CitationStatus.CANCELLED: return 'bg-red-100 text-red-800';
-        case CitationStatus.RESCHEDULE_REQUESTED: return 'bg-purple-100 text-purple-800';
-        default: return 'bg-gray-100 text-gray-800';
+        case CitationStatus.CONFIRMED: return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200';
+        case CitationStatus.PENDING: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200';
+        case CitationStatus.COMPLETED: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200';
+        case CitationStatus.CANCELLED: return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200';
+        case CitationStatus.RESCHEDULE_REQUESTED: return 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200';
+        default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
 };
 
@@ -231,35 +231,35 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
             case 'resumen':
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white p-6 rounded-xl shadow-md space-y-4">
-                            <h3 className="text-xl font-bold">Últimas Incidencias</h3>
+                        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md space-y-4">
+                            <h3 className="text-xl font-bold dark:text-gray-100">Últimas Incidencias</h3>
                             {studentIncidents.length > 0 ? (
                                 studentIncidents.slice(0, 3).map(inc => (
-                                    <div key={inc.id} className="p-3 border rounded-lg bg-gray-50">
-                                        <p className="font-semibold text-gray-800">{inc.type}</p>
-                                        <p className="text-sm text-gray-600">{inc.notes}</p>
-                                        <p className="text-xs text-gray-400 mt-1">{new Date(inc.timestamp).toLocaleDateString()}</p>
+                                    <div key={inc.id} className="p-3 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                        <p className="font-semibold text-gray-800 dark:text-gray-200">{inc.type}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-300">{inc.notes}</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{new Date(inc.timestamp).toLocaleDateString()}</p>
                                     </div>
                                 ))
-                            ) : <p className="text-gray-500">No hay incidencias reportadas.</p>}
+                            ) : <p className="text-gray-500 dark:text-gray-400">No hay incidencias reportadas.</p>}
                         </div>
-                        <div className="bg-white p-6 rounded-xl shadow-md space-y-4">
-                            <h3 className="text-xl font-bold">Próximas Citaciones</h3>
+                        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md space-y-4">
+                            <h3 className="text-xl font-bold dark:text-gray-100">Próximas Citaciones</h3>
                              {studentCitations.length > 0 ? (
                                 studentCitations.filter(c => new Date(c.date) >= new Date()).map(cit => (
-                                    <div key={cit.id} className="p-3 border rounded-lg bg-gray-50">
-                                        <p className="font-semibold text-gray-800">{cit.reason}</p>
-                                        <p className="text-sm text-gray-600">{new Date(cit.date + 'T00:00:00').toLocaleDateString()} a las {cit.time}</p>
+                                    <div key={cit.id} className="p-3 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                        <p className="font-semibold text-gray-800 dark:text-gray-200">{cit.reason}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-300">{new Date(cit.date + 'T00:00:00').toLocaleDateString()} a las {cit.time}</p>
                                     </div>
                                 ))
-                             ) : <p className="text-gray-500">No hay citaciones programadas.</p>}
+                             ) : <p className="text-gray-500 dark:text-gray-400">No hay citaciones programadas.</p>}
                         </div>
                     </div>
                 );
              case 'calificaciones':
                 return (
                     <div className="space-y-6">
-                        <div className="bg-white p-6 rounded-xl shadow-md">
+                        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md">
                             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                                 <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">Calificaciones</h3>
                                 <div className="flex items-center gap-4">
@@ -279,20 +279,20 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                                 <div className="space-y-6">
                                     {studentGradesForPeriod.map(data => (
                                         <div key={data.subject} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                                            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 border-b dark:border-gray-700">
+                                            <div className="bg-gray-50 dark:bg-gray-800 p-4 border-b dark:border-gray-700">
                                                 <h4 className="font-bold text-lg text-primary dark:text-secondary">{data.subject}</h4>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">Docente: {data.teacherName}</p>
                                             </div>
                                             <div className="p-4 space-y-3">
                                                 <ul className="space-y-2">
                                                     {data.gradeItems.map(item => (
-                                                        <li key={item.id} className="flex justify-between items-center text-sm p-2 rounded-md even:bg-gray-50 dark:even:bg-gray-900/50">
+                                                        <li key={item.id} className="flex justify-between items-center text-sm p-2 rounded-md even:bg-gray-50 dark:even:bg-gray-800/50">
                                                             <span>{item.name} <span className="text-gray-500 dark:text-gray-400">({(item.weight * 100).toFixed(0)}%)</span></span>
                                                             <span className="font-bold text-gray-800 dark:text-gray-100">{data.scoresByItem.has(item.id) && data.scoresByItem.get(item.id) !== null ? data.scoresByItem.get(item.id)!.toFixed(1) : 'S.N.'}</span>
                                                         </li>
                                                     ))}
                                                 </ul>
-                                                <div className="flex justify-between items-center pt-3 border-t dark:border-gray-700 font-bold text-md p-2 bg-gray-100 dark:bg-gray-700/50 rounded-md">
+                                                <div className="flex justify-between items-center pt-3 border-t dark:border-gray-700 font-bold text-md p-2 bg-gray-100 dark:bg-gray-800 rounded-md">
                                                     <span className="text-gray-800 dark:text-gray-100">Nota Final</span>
                                                     <div className="flex items-center gap-3">
                                                         <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getDesempenoClass(data.desempeno)}`}>
@@ -319,73 +319,73 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                 );
              case 'convivencia':
                 return (
-                    <div className="bg-white p-6 rounded-xl shadow-md space-y-4">
-                        <h3 className="text-xl font-bold">Historial de Convivencia</h3>
-                        <h4 className="font-semibold text-lg mt-4">Incidencias</h4>
+                    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md space-y-4">
+                        <h3 className="text-xl font-bold dark:text-gray-100">Historial de Convivencia</h3>
+                        <h4 className="font-semibold text-lg mt-4 dark:text-gray-200">Incidencias</h4>
                         {studentIncidents.length > 0 ? (
                             studentIncidents.map(inc => (
-                                <div key={inc.id} className="p-3 border rounded-lg bg-gray-50">
-                                    <p className="font-semibold text-gray-800">{inc.type}</p>
-                                    <p className="text-sm text-gray-600">{inc.notes}</p>
-                                    <p className="text-xs text-gray-400 mt-1">{new Date(inc.timestamp).toLocaleString()}</p>
+                                <div key={inc.id} className="p-3 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                    <p className="font-semibold text-gray-800 dark:text-gray-200">{inc.type}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">{inc.notes}</p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{new Date(inc.timestamp).toLocaleString()}</p>
                                 </div>
                             ))
-                        ) : <p className="text-gray-500">No hay incidencias.</p>}
-                        <h4 className="font-semibold text-lg mt-4">Citaciones</h4>
+                        ) : <p className="text-gray-500 dark:text-gray-400">No hay incidencias.</p>}
+                        <h4 className="font-semibold text-lg mt-4 dark:text-gray-200">Citaciones</h4>
                         {studentCitations.length > 0 ? (
                             studentCitations.map(cit => (
-                                <div key={cit.id} className={`p-3 border rounded-lg bg-gray-50`}>
+                                <div key={cit.id} className={`p-3 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800`}>
                                     <div className="flex justify-between">
-                                        <p className="font-semibold text-gray-800">{cit.reason}</p>
+                                        <p className="font-semibold text-gray-800 dark:text-gray-200">{cit.reason}</p>
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCitationStatusClass(cit.status)}`}>{cit.status}</span>
                                     </div>
-                                    <p className="text-sm text-gray-600">{new Date(cit.date + 'T00:00:00').toLocaleDateString()} a las {cit.time}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">{new Date(cit.date + 'T00:00:00').toLocaleDateString()} a las {cit.time}</p>
                                 </div>
                             ))
-                        ) : <p className="text-gray-500">No hay citaciones.</p>}
+                        ) : <p className="text-gray-500 dark:text-gray-400">No hay citaciones.</p>}
                     </div>
                 );
             case 'comunicados':
                  return (
-                    <div className="bg-white p-6 rounded-xl shadow-md space-y-4">
-                        <h3 className="text-xl font-bold">Comunicados de la Institución</h3>
+                    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md space-y-4">
+                        <h3 className="text-xl font-bold dark:text-gray-100">Comunicados de la Institución</h3>
                         {studentAnnouncements.length > 0 ? (
                             studentAnnouncements.map(ann => (
-                                <div key={ann.id} className="p-4 border rounded-lg bg-gray-50">
+                                <div key={ann.id} className="p-4 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
                                     <div className="flex justify-between items-start">
                                         <h4 className="font-semibold text-primary">{ann.title}</h4>
-                                        <span className="text-xs text-gray-500">{new Date(ann.timestamp).toLocaleDateString()}</span>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(ann.timestamp).toLocaleDateString()}</span>
                                     </div>
-                                    <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{ann.content}</p>
-                                    <p className="text-xs text-gray-500 mt-2 pt-2 border-t"><strong>Enviado por:</strong> {ann.sentBy}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 whitespace-pre-wrap">{ann.content}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 pt-2 border-t dark:border-gray-700"><strong>Enviado por:</strong> {ann.sentBy}</p>
                                 </div>
                             ))
                         ) : (
-                            <p className="text-gray-500 text-center py-8">No hay comunicados para mostrar.</p>
+                            <p className="text-gray-500 dark:text-gray-400 text-center py-8">No hay comunicados para mostrar.</p>
                         )}
                     </div>
                 );
              case 'bandeja':
                 return (
-                    <div className="flex h-[calc(100vh-320px)] bg-white rounded-xl shadow-md overflow-hidden">
-                        <div className="w-full md:w-1/3 border-r border-gray-200 flex flex-col">
-                            <div className="p-4 border-b flex justify-between items-center">
-                                <h2 className="text-xl font-bold text-gray-800">Mensajes</h2>
+                    <div className="flex h-[calc(100vh-320px)] bg-white dark:bg-gray-900 rounded-xl shadow-md overflow-hidden">
+                        <div className="w-full md:w-1/3 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+                            <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">
+                                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Mensajes</h2>
                                 <button onClick={() => setIsNewConvoModalOpen(true)} className="p-2 rounded-full text-primary hover:bg-primary/10" title="Nuevo Mensaje">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                 </button>
                             </div>
                             <ul className="overflow-y-auto flex-1">
                                 {conversations.map(convo => (
-                                    <li key={convo.id} onClick={() => handleSelectConversation(convo)} className={`p-4 cursor-pointer hover:bg-gray-50 border-l-4 ${selectedConversation?.id === convo.id ? 'border-primary bg-blue-50' : 'border-transparent'}`}>
+                                    <li key={convo.id} onClick={() => handleSelectConversation(convo)} className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 border-l-4 ${selectedConversation?.id === convo.id ? 'border-primary bg-blue-50 dark:bg-blue-900/50' : 'border-transparent'}`}>
                                         <div className="flex items-start gap-3">
                                             <div className="relative flex-shrink-0">
                                                 <img src={convo.participantAvatar} alt={convo.participantName} className="w-12 h-12 rounded-full" />
                                                 {convo.unread && <span className="absolute top-0 right-0 block h-3 w-3 rounded-full bg-accent ring-2 ring-white"></span>}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-semibold text-gray-800 truncate">{convo.participantName}</p>
-                                                <p className={`text-sm text-gray-600 truncate mt-1 ${convo.unread ? 'font-bold text-gray-900' : ''}`}>{convo.lastMessage}</p>
+                                                <p className="font-semibold text-gray-800 dark:text-gray-200 truncate">{convo.participantName}</p>
+                                                <p className={`text-sm text-gray-600 dark:text-gray-300 truncate mt-1 ${convo.unread ? 'font-bold text-gray-900 dark:text-gray-100' : ''}`}>{convo.lastMessage}</p>
                                             </div>
                                         </div>
                                     </li>
@@ -395,33 +395,33 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                         <div className="flex-1 flex-col hidden md:flex">
                              {selectedConversation ? (
                                 <>
-                                    <div className="p-4 border-b flex items-center space-x-4">
+                                    <div className="p-4 border-b dark:border-gray-700 flex items-center space-x-4">
                                         <img src={selectedConversation.participantAvatar} alt={selectedConversation.participantName} className="w-10 h-10 rounded-full" />
                                         <div>
-                                            <h3 className="font-bold text-gray-800">{selectedConversation.participantName}</h3>
-                                            <p className="text-sm text-gray-500">{selectedConversation.participantRole}</p>
+                                            <h3 className="font-bold text-gray-800 dark:text-gray-100">{selectedConversation.participantName}</h3>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">{selectedConversation.participantRole}</p>
                                         </div>
                                     </div>
-                                    <div ref={chatContainerRef} className="flex-1 p-6 space-y-4 overflow-y-auto bg-gray-50">
+                                    <div ref={chatContainerRef} className="flex-1 p-6 space-y-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
                                         {selectedConversation.conversation.map((msg, index) => (
                                             <div key={index} className={`flex items-end gap-2 ${msg.sender === 'self' ? 'justify-end' : ''}`}>
                                                 {msg.sender === 'participant' && <img src={selectedConversation.participantAvatar} className="w-8 h-8 rounded-full" alt="participant" />}
-                                                <div className={`max-w-lg p-3 rounded-xl ${msg.sender === 'self' ? 'bg-primary text-white rounded-br-none' : 'bg-gray-200 text-gray-800 rounded-bl-none'}`}>
+                                                <div className={`max-w-lg p-3 rounded-xl ${msg.sender === 'self' ? 'bg-primary text-white rounded-br-none' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none'}`}>
                                                     <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                                                 </div>
                                                 {msg.sender === 'self' && <img src={selectedStudent.avatarUrl} className="w-8 h-8 rounded-full" alt="self" />}
                                             </div>
                                         ))}
                                     </div>
-                                    <form onSubmit={handleSendMessage} className="p-4 border-t bg-white flex items-center gap-4">
-                                        <textarea value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Escribe una respuesta..." className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary resize-none bg-gray-50" rows={1} />
+                                    <form onSubmit={handleSendMessage} className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center gap-4">
+                                        <textarea value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Escribe una respuesta..." className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary resize-none bg-gray-50 dark:bg-gray-700/50 dark:text-gray-200" rows={1} />
                                         <button type="submit" className="bg-primary text-white rounded-full p-3 hover:bg-primary-focus disabled:bg-gray-300" disabled={!newMessage.trim()}>
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                                         </button>
                                     </form>
                                 </>
                             ) : (
-                                <div className="flex-1 flex items-center justify-center text-center"><p className="text-gray-500">Selecciona una conversación para ver los mensajes.</p></div>
+                                <div className="flex-1 flex items-center justify-center text-center"><p className="text-gray-500 dark:text-gray-400">Selecciona una conversación para ver los mensajes.</p></div>
                             )}
                         </div>
                     </div>
@@ -433,17 +433,17 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
     
     return (
         <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-md flex items-center justify-between flex-wrap gap-4">
+            <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center space-x-6">
                     <img src={selectedStudent.avatarUrl} alt={selectedStudent.name} className="w-20 h-20 rounded-full object-cover border-4 border-secondary" />
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800">{selectedStudent.name}</h1>
-                        <p className="text-gray-600">{selectedStudent.grade} - Grupo {selectedStudent.group}</p>
+                        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">{selectedStudent.name}</h1>
+                        <p className="text-gray-600 dark:text-gray-400">{selectedStudent.grade} - Grupo {selectedStudent.group}</p>
                     </div>
                 </div>
                 {students.length > 1 && (
                     <div>
-                        <label htmlFor="student-selector" className="block text-sm font-medium text-gray-700">Cambiar de estudiante:</label>
+                        <label htmlFor="student-selector" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Cambiar de estudiante:</label>
                         <select
                             id="student-selector"
                             value={selectedStudent.id}
@@ -451,7 +451,7 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                                 const student = students.find(s => s.id === Number(e.target.value));
                                 if (student) setSelectedStudent(student);
                             }}
-                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
+                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md bg-white dark:bg-gray-800 dark:text-gray-200"
                         >
                             {students.map(s => (
                                 <option key={s.id} value={s.id}>{s.name}</option>
@@ -461,13 +461,13 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                 )}
             </div>
 
-            <div className="border-b border-gray-200">
+            <div className="border-b border-gray-200 dark:border-gray-700">
                 <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
                     {(['resumen', 'calificaciones', 'convivencia', 'comunicados', 'bandeja'] as const).map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`capitalize whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                            className={`capitalize whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab ? 'border-primary text-primary dark:text-secondary' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}`}
                         >
                            {tab === 'bandeja' ? 'Bandeja de Entrada' : tab}
                         </button>

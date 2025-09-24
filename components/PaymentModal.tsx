@@ -29,21 +29,21 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ plan, userData, onClose }) 
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 animate-zoom-in" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-md mx-4 animate-zoom-in" onClick={e => e.stopPropagation()}>
                 <div className="p-8">
                      <div className="flex justify-between items-start mb-6">
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-800">Confirmar Pago</h2>
-                            <p className="text-gray-500">Paso 2 de 2: Completa la transacción</p>
+                            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Confirmar Pago</h2>
+                            <p className="text-gray-500 dark:text-gray-400">Paso 2 de 2: Completa la transacción</p>
                         </div>
-                        <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-3xl">&times;</button>
+                        <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-3xl">&times;</button>
                      </div>
                      <div className="text-center space-y-4">
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 dark:text-gray-300">
                             Hola, <strong>{userData.rectorName}</strong>. Estás a punto de activar el <strong>{plan.name}</strong> para <strong>{userData.institutionName}</strong>.
                         </p>
                         <p className="text-2xl font-bold text-primary">{formatter.format(plan.price)}</p>
-                        <p className="text-gray-600">Serás dirigido a la pasarela de pagos segura de Wompi para completar tu transacción.</p>
+                        <p className="text-gray-600 dark:text-gray-300">Serás dirigido a la pasarela de pagos segura de Wompi para completar tu transacción.</p>
                         <div className="flex justify-center pt-4">
                            <WompiForm 
                                 amountInCents={amountInCents}
@@ -51,7 +51,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ plan, userData, onClose }) 
                                 signature={signature}
                            />
                         </div>
-                        <p className="text-xs text-gray-400 pt-4">Al hacer clic en el botón de pago, aceptas los términos y condiciones de AULA INTEGRAL MAYA y Wompi.</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 pt-4">Al hacer clic en el botón de pago, aceptas los términos y condiciones de AULA INTEGRAL MAYA y Wompi.</p>
                      </div>
                 </div>
             </div>

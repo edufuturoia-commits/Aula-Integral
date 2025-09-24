@@ -348,7 +348,8 @@ const App: React.FC = () => {
     setAttendanceRecords(prev => {
       const recordsMap = new Map(prev.map(r => [r.id, r]));
       recordsMap.set(record.id, record);
-      return Array.from(recordsMap.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      // FIX: Explicitly type sort parameters to resolve error.
+      return Array.from(recordsMap.values()).sort((a: AttendanceRecord, b: AttendanceRecord) => new Date(b.date).getTime() - new Date(a.date).getTime());
     });
   };
 
@@ -357,7 +358,8 @@ const App: React.FC = () => {
     setAttendanceRecords(prev => {
       const recordsMap = new Map(prev.map(r => [r.id, r]));
       records.forEach(r => recordsMap.set(r.id, r));
-      return Array.from(recordsMap.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      // FIX: Explicitly type sort parameters to resolve error.
+      return Array.from(recordsMap.values()).sort((a: AttendanceRecord, b: AttendanceRecord) => new Date(b.date).getTime() - new Date(a.date).getTime());
     });
   };
 

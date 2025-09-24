@@ -108,11 +108,11 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser, students, te
     };
 
     return (
-        <div className="flex h-[calc(100vh-112px)] bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="flex h-[calc(100vh-112px)] bg-white dark:bg-gray-900 rounded-xl shadow-md overflow-hidden">
             {/* Conversation List */}
-            <div className="w-full md:w-1/3 border-r border-gray-200 flex flex-col">
-                <div className="p-4 border-b flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-800">Bandeja de Entrada</h2>
+            <div className="w-full md:w-1/3 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+                <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Bandeja de Entrada</h2>
                     <button
                         onClick={() => setIsNewConvoModalOpen(true)}
                         className="p-2 rounded-full text-primary hover:bg-primary/10 transition-colors"
@@ -128,7 +128,7 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser, students, te
                         <li
                             key={convo.id}
                             onClick={() => handleSelectConversation(convo)}
-                            className={`p-4 cursor-pointer hover:bg-gray-50 border-b border-gray-200 ${selectedConversation?.id === convo.id ? 'bg-blue-50' : ''}`}
+                            className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-200 dark:border-gray-700 ${selectedConversation?.id === convo.id ? 'bg-blue-50 dark:bg-blue-900/50' : ''}`}
                         >
                             <div className="flex items-start gap-3">
                                 <div className="relative flex-shrink-0">
@@ -137,16 +137,16 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser, students, te
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between text-sm">
-                                        <p className="font-semibold text-gray-800 truncate">{convo.participantName}</p>
-                                        <p className="text-xs text-gray-500 flex-shrink-0 ml-2">{convo.timestamp}</p>
+                                        <p className="font-semibold text-gray-800 dark:text-gray-200 truncate">{convo.participantName}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 ml-2">{convo.timestamp}</p>
                                     </div>
-                                    <p className="text-xs text-gray-500">{convo.participantRole}</p>
-                                    <p className={`text-sm text-gray-600 truncate mt-1 ${convo.unread ? 'font-bold text-gray-900' : ''}`}>{convo.lastMessage}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{convo.participantRole}</p>
+                                    <p className={`text-sm text-gray-600 dark:text-gray-300 truncate mt-1 ${convo.unread ? 'font-bold text-gray-900 dark:text-gray-100' : ''}`}>{convo.lastMessage}</p>
                                 </div>
                             </div>
                         </li>
                     ))}
-                     {conversations.length === 0 && <p className="text-center text-gray-500 p-8">No hay conversaciones.</p>}
+                     {conversations.length === 0 && <p className="text-center text-gray-500 dark:text-gray-400 p-8">No hay conversaciones.</p>}
                 </ul>
             </div>
 
@@ -154,18 +154,18 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser, students, te
             <div className="flex-1 flex flex-col hidden md:flex">
                 {selectedConversation ? (
                     <>
-                        <div className="p-4 border-b flex items-center space-x-4">
+                        <div className="p-4 border-b dark:border-gray-700 flex items-center space-x-4">
                             <img src={selectedConversation.participantAvatar} alt={selectedConversation.participantName} className="w-10 h-10 rounded-full" />
                             <div>
-                                <h3 className="font-bold text-gray-800">{selectedConversation.participantName}</h3>
-                                <p className="text-sm text-gray-500">{selectedConversation.participantRole}</p>
+                                <h3 className="font-bold text-gray-800 dark:text-gray-100">{selectedConversation.participantName}</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{selectedConversation.participantRole}</p>
                             </div>
                         </div>
-                        <div ref={chatContainerRef} className="flex-1 p-6 space-y-4 overflow-y-auto bg-gray-50">
+                        <div ref={chatContainerRef} className="flex-1 p-6 space-y-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
                             {selectedConversation.conversation.map((msg, index) => (
                                 <div key={index} className={`flex items-end gap-2 ${msg.sender === 'self' ? 'justify-end' : ''}`}>
                                     {msg.sender === 'participant' && <img src={selectedConversation.participantAvatar} className="w-8 h-8 rounded-full" alt="participant" />}
-                                    <div className={`max-w-lg p-3 rounded-xl ${msg.sender === 'self' ? 'bg-primary text-white rounded-br-none' : 'bg-gray-200 text-gray-800 rounded-bl-none'}`}>
+                                    <div className={`max-w-lg p-3 rounded-xl ${msg.sender === 'self' ? 'bg-primary text-white rounded-br-none' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none'}`}>
                                         <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                                         <p className="text-xs opacity-70 mt-1 text-right">{msg.timestamp}</p>
                                     </div>
@@ -173,13 +173,13 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser, students, te
                                 </div>
                             ))}
                         </div>
-                        <form onSubmit={handleSendMessage} className="p-4 border-t bg-white flex items-center gap-4">
+                        <form onSubmit={handleSendMessage} className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center gap-4">
                             <textarea
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
                                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); }}}
                                 placeholder="Escribe una respuesta..."
-                                className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary resize-none bg-gray-50"
+                                className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary resize-none bg-gray-50 dark:bg-gray-700/50 dark:text-gray-200"
                                 rows={1}
                             />
                             <button type="submit" className="bg-primary text-white rounded-full p-3 hover:bg-primary-focus disabled:bg-gray-300" disabled={!newMessage.trim()}>
@@ -189,9 +189,9 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser, students, te
                     </>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                        <h3 className="mt-4 text-lg font-semibold text-gray-700">Selecciona una conversación</h3>
-                        <p className="text-gray-500 mt-1">Elige una conversación de la lista o crea una nueva para empezar a chatear.</p>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                        <h3 className="mt-4 text-lg font-semibold text-gray-700 dark:text-gray-200">Selecciona una conversación</h3>
+                        <p className="text-gray-500 dark:text-gray-400 mt-1">Elige una conversación de la lista o crea una nueva para empezar a chatear.</p>
                     </div>
                 )}
             </div>

@@ -30,9 +30,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome }) => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral flex items-center justify-center p-4">
+    <div className="min-h-screen bg-neutral dark:bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-base-100 rounded-2xl shadow-xl p-8 animate-zoom-in">
+        <div className="bg-base-100 dark:bg-gray-800 rounded-2xl shadow-xl p-8 animate-zoom-in">
            <a href="#" onClick={(e) => { e.preventDefault(); onBackToHome(); }} className="inline-flex items-center text-sm font-medium text-primary hover:text-primary-focus mb-4">
              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -41,11 +41,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome }) => {
           </a>
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-primary">AULA INTEGRAL MAYA</h1>
-            <p className="text-gray-500 mt-2">Bienvenido al panel de administración</p>
+            <p className="text-gray-500 dark:text-gray-400 mt-2">Bienvenido al panel de administración</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Correo Electrónico
               </label>
               <div className="mt-1">
@@ -57,7 +57,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome }) => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary bg-gray-50 text-gray-900 placeholder-gray-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-primary focus:border-primary bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="su.correo@institucion.edu.co"
                 />
               </div>
@@ -65,7 +65,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome }) => {
 
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Contraseña
                 </label>
                 <div className="text-sm">
@@ -87,14 +87,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome }) => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary bg-gray-50 text-gray-900 placeholder-gray-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-primary focus:border-primary bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="••••••••"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg" role="alert">
+              <div className="bg-red-100 dark:bg-red-900/50 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded-lg" role="alert">
                 <p>{error}</p>
               </div>
             )}
@@ -117,7 +117,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome }) => {
             </div>
           </form>
         </div>
-        <p className="mt-8 text-center text-sm text-gray-500">
+        <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
           © {new Date().getFullYear()} AULA INTEGRAL MAYA. Todos los derechos reservados.
         </p>
       </div>

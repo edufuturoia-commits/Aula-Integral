@@ -68,58 +68,58 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ plan, onClose, on
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg mx-4 animate-zoom-in flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-                <div className="p-8 border-b">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-lg mx-4 animate-zoom-in flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                <div className="p-8 border-b dark:border-gray-700">
                     <div className="flex justify-between items-start">
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-800">
+                            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                                 {isDemoPlan ? 'Crea tu Cuenta de Demostración' : 'Crea tu Cuenta'}
                             </h2>
-                            <p className="text-gray-500">
+                            <p className="text-gray-500 dark:text-gray-400">
                                 {isDemoPlan ? 'Paso 1: Registra tu institución para acceder' : `Paso 1 de 2: Registra tu institución para el ${plan.name}`}
                             </p>
                         </div>
-                        <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-3xl">&times;</button>
+                        <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-3xl">&times;</button>
                     </div>
                 </div>
                 <form onSubmit={handleSubmit} className="p-8 space-y-4 overflow-y-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Nombre de la Institución</label>
-                            <input type="text" name="institutionName" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre de la Institución</label>
+                            <input type="text" name="institutionName" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"/>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Nombre del Rector(a)</label>
-                            <input type="text" name="rectorName" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre del Rector(a)</label>
+                            <input type="text" name="rectorName" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"/>
                         </div>
                     </div>
                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Correo Electrónico (será tu usuario)</label>
-                        <input type="email" name="email" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo Electrónico (será tu usuario)</label>
+                        <input type="email" name="email" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"/>
                     </div>
                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Teléfono de Contacto</label>
-                        <input type="tel" name="phone" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono de Contacto</label>
+                        <input type="tel" name="phone" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"/>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Contraseña</label>
-                            <input type="password" name="password" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña</label>
+                            <input type="password" name="password" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"/>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Confirmar Contraseña</label>
-                            <input type="password" name="confirmPassword" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-50 text-gray-900"/>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirmar Contraseña</label>
+                            <input type="password" name="confirmPassword" onChange={handleChange} required className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"/>
                         </div>
                     </div>
 
-                    {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+                    {error && <p className="text-red-600 dark:text-red-400 text-sm text-center">{error}</p>}
                     
                     <div className="pt-4 text-center">
-                         {!isDemoPlan && <p className="text-lg font-bold">Total a Pagar: {formatter.format(plan.price)}</p>}
+                         {!isDemoPlan && <p className="text-lg font-bold dark:text-gray-200">Total a Pagar: {formatter.format(plan.price)}</p>}
                         <button type="submit" disabled={isLoading} className="w-full mt-4 bg-primary text-white font-semibold py-3 px-6 rounded-lg hover:bg-primary-focus transition-colors disabled:bg-gray-400">
                            {isLoading ? 'Procesando...' : (isDemoPlan ? 'Crear Cuenta y Acceder' : 'Continuar al Pago')}
                         </button>
-                         <p className="text-xs text-gray-400 mt-4">Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad.</p>
+                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad.</p>
                     </div>
                 </form>
             </div>

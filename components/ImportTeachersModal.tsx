@@ -196,25 +196,25 @@ Devuelve un array JSON de objetos. Cada objeto debe tener las siguientes propied
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-center mb-6 flex-shrink-0">
-              <h2 className="text-2xl font-bold text-gray-800">Importar Plantel Docente</h2>
-              <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Importar Plantel Docente</h2>
+              <button onClick={onClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 text-3xl">&times;</button>
             </div>
             
             {step === 1 && (
                 <div className="flex-1">
-                  <p className="text-gray-600 mb-4">Sube un archivo PDF o Excel con los datos de tus docentes (hasta 200). La IA extraerá automáticamente la información relevante.</p>
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">Sube un archivo PDF o Excel con los datos de tus docentes (hasta 200). La IA extraerá automáticamente la información relevante.</p>
                   <div className="space-y-4">
                       <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Archivo PDF o Excel</label>
-                          <input type="file" onChange={handleFileChange} accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Archivo PDF o Excel</label>
+                          <input type="file" onChange={handleFileChange} accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
                       </div>
-                      {file && <p className="text-sm text-gray-500">Archivo seleccionado: <strong>{file.name}</strong></p>}
+                      {file && <p className="text-sm text-gray-500 dark:text-gray-400">Archivo seleccionado: <strong>{file.name}</strong></p>}
                   </div>
-                  {error && <p className="text-red-600 text-sm text-center mt-2">{error}</p>}
+                  {error && <p className="text-red-600 dark:text-red-400 text-sm text-center mt-2">{error}</p>}
                   <div className="flex justify-end space-x-4 mt-8">
-                      <button type="button" onClick={onClose} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors">Cancelar</button>
+                      <button type="button" onClick={onClose} className="px-6 py-2 rounded-md text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">Cancelar</button>
                       <button onClick={handleExtract} disabled={isExtracting || !file} className="px-6 py-2 rounded-md text-white bg-primary hover:bg-primary-focus transition-colors flex items-center disabled:bg-gray-400">
                           {isExtracting && <Spinner />}
                           {isExtracting ? 'Extrayendo...' : 'Extraer Datos'}
@@ -225,11 +225,11 @@ Devuelve un array JSON de objetos. Cada objeto debe tener las siguientes propied
 
             {step === 2 && (
                 <div className="flex-1 flex flex-col overflow-hidden">
-                    <p className="text-gray-600 mb-4 flex-shrink-0">Se encontraron <strong>{extractedTeachers.length}</strong> docentes. Revisa y corrige los datos antes de importar.</p>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4 flex-shrink-0">Se encontraron <strong>{extractedTeachers.length}</strong> docentes. Revisa y corrige los datos antes de importar.</p>
                     <div className="flex-1 overflow-y-auto pr-2 border-t border-b -mx-8 px-8 py-4">
                         <table className="w-full text-xs">
                             <thead>
-                                <tr className="text-left text-gray-500">
+                                <tr className="text-left text-gray-500 dark:text-gray-400">
                                     <th className="p-2">Cédula</th>
                                     <th className="p-2">Nombre</th>
                                     <th className="p-2">Área</th>
@@ -239,23 +239,23 @@ Devuelve un array JSON de objetos. Cada objeto debe tener las siguientes propied
                             </thead>
                             <tbody>
                                 {extractedTeachers.map((teacher, index) => (
-                                    <tr key={index} className="border-b">
-                                        <td className="p-2"><input type="text" value={teacher.id} onChange={(e) => handleTeacherDataChange(index, 'id', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
-                                        <td className="p-2"><input type="text" value={teacher.name} onChange={(e) => handleTeacherDataChange(index, 'name', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
+                                    <tr key={index} className="border-b dark:border-gray-700">
+                                        <td className="p-2"><input type="text" value={teacher.id} onChange={(e) => handleTeacherDataChange(index, 'id', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
+                                        <td className="p-2"><input type="text" value={teacher.name} onChange={(e) => handleTeacherDataChange(index, 'name', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
                                         <td className="p-2">
-                                            <select value={teacher.subject} onChange={(e) => handleTeacherDataChange(index, 'subject', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent">
+                                            <select value={teacher.subject} onChange={(e) => handleTeacherDataChange(index, 'subject', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent">
                                                 {SUBJECT_AREAS.map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
                                         </td>
-                                        <td className="p-2"><input type="email" value={teacher.email} onChange={(e) => handleTeacherDataChange(index, 'email', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
+                                        <td className="p-2"><input type="email" value={teacher.email} onChange={(e) => handleTeacherDataChange(index, 'email', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
                                         <td className="p-2 text-center">
-                                            <input type="checkbox" checked={teacher.isHomeroomTeacher} onChange={(e) => handleTeacherDataChange(index, 'isHomeroomTeacher', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"/>
+                                            <input type="checkbox" checked={teacher.isHomeroomTeacher} onChange={(e) => handleTeacherDataChange(index, 'isHomeroomTeacher', e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary"/>
                                             {teacher.isHomeroomTeacher && (
                                                 <div className="flex gap-1 mt-1">
-                                                    <select value={teacher.assignedGrade} onChange={(e) => handleTeacherGroupChange(index, 'assignedGrade', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent">
+                                                    <select value={teacher.assignedGrade} onChange={(e) => handleTeacherGroupChange(index, 'assignedGrade', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent">
                                                         {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                                                     </select>
-                                                    <select value={teacher.assignedGroup} onChange={(e) => handleTeacherGroupChange(index, 'assignedGroup', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-gray-900 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent">
+                                                    <select value={teacher.assignedGroup} onChange={(e) => handleTeacherGroupChange(index, 'assignedGroup', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent">
                                                         {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
                                                     </select>
                                                 </div>
@@ -267,7 +267,7 @@ Devuelve un array JSON de objetos. Cada objeto debe tener las siguientes propied
                         </table>
                     </div>
                     <div className="flex justify-between items-center mt-6 flex-shrink-0">
-                        <button type="button" onClick={() => setStep(1)} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors">Atrás</button>
+                        <button type="button" onClick={() => setStep(1)} className="px-6 py-2 rounded-md text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">Atrás</button>
                         <button onClick={handleSave} className="px-6 py-2 rounded-md text-white bg-primary hover:bg-primary-focus transition-colors">
                             Confirmar e Importar {extractedTeachers.length} Docentes
                         </button>
