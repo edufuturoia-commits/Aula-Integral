@@ -306,6 +306,9 @@ export interface Guardian {
   email?: string;
   phone?: string;
   studentIds: number[]; // Array of IDs of the students they are a guardian for
+  // FIX: Add missing password properties to support guardian login.
+  password?: string;
+  passwordChanged?: boolean;
 }
 
 export interface InboxConversation {

@@ -2,13 +2,21 @@
 
 import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
 
+// New Pages for Auth Flow
+import LandingPage from './pages/LandingPage';
+import Login from './pages/Login';
+import ChangePasswordModal from './components/ChangePasswordModal';
+import DemoExpiredModal from './components/DemoExpiredModal';
+
+
 // Components
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
 // Types and DB
-import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian } from './types';
-import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians } from './db';
+import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData } from './types';
+// FIX: Update import to include missing functions.
+import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian } from './db';
 
 // Constants
 import { SIDEBAR_ITEMS, MOCK_INSTITUTION_PROFILE, MOCK_CITATIONS } from './constants';
@@ -104,11 +112,15 @@ const SystemToast: React.FC<SystemToastProps> = ({ message, type, onClose }) => 
   );
 };
 
+type User = Teacher | Student | Guardian;
 
 const App: React.FC = () => {
   // App State Management
+  const [appState, setAppState] = useState<'landing' | 'login' | 'app'>('landing');
   const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<Teacher | Student | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [needsPasswordChange, setNeedsPasswordChange] = useState(false);
+  const [isDemoExpired, setIsDemoExpired] = useState(false);
 
   // Main App Page
   const [currentPage, setCurrentPage] = useState<Page>('Dashboard');
@@ -144,7 +156,6 @@ const App: React.FC = () => {
   });
 
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  const isAdmin = currentUser?.role === Role.ADMIN;
   
   // Real-time notification state
   const [notification, setNotification] = useState<{ title: string; message: string; studentName: string; } | null>(null);
@@ -176,10 +187,10 @@ const App: React.FC = () => {
 
   // Effect to simulate WebSocket for real-time incident notifications
   useEffect(() => {
+    if (appState !== 'app') return;
     let timeoutId: ReturnType<typeof setTimeout>;
 
     const showRandomNotification = () => {
-      // Ensure there are students and the app is online to simulate a realistic scenario
       if (students.length > 0 && navigator.onLine) {
         const randomStudent = students[Math.floor(Math.random() * students.length)];
         const randomIncidentType = Object.values(IncidentType)[Math.floor(Math.random() * Object.values(IncidentType).length)];
@@ -189,23 +200,15 @@ const App: React.FC = () => {
           message: `Se ha reportado un nuevo incidente de tipo "${randomIncidentType}".`,
           studentName: randomStudent.name
         });
-
-        // Automatically hide after 7 seconds
-        setTimeout(() => {
-          setNotification(null);
-        }, 7000);
+        setTimeout(() => setNotification(null), 7000);
       }
-
-      // Schedule next notification
-      const randomInterval = Math.random() * (45000 - 25000) + 25000; // between 25 and 45 seconds
+      const randomInterval = Math.random() * (45000 - 25000) + 25000;
       timeoutId = setTimeout(showRandomNotification, randomInterval);
     };
-
-    // Start the simulation after an initial delay
     timeoutId = setTimeout(showRandomNotification, 20000); 
 
     return () => clearTimeout(timeoutId);
-  }, [students]); // Dependency on students ensures we have data to show.
+  }, [students, appState]);
 
 
   const loadResources = useCallback(async () => {
@@ -251,24 +254,123 @@ const App: React.FC = () => {
         setGuardians(guardiansData);
         setCitations(MOCK_CITATIONS);
         await loadIncidents();
-        
-        // Auto-login as admin for testing purposes
-        const adminUser = teachersData.find(t => t.role === Role.ADMIN);
-        if (adminUser) {
-            setCurrentUser(adminUser);
-        } else {
-            console.error("Admin user not found. Please ensure the database is seeded.");
-        }
-
         await loadResources();
       } catch (error) {
-        console.error("Failed to load initial data from server:", error);
+        console.error("Failed to load initial data:", error);
       } finally {
         setIsLoading(false);
       }
     };
     loadData();
   }, [loadResources, loadIncidents]);
+
+  // Check for demo expiration
+  useEffect(() => {
+    if (currentUser && 'isDemo' in currentUser && currentUser.isDemo && currentUser.demoStartDate) {
+      const startDate = new Date(currentUser.demoStartDate);
+      const sevenDays = 7 * 24 * 60 * 60 * 1000;
+      if (new Date().getTime() - startDate.getTime() > sevenDays) {
+        setIsDemoExpired(true);
+      }
+    } else {
+        setIsDemoExpired(false);
+    }
+  }, [currentUser]);
+
+
+  // --- AUTHENTICATION LOGIC ---
+
+  const handleLogin = async (username: string, pass: string): Promise<{ success: boolean; message: string; }> => {
+    let foundUser: User | undefined;
+
+    if (username.includes('@')) { // Staff login
+        foundUser = await getTeacherByEmail(username);
+        if (foundUser && foundUser.id === pass) {
+            // Correct password is document ID for staff
+        } else {
+            foundUser = undefined;
+        }
+    } else { // Student or Guardian login
+        foundUser = await getStudentByDocumentId(username);
+        if (foundUser && foundUser.password === pass) {
+            // Correct password
+        } else {
+            foundUser = await getGuardianById(username);
+            if(foundUser && (foundUser as Guardian).password === pass) {
+                // Correct password
+            } else {
+                foundUser = await getTeacherById(username); // Staff can also login with ID
+                 if (foundUser && foundUser.id === pass) {
+                    // Correct password is document ID for staff
+                } else {
+                    foundUser = undefined;
+                }
+            }
+        }
+    }
+
+    if (foundUser) {
+        setCurrentUser(foundUser);
+        if ('passwordChanged' in foundUser && (foundUser as Student | Teacher).passwordChanged === false) {
+            setNeedsPasswordChange(true);
+        }
+        if (!('role' in foundUser)) { // It's a guardian
+            setCurrentPage('ParentPortal');
+        }
+        setAppState('app');
+        return { success: true, message: 'Login successful' };
+    }
+
+    return { success: false, message: 'Credenciales inválidas. Por favor, intente de nuevo.' };
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setAppState('landing');
+    setCurrentPage('Dashboard');
+  };
+  
+  const handlePasswordChanged = (user: User) => {
+    setCurrentUser(user);
+    setNeedsPasswordChange(false);
+  };
+  
+  const handleDemoRegister = async (userData: UserRegistrationData): Promise<{success: boolean, message: string}> => {
+    const existingUser = await getTeacherByEmail(userData.email);
+    if (existingUser) {
+        return { success: false, message: 'Este correo electrónico ya está registrado.' };
+    }
+    const newDemoAdmin: Teacher = {
+        id: `demo_${Date.now()}`,
+        name: userData.rectorName,
+        email: userData.email,
+        password: userData.password,
+        avatarUrl: `https://picsum.photos/seed/${userData.rectorName}/100/100`,
+        role: Role.RECTOR,
+        subject: 'Administrativos',
+        passwordChanged: true, // They set it on registration
+        isDemo: true,
+        demoStartDate: new Date().toISOString()
+    };
+    await addOrUpdateTeachers([newDemoAdmin]);
+    const updatedTeachers = await getTeachers();
+    setTeachers(updatedTeachers);
+    
+    setCurrentUser(newDemoAdmin);
+    setAppState('app');
+    return { success: true, message: '¡Registro de demostración exitoso!'};
+  };
+
+  const handleUpgradeFromDemo = async () => {
+    if(currentUser && 'isDemo' in currentUser) {
+        const upgradedUser = {...currentUser, isDemo: false, demoStartDate: undefined};
+        await updateTeacher(upgradedUser as Teacher);
+        setCurrentUser(upgradedUser);
+        setIsDemoExpired(false);
+        showSystemMessage("¡Gracias! Tu cuenta ha sido activada.", 'success');
+    }
+  };
+
 
   // Data Handlers
   const showSystemMessage = useCallback((message: string, type: 'success' | 'error' = 'success') => {
@@ -278,15 +380,21 @@ const App: React.FC = () => {
     }, 5000);
   }, []);
 
-  const handleUpdateUser = async (user: Teacher | Student) => {
-    if ('subject' in user) { // Teacher
-        const updated = teachers.map(t => t.id === user.id ? user : t);
-        await addOrUpdateTeachers(updated);
-        setTeachers(updated);
-    } else { // Student
-        const updated = students.map(s => s.id === user.id ? user : s);
-        await addOrUpdateStudents(updated);
-        setStudents(updated);
+  const handleUpdateUser = async (user: User) => {
+    if ('role' in user) { // Teacher or Student
+        if ('subject' in user) { // Teacher
+            await updateTeacher(user as Teacher);
+            const updated = await getTeachers();
+            setTeachers(updated);
+        } else { // Student
+            await updateStudent(user as Student);
+            const updated = await getStudents();
+            setStudents(updated);
+        }
+    } else { // Guardian
+        await updateGuardian(user as Guardian);
+        const updated = await getGuardians();
+        setGuardians(updated);
     }
     if (currentUser?.id === user.id) {
         setCurrentUser(user);
@@ -348,7 +456,6 @@ const App: React.FC = () => {
     setAttendanceRecords(prev => {
       const recordsMap = new Map(prev.map(r => [r.id, r]));
       recordsMap.set(record.id, record);
-      // FIX: Explicitly type sort parameters to resolve error.
       return Array.from(recordsMap.values()).sort((a: AttendanceRecord, b: AttendanceRecord) => new Date(b.date).getTime() - new Date(a.date).getTime());
     });
   };
@@ -358,7 +465,6 @@ const App: React.FC = () => {
     setAttendanceRecords(prev => {
       const recordsMap = new Map(prev.map(r => [r.id, r]));
       records.forEach(r => recordsMap.set(r.id, r));
-      // FIX: Explicitly type sort parameters to resolve error.
       return Array.from(recordsMap.values()).sort((a: AttendanceRecord, b: AttendanceRecord) => new Date(b.date).getTime() - new Date(a.date).getTime());
     });
   };
@@ -370,60 +476,96 @@ const App: React.FC = () => {
   };
 
   // Render Logic
-  if (isLoading || !currentUser) {
+  if (isLoading) {
     return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">Cargando aplicación...</div>;
   }
+  
+  if (appState === 'landing') {
+    return <LandingPage onShowLogin={() => setAppState('login')} onDemoRegister={handleDemoRegister} />;
+  }
 
-  return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900 font-sans">
-        <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} currentUser={currentUser} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-            <Header currentPage={SIDEBAR_ITEMS.find(item => item.name === currentPage)?.label || currentPage} isOnline={isOnline} currentUser={currentUser} />
-            <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto bg-neutral dark:bg-gray-800">
-                <Suspense fallback={<div className="flex items-center justify-center h-full text-gray-800 dark:text-gray-200">Cargando página...</div>}>
-                    {currentPage === 'Dashboard' && <Dashboard students={students} teachers={teachers} />}
-                    {currentPage === 'Classroom' && (isAdmin || currentUser.role !== Role.STUDENT) && <Classroom isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleAddOrUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendance} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onShowSystemMessage={showSystemMessage} />}
-                    {currentPage === 'Assessments' && (isAdmin || currentUser.role !== Role.STUDENT) && <Assessments students={students} assessments={assessments} setAssessments={handleSetAssessments} studentResults={studentResults} />}
-                    {currentPage === 'Resources' && <Resources resources={resources} downloadedIds={downloadedResourceIds} onUpdate={loadResources}/>}
-                    {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
-                    {currentPage === 'Settings' && (isAdmin || currentUser.role !== Role.STUDENT) && <Settings currentUser={currentUser as Teacher} onUpdateUser={handleUpdateUser as (user: Teacher) => Promise<void>} theme={theme} setTheme={setTheme} />}
-                    {currentPage === 'Incidents' && (isAdmin || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR) && <Incidents isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} guardians={guardians} onUpdateGuardians={handleSetGuardians} onShowSystemMessage={showSystemMessage} />}
-                    {currentPage === 'ParentPortal' && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} />}
-                    {currentPage === 'StudentPortal' && (isAdmin || currentUser.role === Role.STUDENT) && <StudentPortal 
-                        loggedInUser={currentUser}
-                        allStudents={students}
-                        teachers={teachers} 
-                        subjectGrades={subjectGrades} 
-                        resources={resources} 
-                        assessments={assessments} 
-                        studentResults={studentResults} 
-                        onAddResult={handleAddResult}
-                        citations={citations}/>}
-                    {/* FIX: Pass setTeachers to the Rectory component to enable homeroom teacher updates. */}
-                    {currentPage === 'Rectory' && (isAdmin || currentUser.role === Role.RECTOR) && <Rectory students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} onShowSystemMessage={showSystemMessage} />}
-                    {currentPage === 'InstitutionProfile' && (isAdmin || currentUser.role === Role.RECTOR) && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile} />}
-                    {currentPage === 'Calificaciones' && (isAdmin || currentUser.role !== Role.STUDENT) && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} onShowSystemMessage={showSystemMessage}/>}
-                    {currentPage === 'Communication' && (isAdmin || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR || currentUser.role === Role.TEACHER) && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} />}
-                </Suspense>
-            </main>
+  if (appState === 'login') {
+      return <Login onLogin={handleLogin} onBackToHome={() => setAppState('landing')} />;
+  }
+
+
+  if (appState === 'app' && currentUser) {
+      const userRole = 'role' in currentUser ? currentUser.role : 'Guardian';
+      const isUserStudent = userRole === Role.STUDENT;
+      const isAdmin = userRole === Role.ADMIN;
+      const canSeeParentPortal = userRole === Role.ADMIN || userRole === Role.RECTOR || userRole === Role.COORDINATOR;
+      
+      const userForHeader = {
+        name: currentUser.name,
+        avatarUrl: 'avatarUrl' in currentUser ? currentUser.avatarUrl : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=005A9C&color=fff`,
+        role: 'role' in currentUser ? currentUser.role : 'Acudiente'
+      };
+
+      // Guardian (Parent) Layout
+      if (userRole === 'Guardian') {
+        return (
+            <div className="flex flex-col h-screen bg-neutral dark:bg-gray-900 font-sans">
+                <Header 
+                    currentPage={SIDEBAR_ITEMS.find(item => item.name === currentPage)?.label || currentPage}
+                    isOnline={isOnline}
+                    currentUser={userForHeader}
+                    onLogout={handleLogout}
+                    onNavigate={setCurrentPage}
+                />
+                <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+                    <Suspense fallback={<div className="flex items-center justify-center h-full">Cargando portal...</div>}>
+                        {currentPage === 'ParentPortal' && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} />}
+                        {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
+                    </Suspense>
+                </main>
+                 {notification && <NotificationToast title={notification.title} message={notification.message} studentName={notification.studentName} onClose={() => setNotification(null)} />}
+                 {systemMessage && <SystemToast message={systemMessage.message} type={systemMessage.type} onClose={() => setSystemMessage(null)} />}
+                 {needsPasswordChange && <ChangePasswordModal user={currentUser} onPasswordChanged={handlePasswordChanged} />}
+            </div>
+        );
+      }
+
+      // Default Layout for Teachers, Students, Admins, etc.
+      return (
+        <div className="flex h-screen bg-gray-100 dark:bg-gray-900 font-sans">
+            <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} currentUser={currentUser as (Teacher | Student)} onLogout={handleLogout} />
+            <div className="flex-1 flex flex-col overflow-hidden">
+                <Header 
+                    currentPage={SIDEBAR_ITEMS.find(item => item.name === currentPage)?.label || currentPage} 
+                    isOnline={isOnline} 
+                    currentUser={userForHeader} 
+                    onLogout={handleLogout}
+                    onNavigate={setCurrentPage}
+                />
+                <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto bg-neutral dark:bg-gray-800">
+                    <Suspense fallback={<div className="flex items-center justify-center h-full text-gray-800 dark:text-gray-200">Cargando página...</div>}>
+                        {currentPage === 'Dashboard' && <Dashboard students={students} teachers={teachers} />}
+                        {currentPage === 'Classroom' && !isUserStudent && <Classroom isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleAddOrUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendance} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onShowSystemMessage={showSystemMessage} />}
+                        {currentPage === 'Assessments' && !isUserStudent && <Assessments students={students} assessments={assessments} setAssessments={handleSetAssessments} studentResults={studentResults} />}
+                        {currentPage === 'Resources' && <Resources resources={resources} downloadedIds={downloadedResourceIds} onUpdate={loadResources} />}
+                        {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
+                        {currentPage === 'Settings' && <Settings currentUser={currentUser as Teacher} onUpdateUser={handleUpdateUser} theme={theme} setTheme={setTheme} />}
+                        {currentPage === 'Incidents' && !isUserStudent && <Incidents isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} guardians={guardians} onUpdateGuardians={handleSetGuardians} onShowSystemMessage={showSystemMessage} />}
+                        {currentPage === 'ParentPortal' && canSeeParentPortal && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} />}
+                        {currentPage === 'StudentPortal' && <StudentPortal loggedInUser={isAdmin && students.length > 0 ? students[0] : (currentUser as Student)} allStudents={students} teachers={teachers} subjectGrades={subjectGrades} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleAddResult} citations={citations} />}
+                        {currentPage === 'Rectory' && <Rectory students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} onShowSystemMessage={showSystemMessage} />}
+                        {currentPage === 'InstitutionProfile' && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile as any} />}
+                        {currentPage === 'Calificaciones' && !isUserStudent && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} onShowSystemMessage={showSystemMessage} />}
+                        {currentPage === 'Communication' && !isUserStudent && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} />}
+                    </Suspense>
+                </main>
+                {notification && <NotificationToast title={notification.title} message={notification.message} studentName={notification.studentName} onClose={() => setNotification(null)} />}
+                {systemMessage && <SystemToast message={systemMessage.message} type={systemMessage.type} onClose={() => setSystemMessage(null)} />}
+                {needsPasswordChange && <ChangePasswordModal user={currentUser as (Teacher | Student)} onPasswordChanged={handlePasswordChanged as any} />}
+                {isDemoExpired && <DemoExpiredModal onUpgrade={handleUpgradeFromDemo} onLogout={handleLogout} />}
+            </div>
         </div>
-         {notification && (
-            <NotificationToast 
-                title={notification.title} 
-                message={notification.message} 
-                studentName={notification.studentName}
-                onClose={() => setNotification(null)}
-            />
-        )}
-        {systemMessage && (
-            <SystemToast
-                message={systemMessage.message}
-                type={systemMessage.type}
-                onClose={() => setSystemMessage(null)}
-            />
-        )}
-    </div>
-  );
+      );
+  }
+
+  // Fallback if no state matches
+  return <LandingPage onShowLogin={() => setAppState('login')} onDemoRegister={handleDemoRegister} />;
 };
 
+// FIX: Add default export for App component
 export default App;

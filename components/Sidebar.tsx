@@ -1,13 +1,15 @@
 
+
 import React, { useMemo } from 'react';
 import type { Page, Teacher, Student } from '../types';
 import { Role } from '../types';
-import { SIDEBAR_ITEMS } from '../constants';
+import { SIDEBAR_ITEMS, LogoutIcon } from '../constants';
 
 interface SidebarProps {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
   currentUser: Teacher | Student;
+  onLogout: () => void;
 }
 
 const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
@@ -17,7 +19,7 @@ const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
   [Role.STUDENT]: ['Dashboard', 'StudentPortal', 'Resources', 'Profile'],
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser, onLogout }) => {
   const visibleItems = useMemo(() => {
     if (!currentUser) return [];
     
@@ -57,6 +59,20 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentU
           </a>
         ))}
       </nav>
+       <div className="px-2 py-4 mt-auto border-t border-primary-focus/50">
+        <a
+            href="#"
+            onClick={(e) => {
+                e.preventDefault();
+                onLogout();
+            }}
+            className="flex items-center p-3 rounded-lg transition-colors duration-200 text-gray-300 hover:bg-red-500/80 hover:text-white"
+            title="Cerrar Sesión"
+        >
+            <LogoutIcon className="h-6 w-6" />
+            <span className="ml-4 font-medium hidden lg:block">Cerrar Sesión</span>
+        </a>
+      </div>
       <div className="p-4 text-center text-xs text-gray-400 dark:text-gray-500 hidden lg:block">
         <p>Copyright - EduFuturo</p>
         <p>Educadores que Trascienden</p>

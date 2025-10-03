@@ -285,8 +285,8 @@ export const MOCK_PARENT_MESSAGES: ParentMessage[] = [
 ];
 
 export const MOCK_CITATIONS: Citation[] = [
-    { id: 'cit1', studentId: 3, studentName: 'Camila Rodriguez', studentAvatar: 'https://picsum.photos/seed/3/100/100', date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '08:00', location: 'Coordinación', reason: 'Seguimiento académico', status: CitationStatus.PENDING },
-    { id: 'cit2', studentId: 10, studentName: 'Isabella Martínez', studentAvatar: 'https://picsum.photos/seed/10/100/100', date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '10:30', location: 'Coordinación', reason: 'Incidencia de convivencia', status: CitationStatus.CONFIRMED },
+    { id: 'cit1', studentId: 1, studentName: 'Juan David Pérez', studentAvatar: 'https://picsum.photos/seed/student1/100/100', date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '08:00', location: 'Coordinación', reason: 'Seguimiento académico', status: CitationStatus.PENDING },
+    { id: 'cit2', studentId: 2, studentName: 'Sofía López', studentAvatar: 'https://picsum.photos/seed/student2/100/100', date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '10:30', location: 'Coordinación', reason: 'Incidencia de convivencia', status: CitationStatus.CONFIRMED },
 ];
 
 export const MOCK_MESSAGE_HISTORY: CoordinationMessage[] = [

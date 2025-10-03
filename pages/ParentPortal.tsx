@@ -4,6 +4,7 @@ import { CitationStatus, Role, AcademicPeriod, Desempeno } from '../types';
 import ReportCardModal from '../components/ReportCardModal';
 import { MOCK_PARENT_PORTAL_CONVERSATIONS, ACADEMIC_PERIODS } from '../constants';
 import NewParentConversationModal from '../components/NewParentConversationModal';
+import CancelCitationModal from '../components/CancelCitationModal';
 
 
 // Duplicating this helper function here for simplicity
@@ -73,6 +74,10 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
     const [activeTab, setActiveTab] = useState<'resumen' | 'calificaciones' | 'convivencia' | 'comunicados' | 'bandeja'>('resumen');
     const [isReportCardModalOpen, setIsReportCardModalOpen] = useState(false);
     const [selectedPeriod, setSelectedPeriod] = useState<AcademicPeriod>(ACADEMIC_PERIODS[0]);
+    
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [citationToCancel, setCitationToCancel] = useState<Citation | null>(null);
+
 
     // New state for chat
     const [conversations, setConversations] = useState<InboxConversation[]>(MOCK_PARENT_PORTAL_CONVERSATIONS);
@@ -216,6 +221,43 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
         alert(`Boletín para ${period} generado (simulación).`);
     };
 
+    const handleConfirmCitation = (citationId: string) => {
+        if (window.confirm('¿Estás seguro de que quieres confirmar esta citación?')) {
+            onUpdateCitations(prev => prev.map(c => 
+                c.id === citationId 
+                ? { ...c, status: CitationStatus.CONFIRMED } 
+                : c
+            ));
+        }
+    };
+    
+    const handleRequestReschedule = (citationId: string) => {
+        if (window.confirm('¿Estás seguro de que quieres solicitar una reasignación para esta citación? Coordinación será notificada.')) {
+            onUpdateCitations(prev => prev.map(c => 
+                c.id === citationId 
+                ? { ...c, status: CitationStatus.RESCHEDULE_REQUESTED } 
+                : c
+            ));
+        }
+    };
+    
+    const handleOpenCancelModal = (citation: Citation) => {
+        setCitationToCancel(citation);
+        setIsCancelModalOpen(true);
+    };
+    
+    const handleConfirmCancelCitation = (reason: string) => {
+        if (!citationToCancel) return;
+        onUpdateCitations(prev => prev.map(c => 
+            c.id === citationToCancel.id 
+            ? { ...c, status: CitationStatus.CANCELLED, cancellationReason: reason } 
+            : c
+        ));
+        setIsCancelModalOpen(false);
+        setCitationToCancel(null);
+    };
+
+
     if (!selectedStudent) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -248,8 +290,13 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                              {studentCitations.length > 0 ? (
                                 studentCitations.filter(c => new Date(c.date) >= new Date()).map(cit => (
                                     <div key={cit.id} className="p-3 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-                                        <p className="font-semibold text-gray-800 dark:text-gray-200">{cit.reason}</p>
-                                        <p className="text-sm text-gray-600 dark:text-gray-300">{new Date(cit.date + 'T00:00:00').toLocaleDateString()} a las {cit.time}</p>
+                                        <div className="flex justify-between items-start">
+                                            <p className="font-semibold text-gray-800 dark:text-gray-200">{cit.reason}</p>
+                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCitationStatusClass(cit.status)}`}>{cit.status}</span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                                            {new Date(cit.date + 'T00:00:00').toLocaleDateString('es-CO', { month: 'long', day: 'numeric', year: 'numeric' })} a las {cit.time}
+                                        </p>
                                     </div>
                                 ))
                              ) : <p className="text-gray-500 dark:text-gray-400">No hay citaciones programadas.</p>}
@@ -334,12 +381,39 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                         <h4 className="font-semibold text-lg mt-4 dark:text-gray-200">Citaciones</h4>
                         {studentCitations.length > 0 ? (
                             studentCitations.map(cit => (
-                                <div key={cit.id} className={`p-3 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800`}>
-                                    <div className="flex justify-between">
-                                        <p className="font-semibold text-gray-800 dark:text-gray-200">{cit.reason}</p>
+                                <div key={cit.id} className={`p-4 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800`}>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="font-bold text-gray-800 dark:text-gray-200">{cit.reason}</p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                                {new Date(cit.date + 'T00:00:00').toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} a las {cit.time} en {cit.location}.
+                                            </p>
+                                        </div>
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCitationStatusClass(cit.status)}`}>{cit.status}</span>
                                     </div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">{new Date(cit.date + 'T00:00:00').toLocaleDateString()} a las {cit.time}</p>
+
+                                    {/* Buttons and status messages */}
+                                    <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2 flex-wrap">
+                                        {cit.status === CitationStatus.PENDING && (
+                                            <>
+                                                <button onClick={() => handleConfirmCitation(cit.id)} className="px-3 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full hover:bg-green-200 transition-colors">Confirmar Asistencia</button>
+                                                <button onClick={() => handleRequestReschedule(cit.id)} className="px-3 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full hover:bg-yellow-200 transition-colors">Solicitar Reasignación</button>
+                                                <button onClick={() => handleOpenCancelModal(cit)} className="px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full hover:bg-red-200 transition-colors">Cancelar</button>
+                                            </>
+                                        )}
+                                        {cit.status === CitationStatus.CONFIRMED && (
+                                            <>
+                                                <button onClick={() => handleRequestReschedule(cit.id)} className="px-3 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full hover:bg-yellow-200 transition-colors">Solicitar Reasignación</button>
+                                                <button onClick={() => handleOpenCancelModal(cit)} className="px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full hover:bg-red-200 transition-colors">Cancelar</button>
+                                            </>
+                                        )}
+                                        {cit.status === CitationStatus.RESCHEDULE_REQUESTED && (
+                                            <p className="text-xs text-yellow-700 italic">Tu solicitud de reasignación está siendo revisada por coordinación.</p>
+                                        )}
+                                        {cit.status === CitationStatus.CANCELLED && cit.cancellationReason && (
+                                            <p className="text-xs text-red-600 dark:text-red-400"><strong>Motivo cancelación:</strong> {cit.cancellationReason}</p>
+                                        )}
+                                    </div>
                                 </div>
                             ))
                         ) : <p className="text-gray-500 dark:text-gray-400">No hay citaciones.</p>}
@@ -489,6 +563,13 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                     contacts={contactsForParent}
                     onClose={() => setIsNewConvoModalOpen(false)}
                     onStartConversation={handleStartConversation}
+                />
+            )}
+
+            {isCancelModalOpen && citationToCancel && (
+                <CancelCitationModal 
+                    onClose={() => setIsCancelModalOpen(false)} 
+                    onConfirm={handleConfirmCancelCitation} 
                 />
             )}
         </div>

@@ -1,4 +1,5 @@
 
+
 import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades, Guardian } from './types';
 import { MOCK_STUDENTS, MOCK_TEACHERS, MOCK_RESOURCES, MOCK_STUDENT_ASSESSMENT_RESULTS, MOCK_SUBJECT_GRADES, MOCK_ANNOUNCEMENTS } from './constants';
 
@@ -31,6 +32,16 @@ export const addOrUpdateGuardians = (newGuardians: Guardian[]): Promise<void> =>
     const guardianMap = new Map(guardians.map(g => [g.id, g]));
     newGuardians.forEach(g => guardianMap.set(g.id, g));
     guardians = Array.from(guardianMap.values()).sort((a,b) => a.name.localeCompare(b.name));
+    return simulateApiCall(undefined);
+};
+// FIX: Add missing getGuardianById function to support guardian login.
+export const getGuardianById = (id: string): Promise<Guardian | undefined> =>
+    simulateApiCall(guardians.find(g => g.id === id));
+
+// FIX: Add missing updateGuardian function to support updating guardian profiles.
+export const updateGuardian = (guardian: Guardian): Promise<void> => {
+    const index = guardians.findIndex(g => g.id === guardian.id);
+    if (index > -1) guardians[index] = guardian;
     return simulateApiCall(undefined);
 };
 
@@ -85,6 +96,10 @@ export const getAllAttendanceRecords = (): Promise<AttendanceRecord[]> => simula
 export const getTeacherByEmail = (email: string): Promise<Teacher | undefined> => 
     simulateApiCall(teachers.find(t => t.email === email));
 
+// FIX: Add missing getTeacherById function to support login by ID.
+export const getTeacherById = (id: string): Promise<Teacher | undefined> =>
+    simulateApiCall(teachers.find(t => t.id === id));
+
 export const updateTeacher = (teacher: Teacher): Promise<void> => {
     const index = teachers.findIndex(t => t.id === teacher.id);
     if (index > -1) teachers[index] = teacher;
@@ -92,6 +107,10 @@ export const updateTeacher = (teacher: Teacher): Promise<void> => {
 };
 export const getStudentByEmail = (email: string): Promise<Student | undefined> => 
     simulateApiCall(students.find(s => s.email === email));
+
+// FIX: Add missing getStudentByDocumentId function to support student login.
+export const getStudentByDocumentId = (documentId: string): Promise<Student | undefined> =>
+    simulateApiCall(students.find(s => s.documentNumber === documentId));
 
 export const updateStudent = (student: Student): Promise<void> => {
     const index = students.findIndex(s => s.id === student.id);

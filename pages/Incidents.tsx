@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades, Guardian } from '../types';
 import { IncidentType, AttendanceStatus, CitationStatus, Role, DocumentType, TeacherStatus, IncidentStatus } from '../types';
@@ -202,12 +203,14 @@ const Incidents: React.FC<IncidentsProps> = ({
     const [studentToEdit, setStudentToEdit] = useState<Student | null>(null);
     const [studentForIncident, setStudentForIncident] = useState<Student | null>(null);
     
-    // Filters for lists
-    // ... filters for incidents, attendance, citations, etc.
+    // Filters for incidents
     const [incidentSearch, setIncidentSearch] = useState('');
     const [incidentDateFilter, setIncidentDateFilter] = useState('');
     const [incidentTypeFilter, setIncidentTypeFilter] = useState('all');
+    const [incidentStatusFilter, setIncidentStatusFilter] = useState<IncidentStatus | 'all'>('all');
+    const [incidentReporterFilter, setIncidentReporterFilter] = useState('all');
 
+    // Filters for attendance
     const [attendanceDateFilter, setAttendanceDateFilter] = useState('');
     const [attendanceGradeFilter, setAttendanceGradeFilter] = useState('all');
     const [attendanceStatusFilter, setAttendanceStatusFilter] = useState('all');
@@ -221,6 +224,8 @@ const Incidents: React.FC<IncidentsProps> = ({
         return announcements.filter(ann => ann.sentBy === currentUser.name || ann.sentBy === 'Rectoría' || ann.sentBy === 'Coordinación')
             .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     }, [announcements, currentUser.name]);
+
+    const reporters = useMemo(() => Array.from(new Set(incidents.map(inc => inc.teacherName))).sort(), [incidents]);
 
 
     const handleSaveIncident = async (incidentData: Incident) => {
@@ -379,13 +384,21 @@ const Incidents: React.FC<IncidentsProps> = ({
 
 
     const filteredIncidents = useMemo(() => {
-        return incidents.filter(inc => 
-            (inc.studentName.toLowerCase().includes(incidentSearch.toLowerCase()) || 
-             inc.teacherName.toLowerCase().includes(incidentSearch.toLowerCase())) &&
-            (incidentDateFilter ? inc.timestamp.startsWith(incidentDateFilter) : true) &&
-            (incidentTypeFilter === 'all' || inc.type === incidentTypeFilter)
-        ).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    }, [incidents, incidentSearch, incidentDateFilter, incidentTypeFilter]);
+        return incidents.filter(inc => {
+            const searchLower = incidentSearch.toLowerCase();
+            const matchesSearch = incidentSearch.trim() === '' ||
+                inc.studentName.toLowerCase().includes(searchLower) || 
+                inc.teacherName.toLowerCase().includes(searchLower) ||
+                inc.notes.toLowerCase().includes(searchLower);
+
+            const matchesDate = !incidentDateFilter || inc.timestamp.startsWith(incidentDateFilter);
+            const matchesType = incidentTypeFilter === 'all' || inc.type === incidentTypeFilter;
+            const matchesStatus = incidentStatusFilter === 'all' || inc.status === incidentStatusFilter;
+            const matchesReporter = incidentReporterFilter === 'all' || inc.teacherName === incidentReporterFilter;
+
+            return matchesSearch && matchesDate && matchesType && matchesStatus && matchesReporter;
+        }).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }, [incidents, incidentSearch, incidentDateFilter, incidentTypeFilter, incidentStatusFilter, incidentReporterFilter]);
 
     const enrichedAttendanceRecords = useMemo(() => {
         const studentMap = new Map(students.map(s => [s.id, s]));
@@ -467,12 +480,20 @@ const Incidents: React.FC<IncidentsProps> = ({
 
             {activeTab === 'incidents' && (
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <input type="text" placeholder="Buscar por estudiante o docente..." value={incidentSearch} onChange={e => setIncidentSearch(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" />
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                        <input type="text" placeholder="Buscar..." value={incidentSearch} onChange={e => setIncidentSearch(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 col-span-2 md:col-span-1" />
                         <input type="date" value={incidentDateFilter} onChange={e => setIncidentDateFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" />
                         <select value={incidentTypeFilter} onChange={e => setIncidentTypeFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                             <option value="all">Todos los Tipos</option>
                             {Object.values(IncidentType).map(type => <option key={type} value={type}>{type}</option>)}
+                        </select>
+                        <select value={incidentStatusFilter} onChange={e => setIncidentStatusFilter(e.target.value as any)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                            <option value="all">Todos los Estados</option>
+                            {Object.values(IncidentStatus).map(status => <option key={status} value={status}>{status}</option>)}
+                        </select>
+                        <select value={incidentReporterFilter} onChange={e => setIncidentReporterFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                            <option value="all">Todos los Docentes</option>
+                            {reporters.map(name => <option key={name} value={name}>{name}</option>)}
                         </select>
                     </div>
                      <div className="flex justify-end gap-2 mb-4">
@@ -494,7 +515,8 @@ const Incidents: React.FC<IncidentsProps> = ({
                                 </div>
                                 <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 p-2 bg-white dark:bg-gray-800 rounded-md">{inc.notes}</p>
                                 <div className="flex justify-end items-center gap-2 mt-3 text-sm">
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">Estado: {inc.status}</span>
+                                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getCitationStatusClass(inc.status as any)}`}>{inc.status}</span>
+
                                     {inc.status === IncidentStatus.ACTIVE && (
                                         <>
                                             <button onClick={() => handleUpdateIncidentStatus(inc.id, IncidentStatus.ATTENDED)} className="px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200">Marcar como Atendida</button>
