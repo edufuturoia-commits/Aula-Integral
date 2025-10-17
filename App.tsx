@@ -1,6 +1,4 @@
-
-
-import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useCallback, useEffect, Suspense, lazy, useMemo } from 'react';
 
 // New Pages for Auth Flow
 import LandingPage from './pages/LandingPage';
@@ -14,12 +12,12 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
 // Types and DB
-import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData } from './types';
+import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData, Conversation } from './types';
 // FIX: Update import to include missing functions.
 import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian } from './db';
 
 // Constants
-import { SIDEBAR_ITEMS, MOCK_INSTITUTION_PROFILE, MOCK_CITATIONS } from './constants';
+import { SIDEBAR_ITEMS, MOCK_INSTITUTION_PROFILE, MOCK_CITATIONS, MOCK_CONVERSATIONS_DATA } from './constants';
 
 // Lazy load page components for code splitting
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -35,6 +33,10 @@ const Rectory = lazy(() => import('./pages/Rectory'));
 const InstitutionProfile = lazy(() => import('./pages/InstitutionProfile'));
 const Calificaciones = lazy(() => import('./pages/Calificaciones'));
 const Communication = lazy(() => import('./pages/Communication'));
+const TutorMode = lazy(() => import('./pages/TutorMode'));
+const Eventos = lazy(() => import('./pages/Eventos'));
+const SimulacroICFES = lazy(() => import('./pages/SimulacroICFES'));
+const QuickAccess = lazy(() => import('./pages/QuickAccess'));
 
 
 interface NotificationToastProps {
@@ -116,7 +118,7 @@ type User = Teacher | Student | Guardian;
 
 const App: React.FC = () => {
   // App State Management
-  const [appState, setAppState] = useState<'landing' | 'login' | 'app'>('landing');
+  const [appState, setAppState] = useState<'landing' | 'login' | 'quickAccess' | 'app'>('landing');
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [needsPasswordChange, setNeedsPasswordChange] = useState(false);
@@ -141,6 +143,7 @@ const App: React.FC = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS_DATA);
   const [downloadedResourceIds, setDownloadedResourceIds] = useState<Set<string>>(new Set());
   const [institutionProfile, setInstitutionProfile] = useState<InstitutionProfileData>(() => {
     const savedProfile = localStorage.getItem('institutionProfile');
@@ -160,6 +163,26 @@ const App: React.FC = () => {
   // Real-time notification state
   const [notification, setNotification] = useState<{ title: string; message: string; studentName: string; } | null>(null);
   const [systemMessage, setSystemMessage] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  
+  // Feature flags / settings
+  const [icfesDrillSettings, setIcfesDrillSettings] = useState(() => {
+    const saved = localStorage.getItem('icfesDrillSettings');
+    return saved ? JSON.parse(saved) : { isActive: false, grades: [] };
+  });
+
+  const allUsersMap = useMemo(() => {
+    const userMap = new Map<string | number, Student | Teacher | Guardian>();
+    students.forEach(u => userMap.set(u.id, u));
+    teachers.forEach(u => userMap.set(u.id, u));
+    guardians.forEach(u => userMap.set(u.id, u));
+    return userMap;
+  }, [students, teachers, guardians]);
+
+  const handleSetIcfesDrillSettings = (settings: { isActive: boolean, grades: string[] }) => {
+      setIcfesDrillSettings(settings);
+      localStorage.setItem('icfesDrillSettings', JSON.stringify(settings));
+  };
+
 
   // Effects
   useEffect(() => {
@@ -475,6 +498,28 @@ const App: React.FC = () => {
       setGuardians(data);
   };
 
+  const handleUpdateConversation = (updatedConversation: Conversation) => {
+    setConversations(prev => {
+        const newConversations = prev.map(c => c.id === updatedConversation.id ? updatedConversation : c);
+        // sort by most recent message
+        newConversations.sort((a,b) => {
+            const lastMsgA = new Date(a.messages[a.messages.length - 1]?.timestamp || 0).getTime();
+            const lastMsgB = new Date(b.messages[b.messages.length - 1]?.timestamp || 0).getTime();
+            return lastMsgB - lastMsgA;
+        });
+        return newConversations;
+    });
+  };
+
+  const handleCreateConversation = (newConversation: Conversation) => {
+      // Check if conversation already exists to prevent duplicates
+      const exists = conversations.some(c => c.id === newConversation.id);
+      if (!exists) {
+        setConversations(prev => [newConversation, ...prev]);
+      }
+  };
+
+
   // Render Logic
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">Cargando aplicación...</div>;
@@ -485,7 +530,15 @@ const App: React.FC = () => {
   }
 
   if (appState === 'login') {
-      return <Login onLogin={handleLogin} onBackToHome={() => setAppState('landing')} />;
+      return <Login onLogin={handleLogin} onBackToHome={() => setAppState('landing')} onShowQuickAccess={() => setAppState('quickAccess')} />;
+  }
+  
+  if (appState === 'quickAccess') {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">Cargando perfiles...</div>}>
+            <QuickAccess onLogin={handleLogin} onBack={() => setAppState('login')} />
+        </Suspense>
+    );
   }
 
 
@@ -514,7 +567,7 @@ const App: React.FC = () => {
                 />
                 <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
                     <Suspense fallback={<div className="flex items-center justify-center h-full">Cargando portal...</div>}>
-                        {currentPage === 'ParentPortal' && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} />}
+                        {currentPage === 'ParentPortal' && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} currentUser={currentUser as Guardian} />}
                         {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
                     </Suspense>
                 </main>
@@ -528,7 +581,7 @@ const App: React.FC = () => {
       // Default Layout for Teachers, Students, Admins, etc.
       return (
         <div className="flex h-screen bg-gray-100 dark:bg-gray-900 font-sans">
-            <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} currentUser={currentUser as (Teacher | Student)} onLogout={handleLogout} />
+            <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} currentUser={currentUser as (Teacher | Student)} onLogout={handleLogout} icfesDrillSettings={icfesDrillSettings} />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <Header 
                     currentPage={SIDEBAR_ITEMS.find(item => item.name === currentPage)?.label || currentPage} 
@@ -539,19 +592,22 @@ const App: React.FC = () => {
                 />
                 <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto bg-neutral dark:bg-gray-800">
                     <Suspense fallback={<div className="flex items-center justify-center h-full text-gray-800 dark:text-gray-200">Cargando página...</div>}>
-                        {currentPage === 'Dashboard' && <Dashboard students={students} teachers={teachers} />}
+                        {currentPage === 'Dashboard' && <Dashboard students={students} teachers={teachers} citations={citations} onNavigate={setCurrentPage} />}
                         {currentPage === 'Classroom' && !isUserStudent && <Classroom isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleAddOrUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendance} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onShowSystemMessage={showSystemMessage} />}
                         {currentPage === 'Assessments' && !isUserStudent && <Assessments students={students} assessments={assessments} setAssessments={handleSetAssessments} studentResults={studentResults} />}
                         {currentPage === 'Resources' && <Resources resources={resources} downloadedIds={downloadedResourceIds} onUpdate={loadResources} />}
                         {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
                         {currentPage === 'Settings' && <Settings currentUser={currentUser as Teacher} onUpdateUser={handleUpdateUser} theme={theme} setTheme={setTheme} />}
                         {currentPage === 'Incidents' && !isUserStudent && <Incidents isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} guardians={guardians} onUpdateGuardians={handleSetGuardians} onShowSystemMessage={showSystemMessage} />}
-                        {currentPage === 'ParentPortal' && canSeeParentPortal && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} />}
-                        {currentPage === 'StudentPortal' && <StudentPortal loggedInUser={isAdmin && students.length > 0 ? students[0] : (currentUser as Student)} allStudents={students} teachers={teachers} subjectGrades={subjectGrades} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleAddResult} citations={citations} />}
+                        {currentPage === 'ParentPortal' && canSeeParentPortal && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} currentUser={currentUser} />}
+                        {currentPage === 'StudentPortal' && <StudentPortal loggedInUser={isAdmin && students.length > 0 ? students[0] : (currentUser as Student)} allStudents={students} teachers={teachers} subjectGrades={subjectGrades} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleAddResult} citations={citations} icfesDrillSettings={icfesDrillSettings} />}
                         {currentPage === 'Rectory' && <Rectory students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} onShowSystemMessage={showSystemMessage} />}
                         {currentPage === 'InstitutionProfile' && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile as any} />}
                         {currentPage === 'Calificaciones' && !isUserStudent && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} onShowSystemMessage={showSystemMessage} />}
-                        {currentPage === 'Communication' && !isUserStudent && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} />}
+                        {currentPage === 'Communication' && !isUserStudent && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} />}
+                        {currentPage === 'TutorMode' && <TutorMode />}
+                        {currentPage === 'Eventos' && <Eventos />}
+                        {currentPage === 'SimulacroICFES' && <SimulacroICFES settings={icfesDrillSettings} onSettingsChange={handleSetIcfesDrillSettings} />}
                     </Suspense>
                 </main>
                 {notification && <NotificationToast title={notification.title} message={notification.message} studentName={notification.studentName} onClose={() => setNotification(null)} />}

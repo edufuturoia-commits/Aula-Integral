@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import StudentList from '../components/StudentList';
 import IncidentModal from '../components/IncidentModal';
@@ -12,7 +9,7 @@ import AddStudentModal from '../components/AddStudentModal'; // Import new modal
 import type { Student, Incident, ParentMessage, Citation, CoordinationMessage, Teacher, SubjectGrades, AttendanceRecord, Announcement, IncidentType } from '../types';
 import { CitationStatus, Role, IncidentStatus } from '../types';
 import { addOrUpdateStudents } from '../db';
-import { GRADES, GROUPS, MOCK_PARENT_MESSAGES, MOCK_CITATIONS, MOCK_MESSAGE_HISTORY, MOCK_COORDINATOR_USER, GRADE_GROUP_MAP } from '../constants';
+import { GRADES, GROUPS, MOCK_CITATIONS, MOCK_COORDINATOR_USER, GRADE_GROUP_MAP } from '../constants';
 import AttendanceTaker from '../components/AttendanceTaker';
 import ManualViewer from '../components/ManualViewer';
 import EventPostersViewer from '../components/EventPostersViewer';
@@ -111,7 +108,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   const [citationToCancel, setCitationToCancel] = useState<Citation | null>(null);
   const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [groupFilter, setGroupFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'calificaciones' | 'manual' | 'events'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'calificaciones' | 'manual'>('students');
   const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
   const actionMenuRef = useRef<HTMLDivElement>(null);
@@ -251,7 +248,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
       <div className="flex-1 flex flex-col min-w-0">
         <div className="border-b border-gray-200 dark:border-gray-700 mb-4 flex-shrink-0">
           <nav className="-mb-px flex space-x-6 overflow-x-auto">
-            {(['students', 'attendance', 'calificaciones', 'manual', 'events'] as const).map(tab => (
+            {(['students', 'attendance', 'calificaciones', 'manual'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -298,7 +295,6 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
             />
           )}
           {activeTab === 'manual' && <ManualViewer />}
-          {activeTab === 'events' && <EventPostersViewer />}
         </div>
       </div>
 

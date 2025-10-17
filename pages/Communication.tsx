@@ -1,108 +1,120 @@
-import React, { useState, useEffect, useRef } from 'react';
-import type { Teacher, Student, InboxConversation } from '../types';
-import { MOCK_INBOX_CONVERSATIONS, MOCK_TEACHER_INBOX_CONVERSATIONS } from '../constants';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import type { Teacher, Student, InboxConversation, Conversation, Guardian, Message } from '../types';
 import { Role } from '../types';
 import NewConversationModal from '../components/NewConversationModal';
+
+type User = Student | Teacher | Guardian;
 
 interface CommunicationProps {
   currentUser: Teacher;
   students: Student[];
   teachers: Teacher[];
+  conversations: Conversation[];
+  onUpdateConversation: (conversation: Conversation) => void;
+  onCreateConversation: (conversation: Conversation) => void;
+  allUsersMap: Map<string | number, User>;
 }
 
-const Communication: React.FC<CommunicationProps> = ({ currentUser, students, teachers }) => {
-    const [conversations, setConversations] = useState<InboxConversation[]>([]);
+const Communication: React.FC<CommunicationProps> = ({ currentUser, students, teachers, conversations, onUpdateConversation, onCreateConversation, allUsersMap }) => {
     const [selectedConversation, setSelectedConversation] = useState<InboxConversation | null>(null);
     const [newMessage, setNewMessage] = useState('');
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const [isNewConvoModalOpen, setIsNewConvoModalOpen] = useState(false);
 
+    const inboxConversations = useMemo(() => {
+        const myId = currentUser.id;
+        return conversations
+            .filter(c => c.participantIds.includes(myId))
+            .map(c => {
+                const otherParticipantId = c.participantIds.find(id => id !== myId)!;
+                const participant = allUsersMap.get(otherParticipantId);
+                const lastMessage = c.messages[c.messages.length - 1];
+
+                let participantRole: Role | 'Acudiente' = Role.STUDENT;
+                if (participant) {
+                    participantRole = 'role' in participant ? participant.role : 'Acudiente';
+                }
+
+                return {
+                    id: c.id,
+                    participantId: otherParticipantId,
+                    participantName: participant ? participant.name : 'Usuario Desconocido',
+                    participantAvatar: participant && 'avatarUrl' in participant ? participant.avatarUrl : `https://picsum.photos/seed/${otherParticipantId}/100/100`,
+                    participantRole: participantRole,
+                    lastMessage: lastMessage?.text || 'Inicia la conversación...',
+                    timestamp: lastMessage?.timestamp || new Date(0).toISOString(),
+                    unread: false, // Simplification: unread state needs more logic
+                    conversation: c.messages.map(msg => ({
+                        sender: msg.senderId === myId ? 'self' : 'participant',
+                        text: msg.text,
+                        timestamp: new Date(msg.timestamp).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' }),
+                    })),
+                } as InboxConversation;
+            })
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }, [conversations, currentUser.id, allUsersMap]);
 
     useEffect(() => {
-        let initialConversations: InboxConversation[] = [];
-        if (currentUser.role === Role.TEACHER) {
-            initialConversations = MOCK_TEACHER_INBOX_CONVERSATIONS;
-        } else { // Admin, Coordinator, Rector
-            initialConversations = MOCK_INBOX_CONVERSATIONS;
+        if (!selectedConversation && inboxConversations.length > 0) {
+            setSelectedConversation(inboxConversations[0]);
+        } else if (selectedConversation) {
+            const updatedConvo = inboxConversations.find(c => c.id === selectedConversation.id);
+            setSelectedConversation(updatedConvo || null);
         }
-        setConversations(initialConversations);
-        if (initialConversations.length > 0) {
-            const firstConvo = initialConversations[0];
-            setSelectedConversation(firstConvo);
-             if (firstConvo.unread) {
-                setConversations(prev =>
-                    prev.map(c => c.id === firstConvo.id ? { ...c, unread: false } : c)
-                );
-            }
-        } else {
-            setSelectedConversation(null);
-        }
-    }, [currentUser]);
+    }, [inboxConversations, selectedConversation]);
 
 
     useEffect(() => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
-    }, [selectedConversation]);
+    }, [selectedConversation?.conversation]);
 
     const handleSelectConversation = (conversation: InboxConversation) => {
         setSelectedConversation(conversation);
-        // Mark as read
-        if (conversation.unread) {
-            setConversations(prev =>
-                prev.map(c => c.id === conversation.id ? { ...c, unread: false } : c)
-            );
-        }
     };
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !selectedConversation) return;
 
-        const message = {
-            sender: 'self' as const,
+        const originalConversation = conversations.find(c => c.id === selectedConversation.id);
+        if (!originalConversation) return;
+
+        const message: Message = {
+            senderId: currentUser.id,
             text: newMessage,
-            timestamp: 'Ahora',
+            timestamp: new Date().toISOString(),
         };
 
-        const updatedConversation = {
-            ...selectedConversation,
-            conversation: [...selectedConversation.conversation, message],
-            lastMessage: newMessage,
-            timestamp: 'Ahora',
+        const updatedConversation: Conversation = {
+            ...originalConversation,
+            messages: [...originalConversation.messages, message],
         };
 
-        setSelectedConversation(updatedConversation);
-        setConversations(prev =>
-            prev.map(c => c.id === updatedConversation.id ? updatedConversation : c)
-               .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) // Sort to bring recent to top
-        );
+        onUpdateConversation(updatedConversation);
         setNewMessage('');
     };
 
     const handleStartConversation = (participant: { id: string | number; name: string; avatarUrl: string; role: Role; }) => {
-        const participantIdStr = String(participant.id);
-        const convoIdPrefix = participant.role === Role.STUDENT ? 'parent' : (participant.role === Role.TEACHER ? 'teacher' : 'coordination');
-        const existingConvoId = `${convoIdPrefix}-${participantIdStr}`;
-        const existingConvo = conversations.find(c => c.id === existingConvoId);
+        const myId = currentUser.id;
+        const otherId = participant.id;
+        
+        // Create a consistent, sorted ID
+        const convoId = [myId, otherId].sort().join('-');
+        
+        const existingConvo = conversations.find(c => c.id === convoId);
 
         if (existingConvo) {
-            handleSelectConversation(existingConvo);
+            const inboxConvo = inboxConversations.find(ic => ic.id === existingConvo.id);
+            if (inboxConvo) handleSelectConversation(inboxConvo);
         } else {
-            const newConvo: InboxConversation = {
-                id: existingConvoId,
-                participantId: participant.id,
-                participantName: participant.role === Role.STUDENT ? `Acudiente de ${participant.name}` : participant.name,
-                participantAvatar: participant.avatarUrl,
-                participantRole: participant.role,
-                lastMessage: 'Inicia la conversación...',
-                timestamp: 'Ahora',
-                unread: false,
-                conversation: []
+            const newConvo: Conversation = {
+                id: convoId,
+                participantIds: [myId, otherId],
+                messages: []
             };
-            setConversations(prev => [newConvo, ...prev]);
-            setSelectedConversation(newConvo);
+            onCreateConversation(newConvo);
         }
         setIsNewConvoModalOpen(false);
     };
@@ -124,7 +136,7 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser, students, te
                     </button>
                 </div>
                 <ul className="overflow-y-auto flex-1">
-                    {conversations.map(convo => (
+                    {inboxConversations.map(convo => (
                         <li
                             key={convo.id}
                             onClick={() => handleSelectConversation(convo)}
@@ -138,7 +150,7 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser, students, te
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between text-sm">
                                         <p className="font-semibold text-gray-800 dark:text-gray-200 truncate">{convo.participantName}</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 ml-2">{convo.timestamp}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 ml-2">{new Date(convo.timestamp).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })}</p>
                                     </div>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">{convo.participantRole}</p>
                                     <p className={`text-sm text-gray-600 dark:text-gray-300 truncate mt-1 ${convo.unread ? 'font-bold text-gray-900 dark:text-gray-100' : ''}`}>{convo.lastMessage}</p>

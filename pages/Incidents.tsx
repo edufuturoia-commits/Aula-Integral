@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades, Guardian } from '../types';
 import { IncidentType, AttendanceStatus, CitationStatus, Role, DocumentType, TeacherStatus, IncidentStatus } from '../types';
@@ -204,11 +202,13 @@ const Incidents: React.FC<IncidentsProps> = ({
     const [studentForIncident, setStudentForIncident] = useState<Student | null>(null);
     
     // Filters for incidents
+    const [incidentViewMode, setIncidentViewMode] = useState<'list' | 'byTeacher'>('list');
     const [incidentSearch, setIncidentSearch] = useState('');
     const [incidentDateFilter, setIncidentDateFilter] = useState('');
     const [incidentTypeFilter, setIncidentTypeFilter] = useState('all');
     const [incidentStatusFilter, setIncidentStatusFilter] = useState<IncidentStatus | 'all'>('all');
     const [incidentReporterFilter, setIncidentReporterFilter] = useState('all');
+    const [openTeacherAccordion, setOpenTeacherAccordion] = useState<string | null>(null);
 
     // Filters for attendance
     const [attendanceDateFilter, setAttendanceDateFilter] = useState('');
@@ -250,7 +250,16 @@ const Incidents: React.FC<IncidentsProps> = ({
     };
     
     const handleSaveEditedCitation = (updatedCitation: Citation) => {
-        onUpdateCitations(prev => prev.map(c => c.id === updatedCitation.id ? updatedCitation : c));
+        onUpdateCitations(prev => prev.map(c => {
+            if (c.id === updatedCitation.id) {
+                // If the citation was a reschedule request, reset its status to pending so the parent can confirm again.
+                if (citationToEdit?.status === CitationStatus.RESCHEDULE_REQUESTED) {
+                    return { ...updatedCitation, status: CitationStatus.PENDING };
+                }
+                return updatedCitation;
+            }
+            return c;
+        }));
         onShowSystemMessage('Citación actualizada.');
         setIsEditCitationModalOpen(false);
         setCitationToEdit(null);
@@ -400,6 +409,23 @@ const Incidents: React.FC<IncidentsProps> = ({
         }).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     }, [incidents, incidentSearch, incidentDateFilter, incidentTypeFilter, incidentStatusFilter, incidentReporterFilter]);
 
+    const incidentsByTeacher = useMemo(() => {
+        return incidents.reduce((acc, incident) => {
+            const teacherName = incident.teacherName;
+            if (!acc[teacherName]) {
+                acc[teacherName] = [];
+            }
+            acc[teacherName].push(incident);
+            return acc;
+        }, {} as Record<string, Incident[]>);
+    }, [incidents]);
+
+    const filteredTeachersWithIncidents = useMemo(() => {
+        return Object.keys(incidentsByTeacher).filter(name =>
+            name.toLowerCase().includes(incidentSearch.toLowerCase())
+        ).sort();
+    }, [incidentsByTeacher, incidentSearch]);
+
     const enrichedAttendanceRecords = useMemo(() => {
         const studentMap = new Map(students.map(s => [s.id, s]));
         return allAttendanceRecords
@@ -444,6 +470,33 @@ const Incidents: React.FC<IncidentsProps> = ({
         }
     };
     
+    // FIX: Changed component definition to use React.FC and removed the incorrect key prop from the inner div. This resolves TypeScript errors when mapping over this component.
+    const IncidentCard: React.FC<{ inc: Incident }> = ({ inc }) => (
+        <div className="p-4 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+            <div className="flex justify-between items-start">
+                <div>
+                    <p className="font-bold text-gray-800 dark:text-gray-100">{inc.studentName}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Reportado por: {inc.teacherName}</p>
+                </div>
+                <div className="text-right">
+                    <p className="font-semibold text-primary dark:text-secondary">{inc.type}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(inc.timestamp).toLocaleString()}</p>
+                </div>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 p-2 bg-white dark:bg-gray-800 rounded-md">{inc.notes}</p>
+            <div className="flex justify-end items-center gap-2 mt-3 text-sm">
+                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getCitationStatusClass(inc.status as any)}`}>{inc.status}</span>
+
+                {inc.status === IncidentStatus.ACTIVE && (
+                    <>
+                        <button onClick={() => handleUpdateIncidentStatus(inc.id, IncidentStatus.ATTENDED)} className="px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200">Marcar como Atendida</button>
+                        <button onClick={() => handleUpdateIncidentStatus(inc.id, IncidentStatus.ARCHIVED)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Archivar</button>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+
     return (
         <div className="space-y-6">
             <div className="border-b border-gray-200 dark:border-gray-700">
@@ -480,54 +533,70 @@ const Incidents: React.FC<IncidentsProps> = ({
 
             {activeTab === 'incidents' && (
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-                        <input type="text" placeholder="Buscar..." value={incidentSearch} onChange={e => setIncidentSearch(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 col-span-2 md:col-span-1" />
-                        <input type="date" value={incidentDateFilter} onChange={e => setIncidentDateFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" />
-                        <select value={incidentTypeFilter} onChange={e => setIncidentTypeFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
-                            <option value="all">Todos los Tipos</option>
-                            {Object.values(IncidentType).map(type => <option key={type} value={type}>{type}</option>)}
-                        </select>
-                        <select value={incidentStatusFilter} onChange={e => setIncidentStatusFilter(e.target.value as any)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
-                            <option value="all">Todos los Estados</option>
-                            {Object.values(IncidentStatus).map(status => <option key={status} value={status}>{status}</option>)}
-                        </select>
-                        <select value={incidentReporterFilter} onChange={e => setIncidentReporterFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
-                            <option value="all">Todos los Docentes</option>
-                            {reporters.map(name => <option key={name} value={name}>{name}</option>)}
-                        </select>
+                    <div className="flex justify-between items-center mb-4">
+                        <div className="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
+                            <button onClick={() => setIncidentViewMode('list')} className={`px-4 py-1 text-sm font-semibold rounded-md ${incidentViewMode === 'list' ? 'bg-white dark:bg-gray-800 shadow' : 'text-gray-600 dark:text-gray-300'}`}>Lista General</button>
+                            <button onClick={() => setIncidentViewMode('byTeacher')} className={`px-4 py-1 text-sm font-semibold rounded-md ${incidentViewMode === 'byTeacher' ? 'bg-white dark:bg-gray-800 shadow' : 'text-gray-600 dark:text-gray-300'}`}>Por Docente</button>
+                        </div>
+                         <div className="flex justify-end gap-2">
+                            <button onClick={() => handleDownloadIncidents('csv')} className="text-sm bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200">Exportar a CSV</button>
+                            <button onClick={() => handleDownloadIncidents('pdf')} className="text-sm bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-lg hover:bg-red-200">Descargar PDF</button>
+                        </div>
                     </div>
-                     <div className="flex justify-end gap-2 mb-4">
-                        <button onClick={() => handleDownloadIncidents('csv')} className="text-sm bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200">Exportar a CSV</button>
-                        <button onClick={() => handleDownloadIncidents('pdf')} className="text-sm bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-lg hover:bg-red-200">Descargar PDF</button>
-                    </div>
-                    <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-                        {filteredIncidents.map(inc => (
-                             <div key={inc.id} className="p-4 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="font-bold text-gray-800 dark:text-gray-100">{inc.studentName}</p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">Reportado por: {inc.teacherName}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="font-semibold text-primary dark:text-secondary">{inc.type}</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(inc.timestamp).toLocaleString()}</p>
-                                    </div>
-                                </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 p-2 bg-white dark:bg-gray-800 rounded-md">{inc.notes}</p>
-                                <div className="flex justify-end items-center gap-2 mt-3 text-sm">
-                                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getCitationStatusClass(inc.status as any)}`}>{inc.status}</span>
-
-                                    {inc.status === IncidentStatus.ACTIVE && (
-                                        <>
-                                            <button onClick={() => handleUpdateIncidentStatus(inc.id, IncidentStatus.ATTENDED)} className="px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200">Marcar como Atendida</button>
-                                            <button onClick={() => handleUpdateIncidentStatus(inc.id, IncidentStatus.ARCHIVED)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">Archivar</button>
-                                        </>
-                                    )}
-                                </div>
+                    
+                    {incidentViewMode === 'list' ? (
+                        <>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                                <input type="text" placeholder="Buscar..." value={incidentSearch} onChange={e => setIncidentSearch(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 col-span-2 md:col-span-1" />
+                                <input type="date" value={incidentDateFilter} onChange={e => setIncidentDateFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" />
+                                <select value={incidentTypeFilter} onChange={e => setIncidentTypeFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                                    <option value="all">Todos los Tipos</option>
+                                    {Object.values(IncidentType).map(type => <option key={type} value={type}>{type}</option>)}
+                                </select>
+                                <select value={incidentStatusFilter} onChange={e => setIncidentStatusFilter(e.target.value as any)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                                    <option value="all">Todos los Estados</option>
+                                    {Object.values(IncidentStatus).map(status => <option key={status} value={status}>{status}</option>)}
+                                </select>
+                                <select value={incidentReporterFilter} onChange={e => setIncidentReporterFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                                    <option value="all">Todos los Docentes</option>
+                                    {reporters.map(name => <option key={name} value={name}>{name}</option>)}
+                                </select>
                             </div>
-                        ))}
-                        {filteredIncidents.length === 0 && <p className="text-center text-gray-500 dark:text-gray-400 py-8">No se encontraron incidencias.</p>}
-                    </div>
+                            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                                {filteredIncidents.map(inc => <IncidentCard key={inc.id} inc={inc} />)}
+                                {filteredIncidents.length === 0 && <p className="text-center text-gray-500 dark:text-gray-400 py-8">No se encontraron incidencias.</p>}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                             <input type="text" placeholder="Buscar por docente..." value={incidentSearch} onChange={e => setIncidentSearch(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 mb-4" />
+                             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                                {filteredTeachersWithIncidents.map(teacherName => {
+                                    const teacherIncidents = incidentsByTeacher[teacherName];
+                                    const isOpen = openTeacherAccordion === teacherName;
+                                    return (
+                                        <div key={teacherName} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                            <button onClick={() => setOpenTeacherAccordion(isOpen ? null : teacherName)} className="w-full flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                                <span className="font-bold text-gray-800 dark:text-gray-100">{teacherName}</span>
+                                                <div className="flex items-center gap-4">
+                                                    <span className="bg-primary/10 text-primary dark:bg-secondary/20 dark:text-secondary text-xs font-semibold px-2 py-1 rounded-full">{teacherIncidents.length} incidencias</span>
+                                                     <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                            </button>
+                                            {isOpen && (
+                                                <div className="p-4 space-y-3 border-t border-gray-200 dark:border-gray-700">
+                                                    {teacherIncidents.map(inc => <IncidentCard key={inc.id} inc={inc} />)}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                                {filteredTeachersWithIncidents.length === 0 && <p className="text-center text-gray-500 dark:text-gray-400 py-8">No se encontraron docentes con ese nombre.</p>}
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
             
@@ -574,7 +643,7 @@ const Incidents: React.FC<IncidentsProps> = ({
                     </div>
                     <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
                         {citations.map(cit => (
-                             <div key={cit.id} className="p-4 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                            <div key={cit.id} className={`p-4 border dark:border-gray-700 rounded-lg ${cit.status === CitationStatus.RESCHEDULE_REQUESTED ? 'bg-purple-50 dark:bg-purple-900/50' : 'bg-gray-50 dark:bg-gray-900/50'}`}>
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <p className="font-bold text-gray-800 dark:text-gray-100">{cit.studentName}</p>
@@ -585,7 +654,11 @@ const Incidents: React.FC<IncidentsProps> = ({
                                 <div className="flex justify-between items-end mt-3">
                                     <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(cit.date+'T00:00:00').toLocaleDateString()} a las {cit.time}</p>
                                     <div className="space-x-2">
-                                        <button onClick={() => {setCitationToEdit(cit); setIsEditCitationModalOpen(true);}} className="text-xs font-semibold text-blue-600 hover:underline">Editar</button>
+                                        {cit.status === CitationStatus.RESCHEDULE_REQUESTED ? (
+                                            <button onClick={() => {setCitationToEdit(cit); setIsEditCitationModalOpen(true);}} className="text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded-full">Reasignar Fecha</button>
+                                        ) : (
+                                            <button onClick={() => {setCitationToEdit(cit); setIsEditCitationModalOpen(true);}} className="text-xs font-semibold text-blue-600 hover:underline">Editar</button>
+                                        )}
                                         <button onClick={() => {setCitationToCancel(cit); setIsCancelModalOpen(true);}} className="text-xs font-semibold text-red-600 hover:underline">Cancelar</button>
                                     </div>
                                 </div>

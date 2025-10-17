@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Page, Student, AssessmentData, Question, SubjectArea, Competency, Resource, StudentAssessmentResult, ParentMessage, Citation, User, Announcement, Teacher, CoordinationMessage, InstitutionProfileData, EventPoster, SubjectGrades, InboxConversation } from './types';
+import type { Page, Student, AssessmentData, Question, SubjectArea, Competency, Resource, StudentAssessmentResult, Citation, User, Announcement, Teacher, InstitutionProfileData, EventPoster, SubjectGrades, InboxConversation, DesempenoDescriptor, Guardian, Conversation } from './types';
 import { ResourceType, CitationStatus, IncidentType, AttendanceStatus, DocumentType, Role, AcademicPeriod, TeacherStatus } from './types';
 
 // --- ICONS ---
@@ -25,6 +25,12 @@ export const AssessmentsIcon: React.FC<{className?: string}> = ({ className }) =
 export const GradesIcon: React.FC<{className?: string}> = ({ className }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+    </svg>
+);
+
+export const TutorIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
     </svg>
 );
 
@@ -84,6 +90,21 @@ export const InstitutionProfileIcon: React.FC<{className?: string}> = ({ classNa
     </svg>
 );
 
+export const CalendarIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+);
+
+export const ICFESIcon: React.FC<{className?: string}> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        <path d="M12 14l9-5-9-5-9 5 9 5z" />
+        <path d="M12 14l9-5-9-5-9 5 9 5z" transform="translate(0, 6)"/>
+    </svg>
+);
+
+
 export const LogoutIcon: React.FC<{className?: string}> = ({ className }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -96,16 +117,19 @@ export const SIDEBAR_ITEMS: { name: Page; label: string; icon: React.FC<{classNa
     { name: 'Dashboard', label: 'Panel de Control', icon: DashboardIcon },
     { name: 'Classroom', label: 'Mi Salón de Clases', icon: ClassroomIcon },
     { name: 'Incidents', label: 'Coordinación Académica', icon: IncidentsIcon },
+    { name: 'TutorMode', label: 'Modo Tutor', icon: TutorIcon },
     { name: 'Communication', label: 'Bandeja de Entrada', icon: CommunicationIcon },
     { name: 'Assessments', label: 'Evaluaciones', icon: AssessmentsIcon },
     { name: 'Calificaciones', label: 'Calificaciones', icon: GradesIcon },
     { name: 'Resources', label: 'Biblioteca', icon: ResourcesIcon },
+    { name: 'Eventos', label: 'Eventos', icon: CalendarIcon },
     { name: 'Profile', label: 'Mi Perfil', icon: ProfileIcon },
     { name: 'Settings', label: 'Ajustes', icon: SettingsIcon },
     { name: 'Rectory', label: 'Rectoría', icon: RectoryIcon },
     { name: 'InstitutionProfile', label: 'Perfil Institucional', icon: InstitutionProfileIcon },
     { name: 'ParentPortal', label: 'Portal de Acudientes', icon: ParentPortalIcon },
     { name: 'StudentPortal', label: 'Portal del Estudiante', icon: StudentPortalIcon },
+    { name: 'SimulacroICFES', label: 'Simulacro ICFES', icon: ICFESIcon },
 ];
 
 // --- MOCK DATA & CONSTANTS ---
@@ -140,6 +164,15 @@ export const RESOURCE_TYPES: ResourceType[] = [ResourceType.PDF, ResourceType.Vi
 export const SCHOOL_LOCATIONS = ['Salón de Clases', 'Patio de Recreo', 'Baños', 'Pasillos', 'Comedor Escolar', 'Biblioteca', 'Sala de Informática', 'Laboratorio', 'Afueras de la Institución', 'Otro'];
 export const ACADEMIC_PERIODS: AcademicPeriod[] = [AcademicPeriod.PRIMERO, AcademicPeriod.SEGUNDO, AcademicPeriod.TERCERO, AcademicPeriod.CUARTO];
 
+export const MOCK_DESEMPENOS_BANK: DesempenoDescriptor[] = [
+  { id: 'd-math-1', description: 'Identifica y usa los números naturales para contar y realizar operaciones básicas.', area: 'Matemáticas' },
+  { id: 'd-math-2', description: 'Resuelve problemas de suma y resta con números naturales en diferentes contextos.', area: 'Matemáticas' },
+  { id: 'd-math-3', description: 'Aplica conceptos de geometría para describir formas y figuras en su entorno.', area: 'Matemáticas' },
+  { id: 'd-lang-1', description: 'Lee en voz alta con fluidez y entonación adecuadas, demostrando comprensión.', area: 'Lengua Castellana' },
+  { id: 'd-lang-2', description: 'Produce textos escritos que responden a diversas necesidades comunicativas y siguen una estructura lógica.', area: 'Lengua Castellana' },
+  { id: 'd-lang-3', description: 'Participa en conversaciones expresando sus ideas y respetando las opiniones de los demás.', area: 'Lengua Castellana' },
+  { id: 'd-sci-1', description: 'Observa y describe los seres vivos y su entorno, identificando sus características.', area: 'Biología' },
+];
 
 export const MOCK_ASSESSMENT_DATA: AssessmentData[] = [
     { competency: 'Comprensión Lectora', classAverage: 82, studentAverage: 88 },
@@ -273,15 +306,22 @@ export const MOCK_STUDENTS: Student[] = [
         dateOfBirth: '2007-03-20',
         password: '1122334455',
         passwordChanged: true,
+        documentNumber: '1122334455',
     },
     { id: 2, name: 'Sofía López', role: Role.STUDENT, avatarUrl: 'https://picsum.photos/seed/student2/100/100', grade: '11º', group: 'A', dateOfBirth: '2007-01-10', },
     { id: 3, name: 'Carlos Martínez', role: Role.STUDENT, avatarUrl: 'https://picsum.photos/seed/student3/100/100', grade: '11º', group: 'A', dateOfBirth: '2024-08-05', },
 ];
 
-
-export const MOCK_PARENT_MESSAGES: ParentMessage[] = [
-    { studentId: 1, studentName: 'Ana Sofía García', studentAvatar: 'https://picsum.photos/seed/1/100/100', lastMessage: 'Profe, ¿me confirma la fecha del examen?', timestamp: '10:45 AM', unread: true, conversation: [{ sender: 'parent', text: 'Profe, ¿me confirma la fecha del examen?', timestamp: '10:45 AM' }] },
-    { studentId: 5, studentName: 'Carlos Andrés Ruiz', studentAvatar: 'https://picsum.photos/seed/5/100/100', lastMessage: 'Gracias por la retroalimentación.', timestamp: 'Ayer', unread: false, conversation: [{ sender: 'teacher', text: 'El trabajo de Carlos estuvo excelente.', timestamp: 'Ayer' }, { sender: 'parent', text: 'Gracias por la retroalimentación.', timestamp: 'Ayer' }] },
+export const MOCK_GUARDIANS: Guardian[] = [
+    {
+        id: '123456789',
+        name: 'Luisa Fernanda Gonzalez',
+        email: 'luisa.gonzalez@email.com',
+        phone: '3151234567',
+        studentIds: [1], // Guardian for Juan David Pérez
+        password: '123456789',
+        passwordChanged: true,
+    }
 ];
 
 export const MOCK_CITATIONS: Citation[] = [
@@ -289,249 +329,124 @@ export const MOCK_CITATIONS: Citation[] = [
     { id: 'cit2', studentId: 2, studentName: 'Sofía López', studentAvatar: 'https://picsum.photos/seed/student2/100/100', date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: '10:30', location: 'Coordinación', reason: 'Incidencia de convivencia', status: CitationStatus.CONFIRMED },
 ];
 
-export const MOCK_MESSAGE_HISTORY: CoordinationMessage[] = [
-    { id: 'cm1', sender: 'coordination', text: 'Profe, por favor recordar a los estudiantes del 11-A la reunión de mañana.', timestamp: 'Hace 3 horas', readByTeacher: false },
-    { id: 'cm2', sender: 'teacher', text: 'Entendido, Coordinación. Yo les informo ahora en la primera hora.', timestamp: 'Hace 3 horas', readByTeacher: true },
-    { id: 'cm3', sender: 'coordination', text: 'Perfecto, muchas gracias. Adicionalmente, necesitamos el listado de los estudiantes para la salida pedagógica.', timestamp: 'Hace 2 horas', readByTeacher: false },
-    { id: 'cm4', sender: 'teacher', text: 'Claro, se lo envío al final de la jornada. Ya lo tengo listo.', timestamp: 'Hace 1 hora', readByTeacher: true },
-];
-
-export const MOCK_INBOX_CONVERSATIONS: InboxConversation[] = [
+export const MOCK_CONVERSATIONS_DATA: Conversation[] = [
   {
-    id: 'parent-1',
-    participantId: 1,
-    participantName: 'Acudiente de Juan David Pérez',
-    participantAvatar: 'https://picsum.photos/seed/student1/100/100',
-    participantRole: Role.STUDENT,
-    lastMessage: 'Perfecto, muchas gracias por la aclaración.',
-    timestamp: '10:30 AM',
-    unread: false,
-    conversation: [
-        { sender: 'participant', text: 'Buenos días, quisiera saber cómo va Juan David en Matemáticas.', timestamp: '9:15 AM'},
-        { sender: 'self', text: 'Buenos días. Juan David ha mejorado mucho, especialmente en cálculo. Su última nota fue 4.5.', timestamp: '9:20 AM'},
-        { sender: 'participant', text: 'Perfecto, muchas gracias por la aclaración.', timestamp: '10:30 AM'},
-    ]
+    id: '1037612345-123456789',
+    participantIds: ['1037612345', '123456789'],
+    messages: [
+      { senderId: '123456789', text: 'Buenos días profe Ana, ¿cómo está el rendimiento de Juan David en matemáticas?', timestamp: new Date(Date.now() - 3600000 * 2).toISOString()},
+      { senderId: '1037612345', text: 'Hola, buenos días. Juan David va muy bien, ha mejorado bastante en los últimos temas. Su participación es excelente.', timestamp: new Date(Date.now() - 3600000 * 1.5).toISOString()},
+      { senderId: '123456789', text: 'Muchas gracias por la información, profe.', timestamp: new Date(Date.now() - 3600000 * 1).toISOString()},
+    ],
   },
   {
-    id: 'teacher-1037612345',
-    participantId: '1037612345',
-    participantName: 'Ana María Rojas',
-    participantAvatar: 'https://picsum.photos/seed/teacher1/100/100',
-    participantRole: Role.TEACHER,
-    lastMessage: 'Listo, quedo atento. Gracias.',
-    timestamp: 'Ayer',
-    unread: true,
-    conversation: [
-        { sender: 'self', text: 'Hola Ana María, necesito por favor el reporte de notas del 11-A para el cierre de período. Plazo máximo mañana.', timestamp: 'Ayer'},
-        { sender: 'participant', text: 'Hola Coordinación. Claro que sí, ya casi lo termino. Se lo envío hoy en la tarde.', timestamp: 'Ayer'},
-        { sender: 'self', text: 'Listo, quedo atento. Gracias.', timestamp: 'Ayer'},
+    id: '1037612346-123456789',
+    participantIds: ['1037612346', '123456789'],
+    messages: [
+        { senderId: '123456789', text: 'Profesor Carlos, ¿podríamos agendar una reunión para hablar sobre el ensayo de Juan David?', timestamp: new Date(Date.now() - 86400000 * 2).toISOString()},
+        { senderId: '1037612346', text: 'Sí, por supuesto. Puede pasar el viernes.', timestamp: new Date(Date.now() - 86400000 * 1).toISOString()},
+    ],
+  },
+  {
+    id: '987654321-123456789',
+    participantIds: ['987654321', '123456789'],
+    messages: [
+        { senderId: '987654321', text: 'Buenos días, le recuerdo la reunión de seguimiento de Juan David el viernes.', timestamp: new Date(Date.now() - 86400000 * 3).toISOString() },
+        { senderId: '123456789', text: 'Recibido, gracias.', timestamp: new Date(Date.now() - 86400000 * 3 + 60000).toISOString() },
+    ],
+  },
+  {
+    id: '987654321-1037612345',
+    participantIds: ['987654321', '1037612345'],
+    messages: [
+        { senderId: '987654321', text: 'Hola Ana María, necesito por favor el reporte de notas del 11-A para el cierre de período. Plazo máximo mañana.', timestamp: new Date(Date.now() - 86400000 * 1).toISOString()},
+        { senderId: '1037612345', text: 'Hola Coordinación. Claro que sí, ya casi lo termino. Se lo envío hoy en la tarde.', timestamp: new Date(Date.now() - 86400000 * 1 + 60000).toISOString()},
+        { senderId: '987654321', text: 'Listo, quedo atento. Gracias.', timestamp: new Date(Date.now() - 86400000 * 1 + 120000).toISOString()},
     ]
   },
    {
-    id: 'student-3',
-    participantId: 3,
-    participantName: 'Carlos Martínez',
-    participantAvatar: 'https://picsum.photos/seed/student3/100/100',
-    participantRole: Role.STUDENT,
-    lastMessage: 'Sí, señor. Entendido.',
-    timestamp: 'Hace 2 horas',
-    unread: false,
-    conversation: [
-        { sender: 'self', text: 'Carlos, por favor preséntate en coordinación a la salida.', timestamp: 'Hace 2 horas'},
-        { sender: 'participant', text: 'Sí, señor. Entendido.', timestamp: 'Hace 2 horas'},
-    ]
-  },
-];
-
-export const MOCK_TEACHER_INBOX_CONVERSATIONS: InboxConversation[] = [
-  {
-    id: 'parent-1',
-    participantId: 1,
-    participantName: 'Acudiente de Juan David Pérez',
-    participantAvatar: 'https://picsum.photos/seed/student1/100/100',
-    participantRole: Role.STUDENT, 
-    lastMessage: 'Muchas gracias por la información, profe.',
-    timestamp: '11:00 AM',
-    unread: true,
-    conversation: [
-        { sender: 'participant', text: 'Buenos días profe Ana, ¿cómo está el rendimiento de Juan David en matemáticas?', timestamp: '10:50 AM'},
-        { sender: 'self', text: 'Hola, buenos días. Juan David va muy bien, ha mejorado bastante en los últimos temas. Su participación es excelente.', timestamp: '10:55 AM'},
-        { sender: 'participant', text: 'Muchas gracias por la información, profe.', timestamp: '11:00 AM'},
-    ]
-  },
-  {
-    id: 'parent-2',
-    participantId: 2,
-    participantName: 'Acudiente de Sofía López',
-    participantAvatar: 'https://picsum.photos/seed/student2/100/100',
-    participantRole: Role.STUDENT,
-    lastMessage: 'Entendido, estaré pendiente. Gracias.',
-    timestamp: 'Ayer',
-    unread: false,
-    conversation: [
-        { sender: 'self', text: 'Buenas tardes, le recuerdo que mañana es la entrega del taller de geometría para Sofía.', timestamp: 'Ayer'},
-        { sender: 'participant', text: 'Entendido, estaré pendiente. Gracias.', timestamp: 'Ayer'},
-    ]
-  },
-  {
-    id: 'coordination-987654321',
-    participantId: '987654321',
-    participantName: 'Carlos Mendoza',
-    participantAvatar: 'https://picsum.photos/seed/coordinator/100/100',
-    participantRole: Role.COORDINATOR,
-    lastMessage: 'Perfecto, gracias.',
-    timestamp: 'Hace 2 días',
-    unread: false,
-    conversation: [
-        { sender: 'participant', text: 'Profe Ana, por favor no olvide entregar las planillas de notas del 11-A mañana.', timestamp: 'Hace 2 días'},
-        { sender: 'self', text: 'Claro que sí, Coordinación. Mañana a primera hora las tiene en su oficina.', timestamp: 'Hace 2 días'},
-        { sender: 'participant', text: 'Perfecto, gracias.', timestamp: 'Hace 2 días'},
+    id: '987654321-3',
+    participantIds: ['987654321', 3],
+    messages: [
+        { senderId: '987654321', text: 'Carlos, por favor preséntate en coordinación a la salida.', timestamp: new Date(Date.now() - 3600000 * 2).toISOString()},
+        { senderId: 3, text: 'Sí, señor. Entendido.', timestamp: new Date(Date.now() - 3600000 * 2 + 60000).toISOString()},
     ]
   }
 ];
 
-export const MOCK_PARENT_PORTAL_CONVERSATIONS: InboxConversation[] = [
-  {
-    id: 'teacher-1037612345',
-    participantId: '1037612345',
-    participantName: 'Ana María Rojas (Matemáticas)',
-    participantAvatar: 'https://picsum.photos/seed/teacher1/100/100',
-    participantRole: Role.TEACHER,
-    lastMessage: 'Hola, buenos días. Juan David va muy bien...',
-    timestamp: '10:55 AM',
-    unread: false,
-    conversation: [
-        { sender: 'self', text: 'Buenos días profe Ana, ¿cómo está el rendimiento de Juan David en matemáticas?', timestamp: '10:50 AM'},
-        { sender: 'participant', text: 'Hola, buenos días. Juan David va muy bien, ha mejorado bastante en los últimos temas. Su participación es excelente.', timestamp: '10:55 AM'},
-    ]
-  },
-  {
-    id: 'teacher-1037612346',
-    participantId: '1037612346',
-    participantName: 'Carlos Pérez (Lengua Castellana)',
-    participantAvatar: 'https://picsum.photos/seed/teacher2/100/100',
-    participantRole: Role.TEACHER,
-    lastMessage: 'Sí, por supuesto. Puede pasar el viernes.',
-    timestamp: 'Ayer',
-    unread: true,
-    conversation: [
-        { sender: 'self', text: 'Profesor Carlos, ¿podríamos agendar una reunión para hablar sobre el ensayo de Juan David?', timestamp: 'Ayer'},
-        { sender: 'participant', text: 'Sí, por supuesto. Puede pasar el viernes.', timestamp: 'Ayer'},
-    ]
-  },
-  {
-    id: 'coordination-987654321',
-    participantId: '987654321',
-    participantName: 'Coordinación Académica',
-    participantAvatar: 'https://picsum.photos/seed/coordinator/100/100',
-    participantRole: Role.COORDINATOR,
-    lastMessage: 'Recibido, lo revisaremos y le daremos respuesta.',
-    timestamp: 'Hace 3 días',
-    unread: false,
-    conversation: [
-        { sender: 'self', text: 'Buenos días Coordinación, quisiera solicitar un permiso de salida temprano para Juan David el próximo lunes.', timestamp: 'Hace 3 días'},
-        { sender: 'participant', text: 'Recibido, lo revisaremos y le daremos respuesta.', timestamp: 'Hace 3 días'},
-    ]
-  },
+// FIX: Add and export mock data for assessment results, subject grades, announcements, and institution profile to resolve import errors.
+export const MOCK_STUDENT_ASSESSMENT_RESULTS: StudentAssessmentResult[] = [
+    { id: 'asm_math_1_1', studentId: 1, assessmentId: 'asm_math_1', assessmentTitle: 'Quiz de Álgebra Básica', score: 4.5, completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'asm_math_1_2', studentId: 2, assessmentId: 'asm_math_1', assessmentTitle: 'Quiz de Álgebra Básica', score: 3.8, completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'asm_lang_1_1', studentId: 1, assessmentId: 'asm_lang_1', assessmentTitle: 'Comprensión Lectora', score: 4.8, completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
 ];
 
-
-export const MOCK_INSTITUTION_PROFILE: InstitutionProfileData = {
-    name: 'Institución Educativa Integral Maya',
-    daneCode: '123456789012',
-    nit: '900.123.456-7',
-    rector: 'Dr. Armando Paredes',
-    address: 'Calle Falsa 123, Ciudad Primavera',
-    phone: '(+57) 300 123 4567',
-    email: 'contacto@iemaya.edu.co',
-    logoUrl: 'https://picsum.photos/seed/logo/200/200',
-    primaryColor: '#005A9C',
-    secondaryColor: '#FFCD00',
-};
-
-export const MOCK_STUDENT_ASSESSMENT_RESULTS: StudentAssessmentResult[] = [
-    { id: 'asm_1_stud_1', studentId: 1, assessmentId: 'asm_1', assessmentTitle: 'Examen de Biología Celular', score: 85, completedAt: new Date().toISOString() },
-    { id: 'asm_2_stud_1', studentId: 1, assessmentId: 'asm_2', assessmentTitle: 'Quiz de Comprensión Lectora', score: 92, completedAt: new Date().toISOString() },
+export const MOCK_SUBJECT_GRADES: SubjectGrades[] = [
+  {
+    id: 'Matemáticas-11º-A-Primer Período',
+    subject: 'Matemáticas',
+    grade: '11º',
+    group: 'A',
+    period: AcademicPeriod.PRIMERO,
+    teacherId: '1037612345',
+    gradeItems: [
+      { id: 'quiz1', name: 'Quiz Fracciones', weight: 0.2 },
+      { id: 'exam1', name: 'Parcial 1', weight: 0.3 },
+      { id: 'homework1', name: 'Tarea Geometría', weight: 0.1 },
+      { id: 'final1', name: 'Examen Final', weight: 0.4 },
+    ],
+    scores: [
+      { studentId: 1, gradeItemId: 'quiz1', score: 4.5 },
+      { studentId: 1, gradeItemId: 'exam1', score: 4.8 },
+      { studentId: 1, gradeItemId: 'homework1', score: 5.0 },
+      { studentId: 1, gradeItemId: 'final1', score: 4.2 },
+      { studentId: 2, gradeItemId: 'quiz1', score: 3.5 },
+      { studentId: 2, gradeItemId: 'exam1', score: 4.0 },
+      { studentId: 2, gradeItemId: 'homework1', score: 4.8 },
+      { studentId: 2, gradeItemId: 'final1', score: 3.9 },
+      { studentId: 3, gradeItemId: 'quiz1', score: 2.5 },
+      { studentId: 3, gradeItemId: 'exam1', score: 3.0 },
+      { studentId: 3, gradeItemId: 'homework1', score: 4.0 },
+      { studentId: 3, gradeItemId: 'final1', score: 2.8 },
+    ],
+    observations: {
+      1: 'Excelente desempeño, Juan David demuestra gran habilidad para la resolución de problemas.',
+      2: 'Sofía ha mostrado una mejora constante. Debe seguir practicando los temas del parcial.',
+      3: 'Carlos necesita reforzar los conceptos básicos. Se recomienda tutoría.'
+    },
+    isLocked: false,
+  },
 ];
 
 export const MOCK_ANNOUNCEMENTS: Announcement[] = [
     {
-        id: 'ann_1',
+        id: 'ann1',
         title: 'Reunión General de Padres de Familia',
-        content: 'Se convoca a todos los padres de familia a la reunión general que se llevará a cabo el próximo viernes a las 7:00 AM en el auditorio.',
-        recipients: 'all',
-        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        content: 'Se convoca a todos los padres de familia y acudientes a la reunión general que se llevará a cabo el próximo viernes a las 7:00 AM en el auditorio principal.',
+        recipients: 'all_parents',
+        timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
         sentBy: 'Rectoría',
     },
-     {
-        id: 'ann_2',
-        title: 'Día Deportivo - Grado 11',
-        content: 'El próximo lunes se realizará el día deportivo para los estudiantes de grado 11. Recuerden traer uniforme de educación física e hidratación.',
+    {
+        id: 'ann2',
+        title: 'Salida Pedagógica Grado 11º',
+        content: 'Recordamos a los estudiantes de grado 11º que la salida pedagógica al museo se realizará el día de mañana. Por favor, no olvidar la autorización firmada.',
         recipients: { grade: '11º', group: 'A' },
-        timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        sentBy: 'Coordinación de Deportes',
+        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        sentBy: 'Coordinación',
     }
 ];
 
-export const MOCK_SUBJECT_GRADES: SubjectGrades[] = [
-    {
-        id: 'Matemáticas-11º-A-Primer Período',
-        subject: 'Matemáticas',
-        grade: '11º',
-        group: 'A',
-        period: AcademicPeriod.PRIMERO,
-        teacherId: '1037612345',
-        gradeItems: [
-            { id: 'mat-11a-p1-item1', name: 'Taller de Límites', weight: 0.25 },
-            { id: 'mat-11a-p1-item2', name: 'Quiz de Derivadas', weight: 0.25 },
-            { id: 'mat-11a-p1-item3', name: 'Examen Parcial', weight: 0.30 },
-            { id: 'mat-11a-p1-item4', name: 'Actitud y Participación', weight: 0.20 },
-        ],
-        scores: [
-            { studentId: 1, gradeItemId: 'mat-11a-p1-item1', score: 4.5 },
-            { studentId: 1, gradeItemId: 'mat-11a-p1-item2', score: 3.8 },
-            { studentId: 1, gradeItemId: 'mat-11a-p1-item3', score: 4.2 },
-            { studentId: 1, gradeItemId: 'mat-11a-p1-item4', score: 5.0 },
-            { studentId: 2, gradeItemId: 'mat-11a-p1-item1', score: 3.0 },
-            { studentId: 2, gradeItemId: 'mat-11a-p1-item2', score: 3.5 },
-            { studentId: 2, gradeItemId: 'mat-11a-p1-item3', score: 2.8 },
-            { studentId: 2, gradeItemId: 'mat-11a-p1-item4', score: 4.0 },
-            { studentId: 3, gradeItemId: 'mat-11a-p1-item1', score: 5.0 },
-            { studentId: 3, gradeItemId: 'mat-11a-p1-item2', score: null },
-            { studentId: 3, gradeItemId: 'mat-11a-p1-item3', score: 4.8 },
-            { studentId: 3, gradeItemId: 'mat-11a-p1-item4', score: 4.5 },
-        ],
-        observations: {
-            1: "Juan David ha demostrado un excelente dominio de los temas del período. Su participación es destacada. ¡Sigue así!",
-            2: "Sofía necesita reforzar los conceptos vistos para el examen parcial. Se recomienda estudiar los talleres en clase.",
-            3: "Carlos muestra gran potencial, pero debe asegurarse de presentar todas las evaluaciones para tener una nota completa.",
-        },
-        isLocked: false,
-    },
-    {
-        id: 'Lengua Castellana-11º-A-Primer Período',
-        subject: 'Lengua Castellana',
-        grade: '11º',
-        group: 'A',
-        period: AcademicPeriod.PRIMERO,
-        teacherId: '1037612346',
-        gradeItems: [
-            { id: 'len-11a-p1-item1', name: 'Ensayo', weight: 0.40 },
-            { id: 'len-11a-p1-item2', name: 'Exposición', weight: 0.40 },
-            { id: 'len-11a-p1-item3', name: 'Autoevaluación', weight: 0.20 },
-        ],
-        scores: [
-            { studentId: 1, gradeItemId: 'len-11a-p1-item1', score: 4.8 },
-            { studentId: 1, gradeItemId: 'len-11a-p1-item2', score: 4.0 },
-            { studentId: 1, gradeItemId: 'len-11a-p1-item3', score: 5.0 },
-            { studentId: 2, gradeItemId: 'len-11a-p1-item1', score: 3.2 },
-            { studentId: 2, gradeItemId: 'len-11a-p1-item2', score: 3.8 },
-            { studentId: 2, gradeItemId: 'len-11a-p1-item3', score: 4.0 },
-        ],
-        observations: {
-            1: "Excelente capacidad de argumentación en el ensayo.",
-            2: "Debe mejorar la fluidez y seguridad en las exposiciones orales."
-        },
-        isLocked: false,
-    },
-];
+export const MOCK_INSTITUTION_PROFILE: InstitutionProfileData = {
+  name: 'Institución Educativa Ficticia',
+  daneCode: '123456789012',
+  nit: '900.123.456-7',
+  rector: 'Armando Paredes',
+  address: 'Calle Falsa 123, Ciudad Ejemplo',
+  phone: '300 123 4567',
+  email: 'contacto@institucion.edu.co',
+  // FIX: Add missing primaryColor and secondaryColor properties to match InstitutionProfileData type.
+  logoUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE1IiByeT0iMTUiIGZpbGw9IiMwMDVBOUMiLz48dGV4dCB4PSI1MCUiIHk9IjUyJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNlcmlmIiBmb250LXNpemU9IjQwIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiPkFJTTwvdGV4dD48L3N2Zz4=',
+  primaryColor: '#005A9C',
+  secondaryColor: '#FFC72C',
+};

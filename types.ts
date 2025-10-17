@@ -1,4 +1,4 @@
-export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones' | 'Communication';
+export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones' | 'Communication' | 'TutorMode' | 'Eventos' | 'SimulacroICFES';
 
 export enum DocumentType {
   REGISTRO_CIVIL = 'Registro Civil',
@@ -264,11 +264,17 @@ export enum Desempeno {
     BAJO = 'Bajo',
 }
 
+export interface DesempenoDescriptor {
+  id: string;
+  description: string;
+  area: SubjectArea;
+}
 
 export interface GradeItem {
   id: string; // e.g., 'quiz1-math-p1'
   name: string; // e.g., 'Quiz de Fracciones'
   weight: number; // e.g., 0.20 for 20%
+  desempenoIds?: string[];
 }
 
 export interface StudentScore {
@@ -289,6 +295,7 @@ export interface SubjectGrades {
   teacherId: string; // The teacher who manages this gradebook
   observations: Record<number, string>; // studentId -> observation text
   isLocked: boolean;
+  generalDesempenoIds?: string[];
 }
 
 export interface UserRegistrationData {
@@ -311,12 +318,25 @@ export interface Guardian {
   passwordChanged?: boolean;
 }
 
+// New types for centralized conversation store to enable real-time chat
+export interface Message {
+  senderId: string | number;
+  text: string;
+  timestamp: string; // ISO string
+}
+
+export interface Conversation {
+  id: string; // Unique ID for the conversation, e.g., '1037612345-123456789'
+  participantIds: (string | number)[];
+  messages: Message[];
+}
+
 export interface InboxConversation {
   id: string; // e.g., 'teacher-1037612345' or 'parent-1'
   participantId: string | number;
   participantName: string;
   participantAvatar: string;
-  participantRole: Role;
+  participantRole: Role | 'Acudiente';
   lastMessage: string;
   timestamp: string;
   unread: boolean;

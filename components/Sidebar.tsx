@@ -10,16 +10,17 @@ interface SidebarProps {
   setCurrentPage: (page: Page) => void;
   currentUser: Teacher | Student;
   onLogout: () => void;
+  icfesDrillSettings?: { isActive: boolean, grades: string[] };
 }
 
 const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
-  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Communication', 'Rectory', 'Resources', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal'],
-  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Communication', 'Resources', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal'],
-  [Role.TEACHER]: ['Dashboard', 'Classroom', 'Communication', 'Assessments', 'Calificaciones', 'Resources', 'Profile', 'Settings'],
-  [Role.STUDENT]: ['Dashboard', 'StudentPortal', 'Resources', 'Profile'],
+  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Communication', 'Rectory', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES'],
+  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Communication', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES'],
+  [Role.TEACHER]: ['Dashboard', 'Classroom', 'Communication', 'Assessments', 'Calificaciones', 'Resources', 'Eventos', 'Profile', 'Settings'],
+  [Role.STUDENT]: ['Dashboard', 'StudentPortal', 'Resources', 'Eventos', 'Profile'],
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser, onLogout, icfesDrillSettings }) => {
   const visibleItems = useMemo(() => {
     if (!currentUser) return [];
     

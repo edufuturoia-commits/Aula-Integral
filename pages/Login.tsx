@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 interface LoginProps {
   onLogin: (email: string, pass: string) => Promise<{success: boolean, message: string}>;
   onBackToHome: () => void;
+  onShowQuickAccess: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome, onShowQuickAccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,14 +47,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome }) => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Correo Electrónico
+                Correo Electrónico o Documento
               </label>
               <div className="mt-1">
                 <input
                   id="email"
                   name="email"
-                  type="email"
-                  autoComplete="email"
+                  type="text"
+                  autoComplete="username"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -116,6 +117,23 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBackToHome }) => {
               </button>
             </div>
           </form>
+            <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-base-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">O</span>
+                </div>
+            </div>
+            <div>
+                <button
+                    type="button"
+                    onClick={onShowQuickAccess}
+                    className="w-full flex justify-center py-3 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+                >
+                    Acceder con un perfil de prueba
+                </button>
+            </div>
         </div>
         <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
           © {new Date().getFullYear()} AULA INTEGRAL MAYA. Todos los derechos reservados.

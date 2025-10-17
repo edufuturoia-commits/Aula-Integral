@@ -1,7 +1,5 @@
-
-
 import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades, Guardian } from './types';
-import { MOCK_STUDENTS, MOCK_TEACHERS, MOCK_RESOURCES, MOCK_STUDENT_ASSESSMENT_RESULTS, MOCK_SUBJECT_GRADES, MOCK_ANNOUNCEMENTS } from './constants';
+import { MOCK_STUDENTS, MOCK_TEACHERS, MOCK_RESOURCES, MOCK_STUDENT_ASSESSMENT_RESULTS, MOCK_SUBJECT_GRADES, MOCK_ANNOUNCEMENTS, MOCK_GUARDIANS } from './constants';
 
 // --- In-memory store to simulate database ---
 let students: Student[] = MOCK_STUDENTS;
@@ -13,7 +11,7 @@ let announcements: Announcement[] = MOCK_ANNOUNCEMENTS;
 let assessments: Assessment[] = []; // No mock data
 let studentResults: StudentAssessmentResult[] = MOCK_STUDENT_ASSESSMENT_RESULTS;
 let subjectGrades: SubjectGrades[] = MOCK_SUBJECT_GRADES;
-let guardians: Guardian[] = [];
+let guardians: Guardian[] = MOCK_GUARDIANS;
 
 const simulateApiCall = <T>(data: T): Promise<T> => 
     new Promise(resolve => setTimeout(() => {

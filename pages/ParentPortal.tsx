@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useRef } from 'react';
-import type { Student, Teacher, Resource, SubjectGrades, InstitutionProfileData, Citation, Incident, Announcement, InboxConversation } from '../types';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import type { Student, Teacher, Resource, SubjectGrades, InstitutionProfileData, Citation, Incident, Announcement, InboxConversation, DesempenoDescriptor, Conversation, Guardian, Message } from '../types';
 import { CitationStatus, Role, AcademicPeriod, Desempeno } from '../types';
 import ReportCardModal from '../components/ReportCardModal';
-import { MOCK_PARENT_PORTAL_CONVERSATIONS, ACADEMIC_PERIODS } from '../constants';
+import { ACADEMIC_PERIODS, MOCK_DESEMPENOS_BANK } from '../constants';
 import NewParentConversationModal from '../components/NewParentConversationModal';
 import CancelCitationModal from '../components/CancelCitationModal';
+import EventPostersViewer from '../components/EventPostersViewer';
 
 
 // Duplicating this helper function here for simplicity
@@ -67,24 +68,30 @@ interface ParentPortalProps {
     onUpdateCitations: React.Dispatch<React.SetStateAction<Citation[]>>;
     incidents: Incident[];
     announcements: Announcement[];
+    conversations: Conversation[];
+    onUpdateConversation: (conversation: Conversation) => void;
+    onCreateConversation: (conversation: Conversation) => void;
+    allUsersMap: Map<string | number, Student | Teacher | Guardian>;
+    currentUser: Student | Teacher | Guardian;
 }
 
-const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resources, subjectGrades, institutionProfile, citations, onUpdateCitations, incidents, announcements }) => {
+type ParentPortalTab = 'resumen' | 'calificaciones' | 'convivencia' | 'citaciones' | 'comunicados' | 'bandeja' | 'eventos';
+
+const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resources, subjectGrades, institutionProfile, citations, onUpdateCitations, incidents, announcements, conversations: rawConversations, onUpdateConversation, onCreateConversation, allUsersMap, currentUser }) => {
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(students.length > 0 ? students[0] : null);
-    const [activeTab, setActiveTab] = useState<'resumen' | 'calificaciones' | 'convivencia' | 'comunicados' | 'bandeja'>('resumen');
+    const [activeTab, setActiveTab] = useState<ParentPortalTab>('resumen');
     const [isReportCardModalOpen, setIsReportCardModalOpen] = useState(false);
     const [selectedPeriod, setSelectedPeriod] = useState<AcademicPeriod>(ACADEMIC_PERIODS[0]);
     
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [citationToCancel, setCitationToCancel] = useState<Citation | null>(null);
 
-
-    // New state for chat
-    const [conversations, setConversations] = useState<InboxConversation[]>(MOCK_PARENT_PORTAL_CONVERSATIONS);
-    const [selectedConversation, setSelectedConversation] = useState<InboxConversation | null>(conversations.length > 0 ? conversations[0] : null);
+    const [selectedConversation, setSelectedConversation] = useState<InboxConversation | null>(null);
     const [newMessage, setNewMessage] = useState('');
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const [isNewConvoModalOpen, setIsNewConvoModalOpen] = useState(false);
+
+    const desempenoMap = useMemo(() => new Map(MOCK_DESEMPENOS_BANK.map(d => [d.id, d.description])), []);
 
     const studentCitations = useMemo(() => {
         if (!selectedStudent) return [];
@@ -92,10 +99,13 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
             .filter(c => c.studentId === selectedStudent.id)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [citations, selectedStudent]);
+    
+    const pendingCitationsCount = useMemo(() => {
+        return studentCitations.filter(c => c.status === CitationStatus.PENDING).length;
+    }, [studentCitations]);
 
     const studentIncidents = useMemo(() => {
         if (!selectedStudent) return [];
-        // Show all incidents (active and archived) to provide a complete history.
         return incidents
             .filter(inc => inc.studentId === selectedStudent.id)
             .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -129,6 +139,48 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
         const allContacts = [...studentTeachers, ...adminStaff];
         return Array.from(new Map(allContacts.map(item => [item.id, item])).values());
     }, [selectedStudent, teachers, subjectGrades]);
+
+    const inboxConversations = useMemo(() => {
+        const myId = currentUser.id;
+        return rawConversations
+            .filter(c => c.participantIds.includes(myId))
+            .map(c => {
+                const otherParticipantId = c.participantIds.find(id => id !== myId)!;
+                const participant = allUsersMap.get(otherParticipantId);
+                const lastMessage = c.messages[c.messages.length - 1];
+
+                let participantRole: Role | 'Acudiente' = Role.STUDENT;
+                if (participant) {
+                    participantRole = 'role' in participant ? participant.role : 'Acudiente';
+                }
+
+                return {
+                    id: c.id,
+                    participantId: otherParticipantId,
+                    participantName: participant ? participant.name : 'Usuario Desconocido',
+                    participantAvatar: participant && 'avatarUrl' in participant ? participant.avatarUrl : `https://picsum.photos/seed/${otherParticipantId}/100/100`,
+                    participantRole: participantRole,
+                    lastMessage: lastMessage?.text || 'Inicia la conversación...',
+                    timestamp: lastMessage?.timestamp || new Date(0).toISOString(),
+                    unread: false, 
+                    conversation: c.messages.map(msg => ({
+                        sender: msg.senderId === myId ? 'self' : 'participant',
+                        text: msg.text,
+                        timestamp: new Date(msg.timestamp).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' }),
+                    })),
+                } as InboxConversation;
+            })
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }, [rawConversations, currentUser.id, allUsersMap]);
+
+    useEffect(() => {
+        if (!selectedConversation && inboxConversations.length > 0) {
+            setSelectedConversation(inboxConversations[0]);
+        } else if (selectedConversation) {
+            const updatedConvo = inboxConversations.find(c => c.id === selectedConversation.id);
+            setSelectedConversation(updatedConvo || null);
+        }
+    }, [inboxConversations, selectedConversation]);
     
     const studentGradesForPeriod = useMemo(() => {
         if (!selectedStudent) return [];
@@ -149,7 +201,11 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                 return {
                     subject: gradebook.subject,
                     teacherName: teacher?.name || 'No asignado',
-                    gradeItems: gradebook.gradeItems,
+                    generalDesempenoIds: gradebook.generalDesempenoIds || [],
+                    gradeItems: gradebook.gradeItems.map(item => ({
+                        ...item,
+                        desempenos: (item.desempenoIds || []).map(id => desempenoMap.get(id)).filter(Boolean) as string[]
+                    })),
                     scoresByItem,
                     finalScore,
                     desempeno,
@@ -157,88 +213,210 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                 };
             })
             .sort((a, b) => a.subject.localeCompare(b.subject));
-    }, [selectedStudent, subjectGrades, teachers, selectedPeriod]);
+    }, [selectedStudent, subjectGrades, teachers, selectedPeriod, desempenoMap]);
 
     const handleSelectConversation = (conversation: InboxConversation) => {
         setSelectedConversation(conversation);
-        if (conversation.unread) {
-            setConversations(prev => prev.map(c => c.id === conversation.id ? { ...c, unread: false } : c));
-        }
     };
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !selectedConversation) return;
 
-        const message = {
-            sender: 'self' as const,
+        const originalConversation = rawConversations.find(c => c.id === selectedConversation.id);
+        if (!originalConversation) return;
+
+        const message: Message = {
+            senderId: currentUser.id,
             text: newMessage,
-            timestamp: 'Ahora',
+            timestamp: new Date().toISOString(),
         };
 
-        const updatedConversation = {
-            ...selectedConversation,
-            conversation: [...selectedConversation.conversation, message],
-            lastMessage: newMessage,
-            timestamp: 'Ahora',
+        const updatedConversation: Conversation = {
+            ...originalConversation,
+            messages: [...originalConversation.messages, message],
         };
 
-        setSelectedConversation(updatedConversation);
-        setConversations(prev =>
-            prev.map(c => c.id === updatedConversation.id ? updatedConversation : c)
-        );
+        onUpdateConversation(updatedConversation);
         setNewMessage('');
     };
 
     const handleStartConversation = (contact: Teacher) => {
-        const convoId = `${contact.role.toLowerCase()}-${contact.id}`;
-        const existingConvo = conversations.find(c => c.id === convoId);
+        const myId = currentUser.id;
+        const otherId = contact.id;
+        
+        const convoId = [myId, otherId].sort().join('-');
+        
+        const existingConvo = rawConversations.find(c => c.id === convoId);
 
         if (existingConvo) {
-            handleSelectConversation(existingConvo);
+            const inboxConvo = inboxConversations.find(ic => ic.id === existingConvo.id);
+            if (inboxConvo) handleSelectConversation(inboxConvo);
         } else {
-            const newConvo: InboxConversation = {
+            const newConvo: Conversation = {
                 id: convoId,
-                participantId: contact.id,
-                participantName: contact.role === Role.TEACHER ? `${contact.name} (${contact.subject})` : contact.name,
-                participantAvatar: contact.avatarUrl,
-                participantRole: contact.role,
-                lastMessage: 'Inicia la conversación...',
-                timestamp: new Date().toISOString(),
-                unread: false,
-                conversation: []
+                participantIds: [myId, otherId],
+                messages: []
             };
-            setConversations(prev => [newConvo, ...prev].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
-            setSelectedConversation(newConvo);
+            onCreateConversation(newConvo);
         }
         setIsNewConvoModalOpen(false);
     };
     
     const handleGenerateReport = (period: AcademicPeriod) => {
-        // In a real app this would generate a PDF. For now, we'll just log it.
-        console.log(`Generating report card for ${selectedStudent?.name} for period ${period}`);
         setIsReportCardModalOpen(false);
-        alert(`Boletín para ${period} generado (simulación).`);
+        if (!selectedStudent) {
+            alert("No hay un estudiante seleccionado.");
+            return;
+        }
+
+        const gradesForReport = subjectGrades
+            .filter(sg => sg.grade === selectedStudent.grade && sg.group === selectedStudent.group && sg.period === period)
+            .map(gradebook => {
+                const teacher = teachers.find(t => t.id === gradebook.teacherId);
+                const { finalScore } = calculateFinalScore(selectedStudent.id, gradebook);
+                const desempeno = getDesempeno(finalScore);
+                const observation = gradebook.observations[selectedStudent.id] || "Sin observaciones.";
+                const scoresByItem = new Map(gradebook.scores.filter(s => s.studentId === selectedStudent.id).map(s => [s.gradeItemId, s.score]));
+
+                return { subject: gradebook.subject, teacherName: teacher?.name || 'N/A', finalScore, desempeno, observation, gradeItems: gradebook.gradeItems, scoresByItem, generalDesempenoIds: gradebook.generalDesempenoIds || [] };
+            })
+            .sort((a, b) => a.subject.localeCompare(b.subject));
+        
+        const getDesempenoBadgeStyle = (desempeno: Desempeno) => {
+            switch (desempeno) {
+                case Desempeno.SUPERIOR: return 'background-color: #DBEAFE; color: #1E40AF;';
+                case Desempeno.ALTO: return 'background-color: #D1FAE5; color: #065F46;';
+                case Desempeno.BASICO: return 'background-color: #FEF3C7; color: #92400E;';
+                case Desempeno.BAJO: return 'background-color: #FEE2E2; color: #991B1B;';
+                default: return 'background-color: #F3F4F6; color: #374151;';
+            }
+        };
+
+        const subjectCardsHtml = gradesForReport.map(data => `
+            <div class="subject-card">
+                <div class="subject-header">
+                    <div>
+                        <h3>${data.subject}</h3>
+                        <p>Docente: ${data.teacherName}</p>
+                    </div>
+                    <div class="final-score">
+                        <div>Nota Final: <strong>${data.finalScore !== null ? data.finalScore.toFixed(2) : 'N/A'}</strong></div>
+                        <div class="desempeno-badge" style="${getDesempenoBadgeStyle(data.desempeno)}">${data.desempeno}</div>
+                    </div>
+                </div>
+                ${data.gradeItems.length > 0 ? `
+                <table class="grades-table">
+                    <thead>
+                        <tr>
+                            ${data.gradeItems.map(item => `<th>${item.name} (${(item.weight * 100).toFixed(0)}%)</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            ${data.gradeItems.map(item => `<td>${data.scoresByItem.get(item.id)?.toFixed(1) || '-'}</td>`).join('')}
+                        </tr>
+                    </tbody>
+                </table>` : ''}
+                ${data.generalDesempenoIds.length > 0 ? `
+                <div class="desempenos-generales">
+                    <strong>Desempeños del Período:</strong>
+                    <ul>
+                        ${data.generalDesempenoIds.map(id => `<li>${desempenoMap.get(id) || ''}</li>`).join('')}
+                    </ul>
+                </div>` : ''}
+                <div class="observaciones">
+                    <strong>Observaciones del Docente:</strong>
+                    <p>${data.observation}</p>
+                </div>
+            </div>
+        `).join('');
+
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <title>Boletín de Calificaciones - ${selectedStudent.name}</title>
+                <style>
+                    @media print {
+                        @page { size: letter; margin: 1cm; }
+                        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    }
+                    body { font-family: Arial, sans-serif; font-size: 10pt; color: #333; }
+                    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid ${institutionProfile.primaryColor}; padding-bottom: 10px; }
+                    .header img { max-height: 70px; max-width: 150px; object-fit: contain; }
+                    .header-info { text-align: right; font-size: 9pt; }
+                    .report-title { text-align: center; margin: 20px 0; }
+                    .report-title h1 { margin: 0; font-size: 16pt; color: ${institutionProfile.primaryColor}; }
+                    .report-title h2 { margin: 0; font-size: 12pt; font-weight: normal; }
+                    .student-info { border: 1px solid #ccc; padding: 10px; margin-bottom: 20px; border-radius: 8px; font-size: 10pt; display: grid; grid-template-columns: 1fr 1fr; gap: 5px 15px; }
+                    .subject-card { border: 1px solid #ccc; border-radius: 8px; margin-bottom: 15px; page-break-inside: avoid; overflow: hidden; }
+                    .subject-header { display: flex; justify-content: space-between; align-items: center; background-color: #f3f4f6; padding: 10px; border-bottom: 1px solid #ccc; }
+                    .subject-header h3 { margin: 0; font-size: 12pt; }
+                    .subject-header p { margin: 0; font-size: 9pt; color: #555; }
+                    .final-score { text-align: right; }
+                    .desempeno-badge { padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 9pt; margin-top: 4px; display: inline-block; }
+                    .grades-table { width: 100%; border-collapse: collapse; margin: 0; }
+                    .grades-table th, .grades-table td { border: 1px solid #ddd; padding: 6px; text-align: center; font-size: 9pt; }
+                    .grades-table th { background-color: #fafafa; font-weight: bold; }
+                    .desempenos-generales { padding: 10px; font-size: 9pt; }
+                    .desempenos-generales ul { margin: 5px 0 0 0; padding-left: 20px; }
+                    .observaciones { padding: 10px; font-size: 9pt; background-color: #f_f_f; }
+                    .observaciones p { margin: 5px 0 0 0; font-style: italic; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <img src="${institutionProfile.logoUrl}" alt="Logo Institucional">
+                    <div class="header-info">
+                        <strong>${institutionProfile.name}</strong><br>
+                        NIT: ${institutionProfile.nit} | Código DANE: ${institutionProfile.daneCode}<br>
+                        ${institutionProfile.address}<br>
+                        Tel: ${institutionProfile.phone} | Email: ${institutionProfile.email}
+                    </div>
+                </div>
+                <div class="report-title">
+                    <h1>BOLETÍN DE CALIFICACIONES</h1>
+                    <h2>${period}</h2>
+                </div>
+                <div class="student-info">
+                    <div><strong>ESTUDIANTE:</strong> ${selectedStudent.name}</div>
+                    <div><strong>GRADO:</strong> ${selectedStudent.grade} - ${selectedStudent.group}</div>
+                    <div><strong>DOCUMENTO:</strong> ${selectedStudent.documentNumber || 'No registrado'}</div>
+                    <div><strong>FECHA DE EXPEDICIÓN:</strong> ${new Date().toLocaleDateString('es-CO')}</div>
+                </div>
+                ${subjectCardsHtml}
+            </body>
+            </html>
+        `;
+
+        const pdfWindow = window.open("", "_blank");
+        if (pdfWindow) {
+            pdfWindow.document.write(htmlContent);
+            pdfWindow.document.close();
+            setTimeout(() => {
+                pdfWindow.print();
+            }, 500); // Small delay to ensure content is rendered
+        } else {
+            alert("Por favor, habilite las ventanas emergentes para generar el boletín.");
+        }
     };
 
     const handleConfirmCitation = (citationId: string) => {
-        if (window.confirm('¿Estás seguro de que quieres confirmar esta citación?')) {
-            onUpdateCitations(prev => prev.map(c => 
-                c.id === citationId 
-                ? { ...c, status: CitationStatus.CONFIRMED } 
-                : c
-            ));
-        }
+        onUpdateCitations(prev => prev.map(c => 
+            c.id === citationId 
+            ? { ...c, status: CitationStatus.CONFIRMED } 
+            : c
+        ));
     };
     
     const handleRequestReschedule = (citationId: string) => {
-        if (window.confirm('¿Estás seguro de que quieres solicitar una reasignación para esta citación? Coordinación será notificada.')) {
-            onUpdateCitations(prev => prev.map(c => 
-                c.id === citationId 
-                ? { ...c, status: CitationStatus.RESCHEDULE_REQUESTED } 
-                : c
-            ));
-        }
+        onUpdateCitations(prev => prev.map(c => 
+            c.id === citationId 
+            ? { ...c, status: CitationStatus.RESCHEDULE_REQUESTED } 
+            : c
+        ));
     };
     
     const handleOpenCancelModal = (citation: Citation) => {
@@ -267,6 +445,16 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
             </div>
         );
     }
+
+    const TABS: {id: ParentPortalTab, label: string, badge?: number}[] = [
+        { id: 'resumen', label: 'Resumen' },
+        { id: 'calificaciones', label: 'Calificaciones' },
+        { id: 'convivencia', label: 'Incidencias' },
+        { id: 'citaciones', label: 'Citaciones', badge: pendingCitationsCount },
+        { id: 'comunicados', label: 'Comunicados' },
+        { id: 'bandeja', label: 'Bandeja de Entrada' },
+        { id: 'eventos', label: 'Eventos' },
+    ];
     
     const renderContent = () => {
         switch (activeTab) {
@@ -330,12 +518,29 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                                                 <h4 className="font-bold text-lg text-primary dark:text-secondary">{data.subject}</h4>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">Docente: {data.teacherName}</p>
                                             </div>
+                                            {data.generalDesempenoIds.length > 0 && (
+                                                <div className="p-4 border-b dark:border-gray-700">
+                                                    <h5 className="font-semibold text-sm text-gray-700 dark:text-gray-300">Desempeños Generales del Periodo:</h5>
+                                                    <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 mt-1 pl-2">
+                                                        {data.generalDesempenoIds.map(id => <li key={id}>{desempenoMap.get(id)}</li>)}
+                                                    </ul>
+                                                </div>
+                                            )}
                                             <div className="p-4 space-y-3">
                                                 <ul className="space-y-2">
                                                     {data.gradeItems.map(item => (
-                                                        <li key={item.id} className="flex justify-between items-center text-sm p-2 rounded-md even:bg-gray-50 dark:even:bg-gray-800/50">
-                                                            <span>{item.name} <span className="text-gray-500 dark:text-gray-400">({(item.weight * 100).toFixed(0)}%)</span></span>
-                                                            <span className="font-bold text-gray-800 dark:text-gray-100">{data.scoresByItem.has(item.id) && data.scoresByItem.get(item.id) !== null ? data.scoresByItem.get(item.id)!.toFixed(1) : 'S.N.'}</span>
+                                                        <li key={item.id}>
+                                                            <div className="flex justify-between items-center text-sm p-2 rounded-md even:bg-gray-50 dark:even:bg-gray-800/50">
+                                                                <span>{item.name} <span className="text-gray-500 dark:text-gray-400">({(item.weight * 100).toFixed(0)}%)</span></span>
+                                                                <span className="font-bold text-gray-800 dark:text-gray-100">{data.scoresByItem.has(item.id) && data.scoresByItem.get(item.id) !== null ? data.scoresByItem.get(item.id)!.toFixed(1) : 'S.N.'}</span>
+                                                            </div>
+                                                            {item.desempenos.length > 0 && (
+                                                                <div className="pl-4 pt-1 pb-2">
+                                                                    <ul className="list-disc list-inside text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                                                                        {item.desempenos.map((desc, i) => <li key={i}>{desc}</li>)}
+                                                                    </ul>
+                                                                </div>
+                                                            )}
                                                         </li>
                                                     ))}
                                                 </ul>
@@ -367,8 +572,7 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
              case 'convivencia':
                 return (
                     <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md space-y-4">
-                        <h3 className="text-xl font-bold dark:text-gray-100">Historial de Convivencia</h3>
-                        <h4 className="font-semibold text-lg mt-4 dark:text-gray-200">Incidencias</h4>
+                        <h3 className="text-xl font-bold dark:text-gray-100">Historial de Incidencias</h3>
                         {studentIncidents.length > 0 ? (
                             studentIncidents.map(inc => (
                                 <div key={inc.id} className="p-3 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
@@ -377,8 +581,13 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{new Date(inc.timestamp).toLocaleString()}</p>
                                 </div>
                             ))
-                        ) : <p className="text-gray-500 dark:text-gray-400">No hay incidencias.</p>}
-                        <h4 className="font-semibold text-lg mt-4 dark:text-gray-200">Citaciones</h4>
+                        ) : <p className="text-gray-500 dark:text-gray-400">No hay incidencias reportadas.</p>}
+                    </div>
+                );
+             case 'citaciones':
+                return (
+                     <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md space-y-4">
+                        <h3 className="text-xl font-bold dark:text-gray-100">Gestión de Citaciones</h3>
                         {studentCitations.length > 0 ? (
                             studentCitations.map(cit => (
                                 <div key={cit.id} className={`p-4 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800`}>
@@ -391,24 +600,25 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                                         </div>
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCitationStatusClass(cit.status)}`}>{cit.status}</span>
                                     </div>
-
-                                    {/* Buttons and status messages */}
                                     <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2 flex-wrap">
                                         {cit.status === CitationStatus.PENDING && (
                                             <>
                                                 <button onClick={() => handleConfirmCitation(cit.id)} className="px-3 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full hover:bg-green-200 transition-colors">Confirmar Asistencia</button>
-                                                <button onClick={() => handleRequestReschedule(cit.id)} className="px-3 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full hover:bg-yellow-200 transition-colors">Solicitar Reasignación</button>
-                                                <button onClick={() => handleOpenCancelModal(cit)} className="px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full hover:bg-red-200 transition-colors">Cancelar</button>
+                                                <button onClick={() => handleRequestReschedule(cit.id)} className="px-3 py-1 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full hover:bg-purple-200 transition-colors">Solicitar Reasignación</button>
+                                                <button onClick={() => handleOpenCancelModal(cit)} className="px-3 py-1 text-xs font-semibold text-red-600 hover:underline">Cancelar</button>
                                             </>
                                         )}
                                         {cit.status === CitationStatus.CONFIRMED && (
                                             <>
-                                                <button onClick={() => handleRequestReschedule(cit.id)} className="px-3 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full hover:bg-yellow-200 transition-colors">Solicitar Reasignación</button>
-                                                <button onClick={() => handleOpenCancelModal(cit)} className="px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full hover:bg-red-200 transition-colors">Cancelar</button>
+                                                <p className="text-xs text-green-700 dark:text-green-300 italic flex items-center gap-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                                    Has confirmado tu asistencia.
+                                                </p>
+                                                 <button onClick={() => handleOpenCancelModal(cit)} className="px-3 py-1 text-xs font-semibold text-red-600 hover:underline">Cancelar</button>
                                             </>
                                         )}
                                         {cit.status === CitationStatus.RESCHEDULE_REQUESTED && (
-                                            <p className="text-xs text-yellow-700 italic">Tu solicitud de reasignación está siendo revisada por coordinación.</p>
+                                            <p className="text-xs text-purple-700 dark:text-purple-300 italic">Tu solicitud de reasignación está siendo revisada por coordinación.</p>
                                         )}
                                         {cit.status === CitationStatus.CANCELLED && cit.cancellationReason && (
                                             <p className="text-xs text-red-600 dark:text-red-400"><strong>Motivo cancelación:</strong> {cit.cancellationReason}</p>
@@ -416,7 +626,7 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                                     </div>
                                 </div>
                             ))
-                        ) : <p className="text-gray-500 dark:text-gray-400">No hay citaciones.</p>}
+                        ) : <p className="text-gray-500 dark:text-gray-400 text-center py-8">No hay citaciones registradas para este estudiante.</p>}
                     </div>
                 );
             case 'comunicados':
@@ -450,7 +660,7 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                                 </button>
                             </div>
                             <ul className="overflow-y-auto flex-1">
-                                {conversations.map(convo => (
+                                {inboxConversations.map(convo => (
                                     <li key={convo.id} onClick={() => handleSelectConversation(convo)} className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 border-l-4 ${selectedConversation?.id === convo.id ? 'border-primary bg-blue-50 dark:bg-blue-900/50' : 'border-transparent'}`}>
                                         <div className="flex items-start gap-3">
                                             <div className="relative flex-shrink-0">
@@ -464,6 +674,7 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                                         </div>
                                     </li>
                                 ))}
+                                {inboxConversations.length === 0 && <p className="text-center text-gray-500 p-4">No hay conversaciones.</p>}
                             </ul>
                         </div>
                         <div className="flex-1 flex-col hidden md:flex">
@@ -483,7 +694,7 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                                                 <div className={`max-w-lg p-3 rounded-xl ${msg.sender === 'self' ? 'bg-primary text-white rounded-br-none' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none'}`}>
                                                     <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                                                 </div>
-                                                {msg.sender === 'self' && <img src={selectedStudent.avatarUrl} className="w-8 h-8 rounded-full" alt="self" />}
+                                                {msg.sender === 'self' && <img src={('avatarUrl' in currentUser) ? currentUser.avatarUrl : ''} className="w-8 h-8 rounded-full" alt="self" />}
                                             </div>
                                         ))}
                                     </div>
@@ -500,6 +711,8 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                         </div>
                     </div>
                 );
+            case 'eventos':
+                return <EventPostersViewer />;
             default:
                 return null;
         }
@@ -535,15 +748,37 @@ const ParentPortal: React.FC<ParentPortalProps> = ({ students, teachers, resourc
                 )}
             </div>
 
+            {pendingCitationsCount > 0 && (
+                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-md flex justify-between items-center animate-fade-in" role="alert">
+                    <div className="flex items-center">
+                        <svg className="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        <p className="font-bold">
+                            Atención: Tienes {pendingCitationsCount} citación{pendingCitationsCount > 1 ? 'es' : ''} pendiente{pendingCitationsCount > 1 ? 's' : ''} de revisión.
+                        </p>
+                    </div>
+                    <button 
+                        onClick={() => setActiveTab('citaciones')}
+                        className="font-semibold underline hover:text-yellow-900 focus:outline-none focus:ring-2 focus:ring-yellow-500 rounded"
+                    >
+                        Ver ahora
+                    </button>
+                </div>
+            )}
+
             <div className="border-b border-gray-200 dark:border-gray-700">
                 <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
-                    {(['resumen', 'calificaciones', 'convivencia', 'comunicados', 'bandeja'] as const).map(tab => (
+                    {TABS.map(tab => (
                         <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`capitalize whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab ? 'border-primary text-primary dark:text-secondary' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}`}
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === tab.id ? 'border-primary text-primary dark:text-secondary' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}`}
                         >
-                           {tab === 'bandeja' ? 'Bandeja de Entrada' : tab}
+                           {tab.label}
+                            {tab.badge && tab.badge > 0 && (
+                                <span className="bg-yellow-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{tab.badge}</span>
+                            )}
                         </button>
                     ))}
                 </nav>

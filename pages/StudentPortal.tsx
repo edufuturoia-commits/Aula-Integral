@@ -1,12 +1,16 @@
 
 
 
+
+
+
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Student, Assessment, Resource, StudentAssessmentResult, Teacher, SubjectGrades, Citation } from '../types';
 import { Role, CitationStatus } from '../types';
 import OnlineAssessmentTaker from '../components/OnlineAssessmentTaker';
 import ManualViewer from '../components/ManualViewer';
 import EventPostersViewer from '../components/EventPostersViewer';
+import IcfesDrillTaker from './IcfesDrillTaker';
 
 
 interface StudentPortalProps {
@@ -19,6 +23,7 @@ interface StudentPortalProps {
     studentResults: StudentAssessmentResult[];
     onAddResult: (result: StudentAssessmentResult) => Promise<void>;
     citations: Citation[];
+    icfesDrillSettings: { isActive: boolean, grades: string[] };
 }
 
 const getCitationStatusClass = (status: CitationStatus) => {
@@ -31,8 +36,10 @@ const getCitationStatusClass = (status: CitationStatus) => {
     }
 };
 
-const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents, teachers, subjectGrades, resources, assessments, studentResults, onAddResult, citations }) => {
-    const [activeTab, setActiveTab] = useState<'Inicio' | 'Mis Asignaturas' | 'Mis Evaluaciones' | 'Recursos' | 'Citaciones' | 'Eventos' | 'Manual de Convivencia'>('Inicio');
+type StudentPortalTab = 'Inicio' | 'Mis Asignaturas' | 'Mis Evaluaciones' | 'Recursos' | 'Citaciones' | 'Manual de Convivencia' | 'Simulacro ICFES';
+
+const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents, teachers, subjectGrades, resources, assessments, studentResults, onAddResult, citations, icfesDrillSettings }) => {
+    const [activeTab, setActiveTab] = useState<StudentPortalTab>('Inicio');
     const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
     const [viewedStudent, setViewedStudent] = useState<Student | null>(null);
 
@@ -45,6 +52,11 @@ const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents
             setViewedStudent(null);
         }
     }, [loggedInUser, allStudents]);
+
+    const isIcfesDrillVisible = useMemo(() => {
+        if (!viewedStudent) return false;
+        return icfesDrillSettings?.isActive && icfesDrillSettings?.grades?.includes(viewedStudent.grade);
+    }, [viewedStudent, icfesDrillSettings]);
 
     const studentCitations = useMemo(() => {
         if (!viewedStudent) return [];
@@ -126,6 +138,19 @@ const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents
         );
     }
     
+    const TABS: { id: StudentPortalTab, label: string, badge?: number }[] = [
+        { id: 'Inicio', label: 'Inicio' },
+        { id: 'Mis Asignaturas', label: 'Mis Asignaturas' },
+        { id: 'Mis Evaluaciones', label: 'Mis Evaluaciones' },
+        { id: 'Citaciones', label: 'Citaciones', badge: pendingCitationsCount },
+        { id: 'Recursos', label: 'Recursos' },
+        { id: 'Manual de Convivencia', label: 'Manual de Convivencia' },
+    ];
+
+    if (isIcfesDrillVisible) {
+        TABS.splice(3, 0, { id: 'Simulacro ICFES', label: 'Simulacro ICFES' });
+    }
+
     const renderContent = () => {
         switch (activeTab) {
             case 'Inicio':
@@ -197,6 +222,8 @@ const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents
                         )}
                     </div>
                 );
+            case 'Simulacro ICFES':
+                return <IcfesDrillTaker />;
             case 'Citaciones':
                 return (
                      <div className="bg-white p-6 rounded-xl shadow-md space-y-4">
@@ -234,8 +261,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents
                         <p className="mt-4 text-gray-500">Próximamente encontrarás aquí los recursos compartidos por tus docentes.</p>
                     </div>
                 );
-            case 'Eventos':
-                return <EventPostersViewer />;
             case 'Manual de Convivencia':
                 return <ManualViewer />;
             default:
@@ -272,15 +297,15 @@ const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents
             </div>
              <div className="border-b border-gray-200">
                 <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
-                    {(['Inicio', 'Mis Asignaturas', 'Mis Evaluaciones', 'Citaciones', 'Recursos', 'Eventos', 'Manual de Convivencia'] as (typeof activeTab)[]).map(tab => (
+                    {TABS.map(tab => (
                          <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
                         >
-                            {tab}
-                            {tab === 'Citaciones' && pendingCitationsCount > 0 && (
-                                <span className="bg-yellow-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{pendingCitationsCount}</span>
+                            {tab.label}
+                            {tab.badge && tab.badge > 0 && (
+                                <span className="bg-yellow-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{tab.badge}</span>
                             )}
                         </button>
                     ))}

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar } from 'recharts';
 import DashboardCard from '../components/DashboardCard';
 import { MOCK_ASSESSMENT_DATA } from '../constants';
-import type { AssessmentData, Student, Teacher } from '../types';
+import type { AssessmentData, Student, Teacher, Citation, Page } from '../types';
+import { CitationStatus } from '../types';
 import { GoogleGenAI } from "@google/genai";
 
 // Custom Tooltip for Recharts
@@ -24,9 +25,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 interface DashboardProps {
     students: Student[];
     teachers: Teacher[];
+    citations: Citation[];
+    onNavigate: (page: Page) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ students, teachers }) => {
+const Dashboard: React.FC<DashboardProps> = ({ students, teachers, citations, onNavigate }) => {
     const [birthdays, setBirthdays] = useState<{ name: string, avatarUrl: string, role: string }[]>([]);
     const [birthdayMessages, setBirthdayMessages] = useState<Record<string, string>>({});
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -100,6 +103,16 @@ const Dashboard: React.FC<DashboardProps> = ({ students, teachers }) => {
         generateMessages();
     }, [birthdays]);
 
+    const pendingCitations = useMemo(() => {
+        return citations
+            .filter(c => 
+                c.status === CitationStatus.PENDING || 
+                c.status === CitationStatus.CONFIRMED || 
+                c.status === CitationStatus.RESCHEDULE_REQUESTED
+            )
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }, [citations]);
+
     return (
         <div className="space-y-8">
             {birthdays.length > 0 && (
@@ -167,6 +180,47 @@ const Dashboard: React.FC<DashboardProps> = ({ students, teachers }) => {
                             <Bar name="Estudiante Destacado" dataKey="studentAverage" fill="#82ca9d" radius={[4, 4, 0, 0]} maxBarSize={40} />
                         </BarChart>
                     </ResponsiveContainer>
+                </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Citaciones Pendientes</h2>
+                    {pendingCitations.length > 0 && (
+                        <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">
+                            {pendingCitations.length}
+                        </span>
+                    )}
+                </div>
+                <div className="space-y-4 max-h-72 overflow-y-auto pr-2">
+                    {pendingCitations.length > 0 ? (
+                        pendingCitations.map(citation => (
+                            <div key={citation.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-l-4 border-yellow-500">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-bold text-gray-800 dark:text-gray-100">{citation.studentName}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">{citation.reason}</p>
+                                    </div>
+                                    <div className="text-right flex-shrink-0 ml-4">
+                                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{new Date(citation.date + 'T00:00:00').toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{citation.time}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500 dark:text-gray-400">No hay citaciones pendientes en este momento.</p>
+                        </div>
+                    )}
+                </div>
+                <div className="mt-6 text-right">
+                    <button
+                        onClick={() => onNavigate('Incidents')}
+                        className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors text-sm"
+                    >
+                        Ver todas las citaciones
+                    </button>
                 </div>
             </div>
         </div>
