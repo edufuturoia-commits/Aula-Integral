@@ -14,9 +14,9 @@ interface SidebarProps {
 }
 
 const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
-  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Communication', 'Rectory', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES'],
-  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Communication', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES'],
-  [Role.TEACHER]: ['Dashboard', 'Classroom', 'Communication', 'Assessments', 'Calificaciones', 'Resources', 'Eventos', 'Profile', 'Settings'],
+  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Communication', 'Rectory', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES'],
+  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Communication', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES'],
+  [Role.TEACHER]: ['Dashboard', 'Classroom', 'Communication', 'Assessments', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings'],
   [Role.STUDENT]: ['Dashboard', 'StudentPortal', 'Resources', 'Eventos', 'Profile'],
 };
 

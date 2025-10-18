@@ -259,12 +259,15 @@ const IcfesDrillTaker: React.FC = () => {
     }
 
     if (gameState === 'finished') {
+        const proportionalScore = questions.length > 0 ? Math.round((score / questions.length) * 500) : 0;
+        
         return (
             <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg animate-fade-in space-y-6">
                  <div className="text-center">
                     <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">¡Simulacro Finalizado!</h1>
-                    <p className="mt-4 text-lg">Tu puntaje final es:</p>
-                    <p className="text-5xl font-extrabold text-primary dark:text-secondary my-2">{score} / {questions.length}</p>
+                    <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">Este es un puntaje global estimado (sobre 500) basado en tu desempeño.</p>
+                    <p className="text-7xl font-extrabold text-primary dark:text-secondary my-2">{proportionalScore}</p>
+                    <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">({score} de {questions.length} correctas)</p>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">

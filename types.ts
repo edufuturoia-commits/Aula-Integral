@@ -1,4 +1,4 @@
-export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones' | 'Communication' | 'TutorMode' | 'Eventos' | 'SimulacroICFES';
+export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones' | 'Communication' | 'TutorMode' | 'Eventos' | 'SimulacroICFES' | 'Consolidado';
 
 export enum DocumentType {
   REGISTRO_CIVIL = 'Registro Civil',

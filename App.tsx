@@ -37,6 +37,7 @@ const TutorMode = lazy(() => import('./pages/TutorMode'));
 const Eventos = lazy(() => import('./pages/Eventos'));
 const SimulacroICFES = lazy(() => import('./pages/SimulacroICFES'));
 const QuickAccess = lazy(() => import('./pages/QuickAccess'));
+const Consolidado = lazy(() => import('./pages/Consolidado'));
 
 
 interface NotificationToastProps {
@@ -608,6 +609,7 @@ const App: React.FC = () => {
                         {currentPage === 'TutorMode' && <TutorMode />}
                         {currentPage === 'Eventos' && <Eventos />}
                         {currentPage === 'SimulacroICFES' && <SimulacroICFES settings={icfesDrillSettings} onSettingsChange={handleSetIcfesDrillSettings} />}
+                        {currentPage === 'Consolidado' && !isUserStudent && <Consolidado students={students} subjectGradesData={subjectGrades} />}
                     </Suspense>
                 </main>
                 {notification && <NotificationToast title={notification.title} message={notification.message} studentName={notification.studentName} onClose={() => setNotification(null)} />}
