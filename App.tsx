@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, Suspense, lazy, useMemo } from 'react';
 
 // New Pages for Auth Flow
@@ -12,9 +13,9 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
 // Types and DB
-import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData, Conversation } from './types';
+import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData, Conversation, Lesson } from './types';
 // FIX: Update import to include missing functions.
-import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian } from './db';
+import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian, getLessons, addLesson } from './db';
 
 // Constants
 import { SIDEBAR_ITEMS, MOCK_INSTITUTION_PROFILE, MOCK_CITATIONS, MOCK_CONVERSATIONS_DATA } from './constants';
@@ -119,9 +120,24 @@ type User = Teacher | Student | Guardian;
 
 const App: React.FC = () => {
   // App State Management
-  const [appState, setAppState] = useState<'landing' | 'login' | 'quickAccess' | 'app'>('landing');
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser && savedUser !== 'undefined') {
+        try {
+            return JSON.parse(savedUser);
+        } catch (e) {
+            console.error("Failed to parse user from localStorage", e);
+            localStorage.removeItem('currentUser');
+            return null;
+        }
+    }
+    return null;
+  });
+
+  const [appState, setAppState] = useState<'landing' | 'login' | 'quickAccess' | 'app'>(() => {
+      return localStorage.getItem('currentUser') ? 'app' : 'landing';
+  });
   const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [needsPasswordChange, setNeedsPasswordChange] = useState(false);
   const [isDemoExpired, setIsDemoExpired] = useState(false);
 
@@ -145,6 +161,7 @@ const App: React.FC = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS_DATA);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
   const [downloadedResourceIds, setDownloadedResourceIds] = useState<Set<string>>(new Set());
   const [institutionProfile, setInstitutionProfile] = useState<InstitutionProfileData>(() => {
     const savedProfile = localStorage.getItem('institutionProfile');
@@ -215,24 +232,26 @@ const App: React.FC = () => {
     let timeoutId: ReturnType<typeof setTimeout>;
 
     const showRandomNotification = () => {
-      if (students.length > 0 && navigator.onLine) {
-        const randomStudent = students[Math.floor(Math.random() * students.length)];
-        const randomIncidentType = Object.values(IncidentType)[Math.floor(Math.random() * Object.values(IncidentType).length)];
-        
-        setNotification({
-          title: 'Nueva Incidencia Reportada',
-          message: `Se ha reportado un nuevo incidente de tipo "${randomIncidentType}".`,
-          studentName: randomStudent.name
-        });
-        setTimeout(() => setNotification(null), 7000);
-      }
-      const randomInterval = Math.random() * (45000 - 25000) + 25000;
-      timeoutId = setTimeout(showRandomNotification, randomInterval);
+        const canShowIncidentAlerts = currentUser?.notifications?.newIncident !== false;
+
+        if (canShowIncidentAlerts && students.length > 0 && navigator.onLine) {
+            const randomStudent = students[Math.floor(Math.random() * students.length)];
+            const randomIncidentType = Object.values(IncidentType)[Math.floor(Math.random() * Object.values(IncidentType).length)];
+            
+            setNotification({
+            title: 'Nueva Incidencia Reportada',
+            message: `Se ha reportado un nuevo incidente de tipo "${randomIncidentType}".`,
+            studentName: randomStudent.name
+            });
+            setTimeout(() => setNotification(null), 7000);
+        }
+        const randomInterval = Math.random() * (45000 - 25000) + 25000;
+        timeoutId = setTimeout(showRandomNotification, randomInterval);
     };
     timeoutId = setTimeout(showRandomNotification, 20000); 
 
     return () => clearTimeout(timeoutId);
-  }, [students, appState]);
+  }, [students, appState, currentUser]);
 
 
   const loadResources = useCallback(async () => {
@@ -258,7 +277,7 @@ const App: React.FC = () => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const [studentsData, teachersData, assessmentsData, resultsData, gradesData, attendanceData, announcementsData, guardiansData] = await Promise.all([
+        const [studentsData, teachersData, assessmentsData, resultsData, gradesData, attendanceData, announcementsData, guardiansData, lessonsData] = await Promise.all([
           getStudents(),
           getTeachers(),
           getAssessments(),
@@ -267,6 +286,7 @@ const App: React.FC = () => {
           getAllAttendanceRecords(),
           getAnnouncements(),
           getGuardians(),
+          getLessons(),
         ]);
         setStudents(studentsData);
         setTeachers(teachersData);
@@ -276,6 +296,7 @@ const App: React.FC = () => {
         setAttendanceRecords(attendanceData);
         setAnnouncements(announcementsData);
         setGuardians(guardiansData);
+        setLessons(lessonsData);
         setCitations(MOCK_CITATIONS);
         await loadIncidents();
         await loadResources();
@@ -334,6 +355,7 @@ const App: React.FC = () => {
     }
 
     if (foundUser) {
+        localStorage.setItem('currentUser', JSON.stringify(foundUser));
         setCurrentUser(foundUser);
         if ('passwordChanged' in foundUser && (foundUser as Student | Teacher).passwordChanged === false) {
             setNeedsPasswordChange(true);
@@ -349,12 +371,14 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('currentUser');
     setCurrentUser(null);
     setAppState('landing');
     setCurrentPage('Dashboard');
   };
   
   const handlePasswordChanged = (user: User) => {
+    localStorage.setItem('currentUser', JSON.stringify(user));
     setCurrentUser(user);
     setNeedsPasswordChange(false);
   };
@@ -380,6 +404,7 @@ const App: React.FC = () => {
     const updatedTeachers = await getTeachers();
     setTeachers(updatedTeachers);
     
+    localStorage.setItem('currentUser', JSON.stringify(newDemoAdmin));
     setCurrentUser(newDemoAdmin);
     setAppState('app');
     return { success: true, message: '¡Registro de demostración exitoso!'};
@@ -389,6 +414,7 @@ const App: React.FC = () => {
     if(currentUser && 'isDemo' in currentUser) {
         const upgradedUser = {...currentUser, isDemo: false, demoStartDate: undefined};
         await updateTeacher(upgradedUser as Teacher);
+        localStorage.setItem('currentUser', JSON.stringify(upgradedUser));
         setCurrentUser(upgradedUser);
         setIsDemoExpired(false);
         showSystemMessage("¡Gracias! Tu cuenta ha sido activada.", 'success');
@@ -421,6 +447,7 @@ const App: React.FC = () => {
         setGuardians(updated);
     }
     if (currentUser?.id === user.id) {
+        localStorage.setItem('currentUser', JSON.stringify(user));
         setCurrentUser(user);
     }
   };
@@ -520,6 +547,12 @@ const App: React.FC = () => {
       }
   };
 
+  const handleAddLesson = async (lesson: Lesson) => {
+    await addLesson(lesson);
+    const data = await getLessons();
+    setLessons(data);
+  };
+
 
   // Render Logic
   if (isLoading) {
@@ -549,10 +582,33 @@ const App: React.FC = () => {
       const isAdmin = userRole === Role.ADMIN;
       const canSeeParentPortal = userRole === Role.ADMIN || userRole === Role.RECTOR || userRole === Role.COORDINATOR;
       
+      const getDescriptiveRole = (user: User): string => {
+        if (!('role' in user)) { // Guardian
+            return 'Acudiente';
+        }
+
+        if (user.role === Role.TEACHER && 'subject' in user) {
+            return `Docente de ${user.subject}`;
+        }
+        
+        switch (user.role) {
+            case Role.STUDENT:
+                return 'Estudiante';
+            case Role.COORDINATOR:
+                return 'Coordinador Académico';
+            case Role.RECTOR:
+                return 'Rector';
+            case Role.ADMIN:
+                return 'Administrador';
+            default:
+                return user.role; // Fallback for other cases.
+        }
+      };
+      
       const userForHeader = {
         name: currentUser.name,
         avatarUrl: 'avatarUrl' in currentUser ? currentUser.avatarUrl : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=005A9C&color=fff`,
-        role: 'role' in currentUser ? currentUser.role : 'Acudiente'
+        role: getDescriptiveRole(currentUser)
       };
 
       // Guardian (Parent) Layout
@@ -606,7 +662,7 @@ const App: React.FC = () => {
                         {currentPage === 'InstitutionProfile' && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile as any} />}
                         {currentPage === 'Calificaciones' && !isUserStudent && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} onShowSystemMessage={showSystemMessage} />}
                         {currentPage === 'Communication' && !isUserStudent && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} />}
-                        {currentPage === 'TutorMode' && <TutorMode />}
+                        {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} currentUser={currentUser} />}
                         {currentPage === 'Eventos' && <Eventos />}
                         {currentPage === 'SimulacroICFES' && <SimulacroICFES settings={icfesDrillSettings} onSettingsChange={handleSetIcfesDrillSettings} />}
                         {currentPage === 'Consolidado' && !isUserStudent && <Consolidado students={students} subjectGradesData={subjectGrades} />}

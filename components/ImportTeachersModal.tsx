@@ -93,7 +93,7 @@ const ImportTeachersModal: React.FC<ImportTeachersModalProps> = ({ onClose, onSa
                         cedula: { type: Type.STRING, description: "La cédula o un ID temporal si no se encuentra. No debe estar vacío." },
                         nombresYApellidos: { type: Type.STRING, description: "El nombre y apellido completo del docente. DEBE ser extraído de forma literal del documento, sin ninguna corrección, modificación o alteración. Copiar textualmente es la regla principal." },
                         fechaDeNacimiento: { type: Type.STRING, description: "La fecha de nacimiento del docente (YYYY-MM-DD)." },
-                        areaEducativa: { type: Type.STRING, enum: SUBJECT_AREAS, description: `El área de especialización del docente. Debe ser uno de los valores permitidos.` },
+                        areaEducativa: { type: Type.STRING, description: `El área de especialización del docente. Debe ser uno de los valores permitidos.` },
                         direccion: { type: Type.STRING, description: "La dirección de residencia del docente." },
                         email: { type: Type.STRING, description: "El correo electrónico del docente." },
                         movil: { type: Type.STRING, description: "El número de teléfono móvil del docente." },

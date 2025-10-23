@@ -14,10 +14,10 @@ interface SidebarProps {
 }
 
 const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
-  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Communication', 'Rectory', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES'],
-  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Communication', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES'],
-  [Role.TEACHER]: ['Dashboard', 'Classroom', 'Communication', 'Assessments', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings'],
-  [Role.STUDENT]: ['Dashboard', 'StudentPortal', 'Resources', 'Eventos', 'Profile'],
+  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Communication', 'Rectory', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES', 'TutorMode'],
+  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Communication', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES', 'TutorMode'],
+  [Role.TEACHER]: ['Dashboard', 'Classroom', 'Communication', 'Assessments', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'TutorMode'],
+  [Role.STUDENT]: ['Dashboard', 'StudentPortal', 'Resources', 'Eventos', 'Profile', 'TutorMode'],
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser, onLogout, icfesDrillSettings }) => {

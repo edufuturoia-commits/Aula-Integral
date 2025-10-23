@@ -346,3 +346,32 @@ export interface InboxConversation {
     timestamp: string;
   }[];
 }
+
+// --- Tutor Mode Types ---
+
+export interface GeneratedQuestion {
+    question: string;
+    options: string[];
+    correctAnswerIndex: number;
+    explanation: string;
+    area: string;
+}
+
+export interface LessonContent {
+    title: string;
+    introduction: string;
+    development: string;
+    deepening: string;
+    conclusion: string;
+    practiceQuestions: GeneratedQuestion[];
+}
+
+export interface Lesson {
+  id: string;
+  userId: string | number;
+  createdAt: string; // ISO string
+  topic: string;
+  grade: string;
+  subject: SubjectArea;
+  content: LessonContent;
+}

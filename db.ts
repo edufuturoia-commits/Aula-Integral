@@ -1,4 +1,4 @@
-import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades, Guardian } from './types';
+import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades, Guardian, Lesson } from './types';
 import { MOCK_STUDENTS, MOCK_TEACHERS, MOCK_RESOURCES, MOCK_STUDENT_ASSESSMENT_RESULTS, MOCK_SUBJECT_GRADES, MOCK_ANNOUNCEMENTS, MOCK_GUARDIANS } from './constants';
 
 // --- In-memory store to simulate database ---
@@ -12,6 +12,7 @@ let assessments: Assessment[] = []; // No mock data
 let studentResults: StudentAssessmentResult[] = MOCK_STUDENT_ASSESSMENT_RESULTS;
 let subjectGrades: SubjectGrades[] = MOCK_SUBJECT_GRADES;
 let guardians: Guardian[] = MOCK_GUARDIANS;
+let lessons: Lesson[] = []; // For Tutor Mode history
 
 const simulateApiCall = <T>(data: T): Promise<T> => 
     new Promise(resolve => setTimeout(() => {
@@ -161,5 +162,12 @@ export const addOrUpdateSubjectGrades = (grades: SubjectGrades[]): Promise<void>
     const gradeMap = new Map(subjectGrades.map(g => [g.id, g]));
     grades.forEach(g => gradeMap.set(g.id, g));
     subjectGrades = Array.from(gradeMap.values());
+    return simulateApiCall(undefined);
+};
+
+// --- Tutor Mode Lesson Functions ---
+export const getLessons = (): Promise<Lesson[]> => simulateApiCall(lessons);
+export const addLesson = (lesson: Lesson): Promise<void> => {
+    lessons.unshift(lesson); // Add to the top of the list
     return simulateApiCall(undefined);
 };
