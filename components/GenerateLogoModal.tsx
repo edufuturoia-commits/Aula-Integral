@@ -55,21 +55,21 @@ const GenerateLogoModal: React.FC<GenerateLogoModalProps> = ({ onClose, onLogoGe
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-xl mx-auto flex flex-col max-h-[90vh]">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-xl mx-auto flex flex-col max-h-[90vh]">
                 <div className="flex justify-between items-center mb-6 flex-shrink-0">
-                    <h2 className="text-2xl font-bold text-gray-800">Generador de Logo con IA</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Generador de Logo con IA</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto pr-2 space-y-4">
                     <div>
-                        <label htmlFor="prompt" className="block text-sm font-medium text-gray-700 mb-1">Describe el logo que imaginas:</label>
+                        <label htmlFor="prompt" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Describe el logo que imaginas:</label>
                         <textarea
                             id="prompt"
                             rows={4}
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 text-gray-900"
+                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         />
                     </div>
                     
@@ -82,7 +82,7 @@ const GenerateLogoModal: React.FC<GenerateLogoModalProps> = ({ onClose, onLogoGe
                     {isLoading && (
                         <div className="flex flex-col items-center justify-center p-8">
                             <Spinner />
-                            <p className="mt-4 text-gray-600">Creando tu logo, esto puede tardar un momento...</p>
+                            <p className="mt-4 text-gray-600 dark:text-gray-300">Creando tu logo, esto puede tardar un momento...</p>
                         </div>
                     )}
                     
@@ -90,14 +90,14 @@ const GenerateLogoModal: React.FC<GenerateLogoModalProps> = ({ onClose, onLogoGe
                     
                     {generatedLogo && (
                         <div className="text-center mt-4 animate-fade-in">
-                            <h3 className="text-lg font-semibold mb-2">Logo Generado</h3>
+                            <h3 className="text-lg font-semibold mb-2 dark:text-gray-100">Logo Generado</h3>
                             <img src={generatedLogo} alt="Logo generado" className="w-48 h-48 mx-auto rounded-lg shadow-md border" />
                         </div>
                     )}
                 </div>
 
-                <div className="flex justify-end space-x-4 pt-6 mt-4 border-t flex-shrink-0">
-                    <button type="button" onClick={onClose} className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300">Cerrar</button>
+                <div className="flex justify-end space-x-4 pt-6 mt-4 border-t dark:border-gray-700 flex-shrink-0">
+                    <button type="button" onClick={onClose} className="px-6 py-2 rounded-md text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Cerrar</button>
                     <button onClick={handleUseLogo} disabled={!generatedLogo} className="px-6 py-2 rounded-md text-white bg-primary hover:bg-primary-focus disabled:bg-gray-400">
                         Usar este Logo
                     </button>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import type { Student } from '../types';
 
 interface StudentCardProps {
@@ -6,10 +7,11 @@ interface StudentCardProps {
     onSelect?: () => void;
     onEdit?: () => void;
     onReportIncident?: () => void;
+    onReportAttention?: () => void;
 }
 
-const StudentCard: React.FC<StudentCardProps> = ({ student, onSelect, onEdit, onReportIncident }) => {
-    const hasButtons = onEdit || onReportIncident;
+const StudentCard: React.FC<StudentCardProps> = ({ student, onSelect, onEdit, onReportIncident, onReportAttention }) => {
+    const hasButtons = onEdit || onReportIncident || onReportAttention;
     const isClickable = !hasButtons && onSelect;
 
     return (
@@ -25,6 +27,13 @@ const StudentCard: React.FC<StudentCardProps> = ({ student, onSelect, onEdit, on
             </div>
             {hasButtons ? (
                 <div className="flex items-center space-x-2">
+                    {onReportAttention && (
+                        <button onClick={onReportAttention} className="p-2 rounded-full text-pink-600 hover:bg-pink-100 dark:hover:bg-pink-900/50" title="Reportar para Atención Psicológica">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                            </svg>
+                        </button>
+                    )}
                     {onReportIncident && (
                         <button onClick={onReportIncident} className="p-2 rounded-full text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50" title="Reportar Incidencia">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -41,23 +50,18 @@ const StudentCard: React.FC<StudentCardProps> = ({ student, onSelect, onEdit, on
                         </button>
                     )}
                 </div>
-            ) : (
-                isClickable && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
-            )}
+            ) : null}
         </div>
     );
 };
 
-
 interface StudentListProps {
   students: Student[];
-  onSelectStudent?: (student: Student) => void;
-  onImportClick?: () => void;
-  onAddStudentClick?: () => void;
-  onEditStudent?: (student: Student) => void;
   onReportIncident?: (student: Student) => void;
+  onReportAttention?: (student: Student) => void;
+  onAddStudentClick?: () => void;
+  onImportClick?: () => void;
+  onEditStudent?: (student: Student) => void;
   grades: string[];
   selectedGrade: string;
   onGradeChange: (grade: string) => void;
@@ -66,81 +70,56 @@ interface StudentListProps {
   onGroupChange: (group: string) => void;
 }
 
-const StudentList: React.FC<StudentListProps> = ({ students, onSelectStudent, onImportClick, onAddStudentClick, onEditStudent, onReportIncident, grades, selectedGrade, onGradeChange, groups, selectedGroup, onGroupChange }) => {
-    const [searchTerm, setSearchTerm] = useState('');
-
-    const filteredStudents = students.filter(student =>
-        student.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                 <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Estudiantes ({students.length})</h2>
-                 <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
-                    <select
-                        value={selectedGrade}
-                        onChange={(e) => onGradeChange(e.target.value)}
-                        className="w-full sm:w-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
-                    >
-                        {grades.map(grade => (
-                            <option key={grade} value={grade}>{grade === 'all' ? 'Todos los Grados' : grade}</option>
-                        ))}
-                    </select>
-                     <select
-                        value={selectedGroup}
-                        onChange={(e) => onGroupChange(e.target.value)}
-                        className="w-full sm:w-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
-                    >
-                        {groups.map(group => (
-                            <option key={group} value={group}>{group === 'all' ? 'Todos los Grupos' : group}</option>
-                        ))}
-                    </select>
-                    <input
-                        type="text"
-                        placeholder="Buscar estudiante..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full sm:w-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
-                    />
-                    {onImportClick && (
-                         <button 
-                            onClick={onImportClick}
-                            className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors flex items-center space-x-2 flex-shrink-0"
-                        >
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                            <span className="hidden sm:inline">Importar</span>
-                        </button>
-                    )}
-                    {onAddStudentClick && (
-                        <button 
-                            onClick={onAddStudentClick}
-                            className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors flex items-center space-x-2 flex-shrink-0"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                            <span className="hidden sm:inline">Añadir Estudiante</span>
-                        </button>
-                    )}
-                 </div>
-            </div>
-           
-            <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
-                {filteredStudents.length > 0 ? (
-                    filteredStudents.map(student => (
-                        <StudentCard 
-                            key={student.id} 
-                            student={student} 
-                            onSelect={onSelectStudent ? () => onSelectStudent(student) : undefined} 
-                            onEdit={onEditStudent ? () => onEditStudent(student) : undefined}
-                            onReportIncident={onReportIncident ? () => onReportIncident(student) : undefined}
-                        />
-                    ))
-                ) : (
-                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">No se encontraron estudiantes.</p>
-                )}
-            </div>
+const StudentList: React.FC<StudentListProps> = ({
+  students,
+  onReportIncident,
+  onReportAttention,
+  onAddStudentClick,
+  onImportClick,
+  onEditStudent,
+  grades,
+  selectedGrade,
+  onGradeChange,
+  groups,
+  selectedGroup,
+  onGroupChange,
+}) => {
+  return (
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">Lista de Estudiantes ({students.length})</h3>
+        <div className="flex flex-wrap items-center gap-2">
+            <select value={selectedGrade} onChange={e => onGradeChange(e.target.value)} className="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                {grades.map(g => <option key={g} value={g}>{g === 'all' ? 'Todos los Grados' : g}</option>)}
+            </select>
+            <select value={selectedGroup} onChange={e => onGroupChange(e.target.value)} className="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                {groups.map(g => <option key={g} value={g}>{g === 'all' ? 'Todos los Grupos' : `Grupo ${g}`}</option>)}
+            </select>
+          {onAddStudentClick && (
+            <button onClick={onAddStudentClick} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors">Añadir Estudiante</button>
+          )}
+          {onImportClick && (
+            <button onClick={onImportClick} className="bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-200">Importar</button>
+          )}
         </div>
-    );
+      </div>
+      <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+        {students.length > 0 ? (
+          students.map(student => (
+            <StudentCard 
+              key={student.id} 
+              student={student} 
+              onReportIncident={onReportIncident ? () => onReportIncident(student) : undefined}
+              onReportAttention={onReportAttention ? () => onReportAttention(student) : undefined}
+              onEdit={onEditStudent ? () => onEditStudent(student) : undefined}
+            />
+          ))
+        ) : (
+          <p className="text-center text-gray-500 dark:text-gray-400 py-8">No hay estudiantes en el grado/grupo seleccionado.</p>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default StudentList;

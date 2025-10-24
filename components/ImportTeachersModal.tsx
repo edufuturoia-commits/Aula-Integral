@@ -97,6 +97,9 @@ const ImportTeachersModal: React.FC<ImportTeachersModalProps> = ({ onClose, onSa
                         direccion: { type: Type.STRING, description: "La dirección de residencia del docente." },
                         email: { type: Type.STRING, description: "El correo electrónico del docente." },
                         movil: { type: Type.STRING, description: "El número de teléfono móvil del docente." },
+                        esDirectorDeGrupo: { type: Type.BOOLEAN, description: "Indica si el docente es director de grupo (true) o no (false). Si no se especifica, se asume false." },
+                        gradoAsignado: { type: Type.STRING, description: "Si es director de grupo, el grado asignado (ej: '11º')." },
+                        grupoAsignado: { type: Type.STRING, description: "Si es director de grupo, el grupo asignado (ej: 'A')." }
                     },
                     required: ['cedula', 'nombresYApellidos'],
                 },
@@ -109,9 +112,10 @@ const ImportTeachersModal: React.FC<ImportTeachersModalProps> = ({ onClose, onSa
 2.  **Manejo de Cédula/ID**: Extrae el número de Cédula o Identificación. Si no se encuentra, **DEBES GENERAR** un ID temporal único (ej: 'temp_12345'). El campo de la cédula no puede quedar vacío.
 3.  **Campos Opcionales**: Si no encuentras información para Fecha de Nacimiento, Dirección, Email o Móvil, deja el campo como un string vacío.
 4.  **Área Educativa**: El 'areaEducativa' debe ser uno de los siguientes valores: ${subjectList}. Intenta deducir la materia correcta. Si parece ser un profesor de primaria (enseña múltiples materias básicas), asigna 'Todas'. Si el cargo es de coordinador, asigna 'Coordinadores'. Si es administrativo, asigna 'Administrativos'. Si no es claro, asigna 'Matemáticas' por defecto.
+5.  **Director de Grupo**: Si el documento indica que un docente es "director de grupo", "titular", o un rol similar para un curso específico, establece 'esDirectorDeGrupo' en true. Además, extrae el grado y el grupo correspondientes en 'gradoAsignado' y 'grupoAsignado'. Si no se especifica, 'esDirectorDeGrupo' debe ser false.
 
 **Formato de Salida:**
-Devuelve un array JSON de objetos. Cada objeto debe tener las siguientes propiedades: "cedula", "nombresYApellidos", "fechaDeNacimiento", "areaEducativa", "direccion", "email", "movil".`;
+Devuelve un array JSON de objetos. Cada objeto debe tener las siguientes propiedades: "cedula", "nombresYApellidos", "fechaDeNacimiento", "areaEducativa", "direccion", "email", "movil", "esDirectorDeGrupo", "gradoAsignado", "grupoAsignado".`;
 
             const filePart = await fileToGenerativePart(file);
             const contents = { parts: [{ text: promptInstruction }, filePart] };
@@ -130,7 +134,18 @@ Devuelve un array JSON de objetos. Cada objeto debe tener las siguientes propied
                 throw new Error("La respuesta de la IA estaba vacía. Intente con un archivo más simple o en formato PDF.");
             }
 
-            const rawTeachers = JSON.parse(responseText) as { cedula: string, nombresYApellidos: string, fechaDeNacimiento: string, areaEducativa: SubjectArea, direccion: string, email: string, movil: string }[];
+            const rawTeachers = JSON.parse(responseText) as { 
+                cedula: string, 
+                nombresYApellidos: string, 
+                fechaDeNacimiento: string, 
+                areaEducativa: SubjectArea, 
+                direccion: string, 
+                email: string, 
+                movil: string,
+                esDirectorDeGrupo?: boolean,
+                gradoAsignado?: string,
+                grupoAsignado?: string
+            }[];
             
             if (!rawTeachers || rawTeachers.length === 0) {
                 setError("No se pudieron extraer datos de docentes del archivo. Por favor, asegúrate de que el archivo contenga una lista clara.");
@@ -146,9 +161,9 @@ Devuelve un array JSON de objetos. Cada objeto debe tener las siguientes propied
                 address: t.direccion || '',
                 email: t.email || '',
                 phone: t.movil || '',
-                isHomeroomTeacher: false,
-                assignedGrade: GRADES[5],
-                assignedGroup: GROUPS[0]
+                isHomeroomTeacher: t.esDirectorDeGrupo || false,
+                assignedGrade: t.esDirectorDeGrupo && t.gradoAsignado && GRADES.includes(t.gradoAsignado) ? t.gradoAsignado : GRADES[5],
+                assignedGroup: t.esDirectorDeGrupo && t.grupoAsignado && GROUPS.includes(t.grupoAsignado) ? t.grupoAsignado : GROUPS[0]
             })));
             setStep(2);
 
@@ -208,7 +223,7 @@ Devuelve un array JSON de objetos. Cada objeto debe tener las siguientes propied
                   <div className="space-y-4">
                       <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Archivo PDF o Excel</label>
-                          <input type="file" onChange={handleFileChange} accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
+                          <input type="file" onChange={handleFileChange} accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="block w-full text-sm text-gray-500 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
                       </div>
                       {file && <p className="text-sm text-gray-500 dark:text-gray-400">Archivo seleccionado: <strong>{file.name}</strong></p>}
                   </div>
@@ -240,22 +255,22 @@ Devuelve un array JSON de objetos. Cada objeto debe tener las siguientes propied
                             <tbody>
                                 {extractedTeachers.map((teacher, index) => (
                                     <tr key={index} className="border-b dark:border-gray-700">
-                                        <td className="p-2"><input type="text" value={teacher.id} onChange={(e) => handleTeacherDataChange(index, 'id', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
-                                        <td className="p-2"><input type="text" value={teacher.name} onChange={(e) => handleTeacherDataChange(index, 'name', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
+                                        <td className="p-2"><input type="text" value={teacher.id} onChange={(e) => handleTeacherDataChange(index, 'id', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
+                                        <td className="p-2"><input type="text" value={teacher.name} onChange={(e) => handleTeacherDataChange(index, 'name', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
                                         <td className="p-2">
-                                            <select value={teacher.subject} onChange={(e) => handleTeacherDataChange(index, 'subject', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                            <select value={teacher.subject} onChange={(e) => handleTeacherDataChange(index, 'subject', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent">
                                                 {SUBJECT_AREAS.map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
                                         </td>
-                                        <td className="p-2"><input type="email" value={teacher.email} onChange={(e) => handleTeacherDataChange(index, 'email', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
+                                        <td className="p-2"><input type="email" value={teacher.email} onChange={(e) => handleTeacherDataChange(index, 'email', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
                                         <td className="p-2 text-center">
                                             <input type="checkbox" checked={teacher.isHomeroomTeacher} onChange={(e) => handleTeacherDataChange(index, 'isHomeroomTeacher', e.target.checked)} className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary"/>
                                             {teacher.isHomeroomTeacher && (
                                                 <div className="flex gap-1 mt-1">
-                                                    <select value={teacher.assignedGrade} onChange={(e) => handleTeacherGroupChange(index, 'assignedGrade', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                                    <select value={teacher.assignedGrade} onChange={(e) => handleTeacherGroupChange(index, 'assignedGrade', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent">
                                                         {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                                                     </select>
-                                                    <select value={teacher.assignedGroup} onChange={(e) => handleTeacherGroupChange(index, 'assignedGroup', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                                    <select value={teacher.assignedGroup} onChange={(e) => handleTeacherGroupChange(index, 'assignedGroup', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent">
                                                         {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
                                                     </select>
                                                 </div>

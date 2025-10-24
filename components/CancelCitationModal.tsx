@@ -27,7 +27,7 @@ const CancelCitationModal: React.FC<CancelCitationModalProps> = ({ onClose, onCo
             rows={4}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-300"
             placeholder="Motivo de la cancelación..."
             required
           ></textarea>

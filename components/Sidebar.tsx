@@ -1,5 +1,3 @@
-
-
 import React, { useMemo } from 'react';
 import type { Page, Teacher, Student } from '../types';
 import { Role } from '../types';
@@ -14,20 +12,17 @@ interface SidebarProps {
 }
 
 const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
-  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Communication', 'Rectory', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES', 'TutorMode'],
-  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Communication', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES', 'TutorMode'],
+  [Role.ADMIN]: ['Dashboard', 'Classroom', 'Incidents', 'Psychology', 'TutorMode', 'Communication', 'Assessments', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'Rectory', 'InstitutionProfile', 'ParentPortal', 'StudentPortal', 'SimulacroICFES'],
+  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Psychology', 'Communication', 'Rectory', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES', 'TutorMode'],
+  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Psychology', 'Communication', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES', 'TutorMode'],
   [Role.TEACHER]: ['Dashboard', 'Classroom', 'Communication', 'Assessments', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'TutorMode'],
   [Role.STUDENT]: ['Dashboard', 'StudentPortal', 'Resources', 'Eventos', 'Profile', 'TutorMode'],
+  [Role.PSYCHOLOGY]: ['Dashboard', 'Psychology', 'Communication', 'Resources', 'Profile', 'Settings'],
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser, onLogout, icfesDrillSettings }) => {
   const visibleItems = useMemo(() => {
     if (!currentUser) return [];
-    
-    // Admin sees all pages.
-    if (currentUser.role === Role.ADMIN) {
-        return SIDEBAR_ITEMS;
-    }
 
     const allowedPages = PAGE_ACCESS[currentUser.role] || [];
     return SIDEBAR_ITEMS.filter(item => allowedPages.includes(item.name));

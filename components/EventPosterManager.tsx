@@ -87,45 +87,45 @@ const EventPosterManager: React.FC = () => {
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 bg-white p-6 rounded-xl shadow-md">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">Añadir Nuevo Póster</h3>
+            <div className="lg:col-span-1 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Añadir Nuevo Póster</h3>
                 <form onSubmit={handleAddPoster} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Imagen del Póster</label>
-                        <input type="file" onChange={handleFileChange} accept="image/png, image/jpeg, image/webp" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Imagen del Póster</label>
+                        <input type="file" onChange={handleFileChange} accept="image/png, image/jpeg, image/webp" className="block w-full text-sm text-gray-500 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
                         {previewUrl && <img src={previewUrl} alt="Vista previa" className="mt-4 w-full h-auto rounded-lg object-cover" />}
                     </div>
                     <div>
-                        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Título del Evento</label>
-                        <input type="text" id="title" value={title} onChange={e => setTitle(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900" required />
+                        <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título del Evento</label>
+                        <input type="text" id="title" value={title} onChange={e => setTitle(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-100" required />
                     </div>
                      <div>
-                        <label htmlFor="eventDate" className="block text-sm font-medium text-gray-700 mb-1">Fecha del Evento</label>
-                        <input type="date" id="eventDate" value={eventDate} onChange={e => setEventDate(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-900" required />
+                        <label htmlFor="eventDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha del Evento</label>
+                        <input type="date" id="eventDate" value={eventDate} onChange={e => setEventDate(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700/50 text-gray-900 dark:text-gray-100" required />
                     </div>
                     {error && <p className="text-red-600 text-sm">{error}</p>}
                     <button type="submit" className="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors">Publicar Póster</button>
                 </form>
             </div>
-             <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">Portal de Eventos Publicados ({posters.length})</h3>
+             <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Portal de Eventos Publicados ({posters.length})</h3>
                 {posters.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-2">
                         {posters.map(poster => (
-                            <div key={poster.id} className="bg-gray-50 border rounded-lg overflow-hidden flex flex-col">
+                            <div key={poster.id} className="bg-gray-50 dark:bg-gray-900/50 border dark:border-gray-700 rounded-lg overflow-hidden flex flex-col">
                                 <img src={poster.imageUrl} alt={poster.title} className="w-full h-48 object-cover"/>
                                 <div className="p-4 flex-grow">
-                                    <h4 className="font-bold text-gray-800">{poster.title}</h4>
-                                    <p className="text-sm text-gray-600">Fecha: {new Date(poster.eventDate + 'T00:00:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                    <h4 className="font-bold text-gray-800 dark:text-gray-100">{poster.title}</h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">Fecha: {new Date(poster.eventDate + 'T00:00:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                 </div>
-                                <div className="p-2 bg-gray-100 border-t text-right">
-                                    <button onClick={() => handleDeletePoster(poster.id)} className="text-sm text-red-600 hover:text-red-800 font-semibold">Eliminar</button>
+                                <div className="p-2 bg-gray-100 dark:bg-gray-700/50 border-t dark:border-gray-700 text-right">
+                                    <button onClick={() => handleDeletePoster(poster.id)} className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-semibold">Eliminar</button>
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <p className="text-center text-gray-500 py-16">No hay pósteres publicados. Añade uno para empezar.</p>
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-16">No hay pósteres publicados. Añade uno para empezar.</p>
                 )}
             </div>
         </div>

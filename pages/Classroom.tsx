@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import StudentList from '../components/StudentList';
 import IncidentModal from '../components/IncidentModal';
@@ -6,7 +8,7 @@ import CitationModal from '../components/CitationModal';
 import GroupMessageModal from '../components/GroupMessageModal';
 import CancelCitationModal from '../components/CancelCitationModal';
 import AddStudentModal from '../components/AddStudentModal'; // Import new modal
-import type { Student, Incident, ParentMessage, Citation, CoordinationMessage, Teacher, SubjectGrades, AttendanceRecord, Announcement, IncidentType } from '../types';
+import type { Student, Incident, ParentMessage, Citation, CoordinationMessage, Teacher, SubjectGrades, AttendanceRecord, Announcement, IncidentType, AttentionReport } from '../types';
 import { CitationStatus, Role, IncidentStatus } from '../types';
 import { addOrUpdateStudents } from '../db';
 import { GRADES, GROUPS, MOCK_CITATIONS, MOCK_COORDINATOR_USER, GRADE_GROUP_MAP } from '../constants';
@@ -14,6 +16,7 @@ import AttendanceTaker from '../components/AttendanceTaker';
 import ManualViewer from '../components/ManualViewer';
 import EventPostersViewer from '../components/EventPostersViewer';
 import Calificaciones from './Calificaciones';
+import AttentionReportModal from '../components/AttentionReportModal';
 
 
 interface ClassroomProps {
@@ -31,6 +34,7 @@ interface ClassroomProps {
   onUpdateIncidents: (action: 'add' | 'update' | 'delete', data: Incident | string) => Promise<void>;
   announcements: Announcement[];
   onShowSystemMessage: (message: string, type?: 'success' | 'error') => void;
+  onReportAttention: (report: AttentionReport) => void;
 }
 
 // --- Icons ---
@@ -98,7 +102,7 @@ const IncidentTypeIcon: React.FC<{type: IncidentType, className?: string}> = ({ 
 };
 
 
-const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, teachers, currentUser, subjectGradesData, setSubjectGradesData, attendanceRecords, onUpdateAttendance, onBulkUpdateAttendance, incidents, onUpdateIncidents, announcements, onShowSystemMessage }) => {
+const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, teachers, currentUser, subjectGradesData, setSubjectGradesData, attendanceRecords, onUpdateAttendance, onBulkUpdateAttendance, incidents, onUpdateIncidents, announcements, onShowSystemMessage, onReportAttention }) => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
@@ -110,280 +114,209 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   const [groupFilter, setGroupFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'calificaciones' | 'manual'>('students');
   const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
-  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
-  const actionMenuRef = useRef<HTMLDivElement>(null);
+  const [isAttentionReportModalOpen, setIsAttentionReportModalOpen] = useState(false);
+  const [studentForAttention, setStudentForAttention] = useState<Student | null>(null);
 
+  const availableGrades = useMemo(() => {
+    if (!currentUser) return ['all'];
+    
+    if (currentUser.role === Role.ADMIN || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR) {
+        return ['all', ...GRADES];
+    }
+    
+    // For teachers, only show grades they teach or are homeroom teacher for
+    const teacherGrades = new Set<string>();
+    if (currentUser.isHomeroomTeacher && currentUser.assignedGroup) {
+      teacherGrades.add(currentUser.assignedGroup.grade);
+    }
+    subjectGradesData.forEach(sg => {
+      if (sg.teacherId === currentUser.id) {
+        teacherGrades.add(sg.grade);
+      }
+    });
 
-  const studentMap = useMemo(() => new Map(students.map(s => [s.id, s])), [students]);
+    if (teacherGrades.size === 0) return ['all'];
+    return ['all', ...Array.from(teacherGrades)].sort();
+  }, [currentUser, subjectGradesData]);
+  
+  const availableGroups = useMemo(() => {
+    if (!currentUser) return ['all'];
+
+    if (currentUser.role === Role.ADMIN || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR) {
+        if (gradeFilter === 'all') {
+            return ['all', ...GROUPS];
+        }
+        return ['all', ...GRADE_GROUP_MAP[gradeFilter] || []];
+    }
+    
+    const teacherGroups = new Set<string>();
+    
+    // If homeroom teacher, add their assigned group
+    const isHomeroom = currentUser.isHomeroomTeacher && currentUser.assignedGroup;
+    if (isHomeroom && (gradeFilter === 'all' || gradeFilter === currentUser.assignedGroup?.grade)) {
+      teacherGroups.add(currentUser.assignedGroup!.group);
+    }
+    
+    // Also add groups from subject gradebooks
+    subjectGradesData.forEach(sg => {
+        if (sg.teacherId === currentUser.id && (gradeFilter === 'all' || sg.grade === gradeFilter)) {
+            teacherGroups.add(sg.group);
+        }
+    });
+    
+    return ['all', ...Array.from(teacherGroups)].sort();
+
+  }, [currentUser, gradeFilter, subjectGradesData]);
+
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-        if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
-            setActionMenuOpen(null);
-        }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const availableGrades = useMemo(() => ['all', ...GRADES], []);
-  const availableGroups = useMemo(() => {
-    if (gradeFilter === 'all' || !GRADE_GROUP_MAP[gradeFilter]) {
-        return ['all', ...GROUPS];
+    // If the current grade filter is no longer in the list of available grades (e.g., teacher changed), reset it.
+    if (gradeFilter !== 'all' && !availableGrades.includes(gradeFilter)) {
+        setGradeFilter('all');
     }
-    return ['all', ...GRADE_GROUP_MAP[gradeFilter]];
-  }, [gradeFilter]);
-
-  const handleGradeChange = (grade: string) => {
-    setGradeFilter(grade);
-    setGroupFilter('all');
-  };
+  }, [availableGrades, gradeFilter]);
+  
+  useEffect(() => {
+    if(groupFilter !== 'all' && !availableGroups.includes(groupFilter)) {
+        setGroupFilter('all');
+    }
+  }, [availableGroups, groupFilter]);
 
   const filteredStudents = useMemo(() => {
-      return students.filter(student => {
-          const matchesGrade = gradeFilter === 'all' || student.grade === gradeFilter;
-          const matchesGroup = groupFilter === 'all' || student.group === groupFilter;
-          return matchesGrade && matchesGroup;
-      });
-  }, [students, gradeFilter, groupFilter]);
-  
-  const myReportedIncidents = useMemo(() => 
-    incidents
-      .filter(inc => inc.teacherName === currentUser.name && inc.status === IncidentStatus.ACTIVE)
-      .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), 
-  [incidents, currentUser.name]);
-
-  const openModalForStudent = (student: Student) => {
-    setSelectedStudent(student);
-    setIsModalOpen(true);
-  };
-  
-  const handleOpenEditModal = (incident: Incident) => {
-    setEditingIncident(incident);
-    setIsModalOpen(true);
-    setActionMenuOpen(null);
-  };
-
-  const handleDeclineIncident = async (incident: Incident) => {
-    setActionMenuOpen(null);
-    if (window.confirm("¿Estás seguro de que quieres declinar esta incidencia? No aparecerá más en tu lista de activas y se notificará a coordinación.")) {
-        try {
-            const updatedIncident = { ...incident, status: IncidentStatus.DECLINED };
-            await onUpdateIncidents('update', updatedIncident);
-            onShowSystemMessage("Incidencia declinada exitosamente.");
-        } catch (error) {
-            console.error("Failed to decline incident:", error);
-            onShowSystemMessage("Error al declinar la incidencia.", 'error');
+    // If no specific filter is set, a homeroom teacher should see their class by default.
+    if (gradeFilter === 'all' && groupFilter === 'all') {
+        const homeroomGroup = currentUser.isHomeroomTeacher && currentUser.assignedGroup;
+        if(homeroomGroup) {
+            return students.filter(s => s.grade === homeroomGroup.grade && s.group === homeroomGroup.group);
         }
+        // If not a homeroom teacher and no filter, show all students (or could be an empty list based on requirements)
+        return students;
     }
-  };
+    return students.filter(s => {
+      const gradeMatch = gradeFilter === 'all' || s.grade === gradeFilter;
+      const groupMatch = groupFilter === 'all' || s.group === groupFilter;
+      return gradeMatch && groupMatch;
+    });
+  }, [students, gradeFilter, groupFilter, currentUser]);
 
-  const handleCloseModal = () => {
+  const incidentsByStudentId = useMemo(() => {
+    const map = new Map<number, Incident[]>();
+    incidents.forEach(incident => {
+        if (!map.has(incident.studentId)) {
+            map.set(incident.studentId, []);
+        }
+        map.get(incident.studentId)!.push(incident);
+    });
+    // Sort incidents for each student by most recent
+    map.forEach(studentIncidents => {
+        studentIncidents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    });
+    return map;
+  }, [incidents]);
+  
+  const handleSaveIncident = async (incidentData: Incident) => {
+    if (editingIncident) {
+        await onUpdateIncidents('update', incidentData);
+        onShowSystemMessage("Incidencia actualizada exitosamente.");
+    } else {
+        await onUpdateIncidents('add', incidentData);
+        onShowSystemMessage("Incidencia reportada exitosamente.");
+    }
     setIsModalOpen(false);
     setSelectedStudent(null);
     setEditingIncident(null);
   };
   
-  const handleSaveIncident = async (incidentData: Incident) => {
-    try {
-        if (editingIncident) {
-            await onUpdateIncidents('update', incidentData);
-            onShowSystemMessage("Incidencia actualizada correctamente.");
-        } else {
-            await onUpdateIncidents('add', { ...incidentData, status: IncidentStatus.ACTIVE });
-            onShowSystemMessage("Incidencia guardada. Coordinación ha sido notificada.");
-        }
-        handleCloseModal();
-    } catch (error) {
-        console.error("Failed to save incident:", error);
-        onShowSystemMessage("Error: No se pudo guardar la incidencia. Revisa tu conexión.", 'error');
-    }
-  };
-  
-  const handleSaveCitations = (newCitations: Citation[]) => {
-    // This state is local to Incidents page, but we keep the handler signature for consistency
-    setIsCitationModalOpen(false);
-    onShowSystemMessage(`${newCitations.length} citacion(es) enviada(s) exitosamente (simulación).`);
+  const handleSaveNewStudent = async (newStudentData: {name: string, grade: string, group: string}) => {
+      const newStudent: Student = {
+          id: Date.now(),
+          name: newStudentData.name,
+          avatarUrl: `https://picsum.photos/seed/${Date.now()}/100/100`,
+          grade: newStudentData.grade,
+          group: newStudentData.group,
+          role: Role.STUDENT,
+      };
+      
+      const newStudents = [...students, newStudent];
+      await addOrUpdateStudents(newStudents);
+      setStudents(newStudents);
+      
+      setIsAddStudentModalOpen(false);
+      onShowSystemMessage(`${newStudent.name} ha sido añadido exitosamente.`, 'success');
   };
 
-  const handleOpenCancelModal = (citation: Citation) => {
-    setCitationToCancel(citation);
-    setIsCancelModalOpen(true);
-  };
-
-  const handleConfirmCancelCitation = (reason: string) => {
-    // This state is local to Incidents page, but we keep the handler signature for consistency
-    if (!citationToCancel) return;
-    setIsCancelModalOpen(false);
-    setCitationToCancel(null);
-    onShowSystemMessage("Citación cancelada exitosamente (simulación).");
-  };
-  
-  const handleSendGroupMessage = (message: string) => {
-    setIsGroupMessageModalOpen(false);
-    onShowSystemMessage("Mensaje grupal enviado a todos los acudientes.");
-  };
-
-  const handleSaveNewStudent = async (newStudentData: { name: string; grade: string; group: string }) => {
-    const newStudent: Student = {
-        id: Date.now(),
-        name: newStudentData.name,
-        avatarUrl: `https://picsum.photos/seed/${Date.now()}/100/100`,
-        grade: newStudentData.grade,
-        group: newStudentData.group,
-        role: Role.STUDENT,
-    };
-    const updatedStudents = [...students, newStudent];
-    await addOrUpdateStudents(updatedStudents);
-    setStudents(updatedStudents.sort((a,b) => a.name.localeCompare(b.name)));
-    setIsAddStudentModalOpen(false);
-    onShowSystemMessage(`${newStudent.name} ha sido añadido exitosamente.`, 'success');
+  const handleSaveAttentionReport = (report: AttentionReport) => {
+      onReportAttention(report);
+      setIsAttentionReportModalOpen(false);
+      setStudentForAttention(null);
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-full">
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="border-b border-gray-200 dark:border-gray-700 mb-4 flex-shrink-0">
-          <nav className="-mb-px flex space-x-6 overflow-x-auto">
+    <div className="space-y-6">
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="-mb-px flex space-x-6 overflow-x-auto">
             {(['students', 'attendance', 'calificaciones', 'manual'] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`capitalize whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab ? 'border-primary text-primary dark:text-secondary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-              >
-                {tab === 'students' ? 'Mis Estudiantes' : tab}
-              </button>
+                 <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`capitalize whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab ? 'border-primary text-primary dark:text-secondary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                 >
+                     {tab === 'calificaciones' ? 'Calificaciones' : tab === 'manual' ? 'Manual y Eventos' : tab}
+                 </button>
             ))}
-          </nav>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {activeTab === 'students' && (
-            <StudentList
-              students={filteredStudents}
-              onReportIncident={openModalForStudent}
-              onAddStudentClick={() => setIsAddStudentModalOpen(true)}
-              grades={availableGrades}
-              selectedGrade={gradeFilter}
-              onGradeChange={handleGradeChange}
-              groups={availableGroups}
-              selectedGroup={groupFilter}
-              onGroupChange={setGroupFilter}
-            />
-          )}
-          {activeTab === 'attendance' && (
-            <AttendanceTaker
-              students={filteredStudents}
-              isOnline={isOnline}
-              allAttendanceRecords={attendanceRecords}
-              onUpdateRecord={onUpdateAttendance}
-              onBulkUpdateRecords={onBulkUpdateAttendance}
-            />
-          )}
-          {activeTab === 'calificaciones' && (
-            <Calificaciones 
-              students={filteredStudents}
-              teachers={teachers}
-              subjectGradesData={subjectGradesData}
-              setSubjectGradesData={setSubjectGradesData}
-              currentUser={currentUser}
-              viewMode="teacher"
-              onShowSystemMessage={onShowSystemMessage}
-            />
-          )}
-          {activeTab === 'manual' && <ManualViewer />}
-        </div>
+        </nav>
       </div>
 
-      {/* Right side panel for incident management, only shown on students tab */}
       {activeTab === 'students' && (
-        <div className="w-full lg:w-96 flex-shrink-0">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md h-full flex flex-col">
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-3 flex justify-between items-center">
-                  <span>Gestión de Incidencias</span>
-                  <span className="text-base font-medium bg-primary/10 text-primary dark:bg-secondary/20 dark:text-secondary px-2 py-1 rounded-md">{myReportedIncidents.length}</span>
-              </h3>
-              <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-                  {myReportedIncidents.length > 0 ? (
-                      myReportedIncidents.map(inc => {
-                        const student = studentMap.get(inc.studentId);
-                        return (
-                          <div key={inc.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 space-y-3">
-                              {/* Card Header */}
-                              <div className="flex justify-between items-start">
-                                  <div className="flex items-center gap-3">
-                                      <img 
-                                        src={student?.avatarUrl || `https://picsum.photos/seed/${inc.studentId}/100/100`} 
-                                        alt={inc.studentName} 
-                                        className="w-10 h-10 rounded-full object-cover" 
-                                      />
-                                      <div>
-                                          <p className="font-bold text-gray-800 dark:text-gray-100">{inc.studentName}</p>
-                                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                                            {new Date(inc.timestamp).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
-                                          </p>
-                                      </div>
-                                  </div>
-                                  <div className="relative" ref={actionMenuRef}>
-                                      <button 
-                                        onClick={() => setActionMenuOpen(actionMenuOpen === inc.id ? null : inc.id)}
-                                        className="p-1 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                        aria-haspopup="true"
-                                        aria-expanded={actionMenuOpen === inc.id}
-                                      >
-                                          <MoreVertIcon />
-                                      </button>
-                                      {actionMenuOpen === inc.id && (
-                                          <div className="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
-                                              <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                                                  <a href="#" onClick={(e) => { e.preventDefault(); handleOpenEditModal(inc); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800" role="menuitem">Editar</a>
-                                                  <a href="#" onClick={(e) => { e.preventDefault(); handleDeclineIncident(inc); }} className="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800" role="menuitem">Declinar</a>
-                                              </div>
-                                          </div>
-                                      )}
-                                  </div>
-                              </div>
+        <StudentList 
+            students={filteredStudents} 
+            onReportIncident={(student) => { setSelectedStudent(student); setIsModalOpen(true); }}
+            onAddStudentClick={() => setIsAddStudentModalOpen(true)}
+            grades={availableGrades}
+            selectedGrade={gradeFilter}
+            onGradeChange={setGradeFilter}
+            groups={availableGroups}
+            selectedGroup={groupFilter}
+            onGroupChange={setGroupFilter}
+            onReportAttention={(student) => { setStudentForAttention(student); setIsAttentionReportModalOpen(true); }}
+        />
+      )}
 
-                              {/* Card Body */}
-                              <div>
-                                  <div className="flex items-center gap-2 mb-2">
-                                      <IncidentTypeIcon type={inc.type as IncidentType} className="h-5 w-5 text-primary dark:text-secondary" />
-                                      <span className="text-sm font-semibold text-primary dark:text-secondary">{inc.type}</span>
-                                  </div>
-                                  <p className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-md">{inc.notes}</p>
-                              </div>
-                          </div>
-                        )
-                      })
-                  ) : (
-                      <div className="text-center text-gray-500 dark:text-gray-400 py-8 flex flex-col items-center">
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                         <p className="mt-2 font-medium">Todo en orden</p>
-                         <p className="text-xs mt-1">No has reportado incidencias activas. Usa el botón de alerta en la lista de estudiantes para registrar una.</p>
-                      </div>
-                  )}
-              </div>
-          </div>
+      {activeTab === 'attendance' && <AttendanceTaker students={filteredStudents} isOnline={isOnline} allAttendanceRecords={attendanceRecords} onUpdateRecord={onUpdateAttendance} onBulkUpdateRecords={onBulkUpdateAttendance} />}
+      
+      {activeTab === 'calificaciones' && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGradesData} setSubjectGradesData={setSubjectGradesData} currentUser={currentUser} viewMode='teacher' onShowSystemMessage={onShowSystemMessage} />}
+
+      {activeTab === 'manual' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="lg:col-span-1"><ManualViewer /></div>
+            <div className="lg:col-span-1"><EventPostersViewer /></div>
         </div>
       )}
       
-      {isModalOpen && (
-          <IncidentModal
-            student={selectedStudent}
+      {isModalOpen && (selectedStudent || editingIncident) && (
+        <IncidentModal 
+            student={selectedStudent} 
             incident={editingIncident}
             students={students}
-            onClose={handleCloseModal}
+            onClose={() => { setIsModalOpen(false); setSelectedStudent(null); setEditingIncident(null); }} 
             onSave={handleSaveIncident}
             reporter={currentUser}
+        />
+      )}
+      {isAddStudentModalOpen && (
+          <AddStudentModal
+            onClose={() => setIsAddStudentModalOpen(false)}
+            onSave={handleSaveNewStudent}
           />
       )}
-      {isAddStudentModalOpen && <AddStudentModal onClose={() => setIsAddStudentModalOpen(false)} onSave={handleSaveNewStudent} />}
-      {isCitationModalOpen && <CitationModal students={filteredStudents} onClose={() => setIsCitationModalOpen(false)} onSave={handleSaveCitations} currentUser={currentUser} />}
-      {isGroupMessageModalOpen && <GroupMessageModal onClose={() => setIsGroupMessageModalOpen(false)} onSend={handleSendGroupMessage} />}
-      {isCancelModalOpen && citationToCancel && <CancelCitationModal onClose={() => setIsCancelModalOpen(false)} onConfirm={handleConfirmCancelCitation} />}
+      {isAttentionReportModalOpen && studentForAttention && (
+        <AttentionReportModal 
+            student={studentForAttention}
+            reporter={currentUser}
+            onClose={() => setIsAttentionReportModalOpen(false)}
+            onSave={handleSaveAttentionReport}
+        />
+      )}
     </div>
   );
 };

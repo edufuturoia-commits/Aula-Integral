@@ -14,7 +14,6 @@ interface PlanDetails {
     period: string;
 }
 
-// FIX: Changed JSX.Element to React.ReactElement to resolve namespace error.
 const FeatureCard: React.FC<{ icon: React.ReactElement; title: string; description: string }> = ({ icon, title, description }) => (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-transform transform hover:-translate-y-1">
         <div className="text-primary mb-4">{icon}</div>

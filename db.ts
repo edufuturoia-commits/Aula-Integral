@@ -1,4 +1,6 @@
-import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades, Guardian, Lesson } from './types';
+
+
+import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades, Guardian, Lesson, AttentionReport } from './types';
 import { MOCK_STUDENTS, MOCK_TEACHERS, MOCK_RESOURCES, MOCK_STUDENT_ASSESSMENT_RESULTS, MOCK_SUBJECT_GRADES, MOCK_ANNOUNCEMENTS, MOCK_GUARDIANS } from './constants';
 
 // --- In-memory store to simulate database ---
@@ -13,6 +15,7 @@ let studentResults: StudentAssessmentResult[] = MOCK_STUDENT_ASSESSMENT_RESULTS;
 let subjectGrades: SubjectGrades[] = MOCK_SUBJECT_GRADES;
 let guardians: Guardian[] = MOCK_GUARDIANS;
 let lessons: Lesson[] = []; // For Tutor Mode history
+let attentionReports: AttentionReport[] = [];
 
 const simulateApiCall = <T>(data: T): Promise<T> => 
     new Promise(resolve => setTimeout(() => {
@@ -33,11 +36,10 @@ export const addOrUpdateGuardians = (newGuardians: Guardian[]): Promise<void> =>
     guardians = Array.from(guardianMap.values()).sort((a,b) => a.name.localeCompare(b.name));
     return simulateApiCall(undefined);
 };
-// FIX: Add missing getGuardianById function to support guardian login.
+
 export const getGuardianById = (id: string): Promise<Guardian | undefined> =>
     simulateApiCall(guardians.find(g => g.id === id));
 
-// FIX: Add missing updateGuardian function to support updating guardian profiles.
 export const updateGuardian = (guardian: Guardian): Promise<void> => {
     const index = guardians.findIndex(g => g.id === guardian.id);
     if (index > -1) guardians[index] = guardian;
@@ -59,6 +61,19 @@ export const deleteIncident = (id: string): Promise<void> => {
     return simulateApiCall(undefined);
 };
 export const getIncidents = (): Promise<Incident[]> => simulateApiCall(incidents);
+
+// --- Psychology Attention Reports ---
+export const getAttentionReports = (): Promise<AttentionReport[]> => simulateApiCall(attentionReports);
+export const addAttentionReport = (report: AttentionReport): Promise<void> => {
+    attentionReports.unshift(report);
+    return simulateApiCall(undefined);
+};
+export const updateAttentionReport = (report: AttentionReport): Promise<void> => {
+    const index = attentionReports.findIndex(r => r.id === report.id);
+    if (index > -1) attentionReports[index] = report;
+    return simulateApiCall(undefined);
+};
+
 
 // --- Resource Functions ---
 export const addResource = (resource: Resource): Promise<void> => {
@@ -95,7 +110,6 @@ export const getAllAttendanceRecords = (): Promise<AttendanceRecord[]> => simula
 export const getTeacherByEmail = (email: string): Promise<Teacher | undefined> => 
     simulateApiCall(teachers.find(t => t.email === email));
 
-// FIX: Add missing getTeacherById function to support login by ID.
 export const getTeacherById = (id: string): Promise<Teacher | undefined> =>
     simulateApiCall(teachers.find(t => t.id === id));
 
@@ -107,7 +121,6 @@ export const updateTeacher = (teacher: Teacher): Promise<void> => {
 export const getStudentByEmail = (email: string): Promise<Student | undefined> => 
     simulateApiCall(students.find(s => s.email === email));
 
-// FIX: Add missing getStudentByDocumentId function to support student login.
 export const getStudentByDocumentId = (documentId: string): Promise<Student | undefined> =>
     simulateApiCall(students.find(s => s.documentNumber === documentId));
 

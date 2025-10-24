@@ -9,13 +9,14 @@ interface CommunicationProps {
   currentUser: Teacher;
   students: Student[];
   teachers: Teacher[];
+  guardians: Guardian[];
   conversations: Conversation[];
   onUpdateConversation: (conversation: Conversation) => void;
   onCreateConversation: (conversation: Conversation) => void;
   allUsersMap: Map<string | number, User>;
 }
 
-const Communication: React.FC<CommunicationProps> = ({ currentUser, students, teachers, conversations, onUpdateConversation, onCreateConversation, allUsersMap }) => {
+const Communication: React.FC<CommunicationProps> = ({ currentUser, students, teachers, guardians, conversations, onUpdateConversation, onCreateConversation, allUsersMap }) => {
     const [selectedConversation, setSelectedConversation] = useState<InboxConversation | null>(null);
     const [newMessage, setNewMessage] = useState('');
     const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -96,7 +97,7 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser, students, te
         setNewMessage('');
     };
 
-    const handleStartConversation = (participant: { id: string | number; name: string; avatarUrl: string; role: Role; }) => {
+    const handleStartConversation = (participant: { id: string | number; name: string; avatarUrl: string; role: Role | 'Acudiente'; }) => {
         const myId = currentUser.id;
         const otherId = participant.id;
         
@@ -211,6 +212,7 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser, students, te
                 <NewConversationModal
                     students={students}
                     teachers={teachers}
+                    guardians={guardians}
                     onClose={() => setIsNewConvoModalOpen(false)}
                     onStartConversation={handleStartConversation}
                 />

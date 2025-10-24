@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades, Guardian } from '../types';
+import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades, Guardian, AttentionReport } from '../types';
 import { IncidentType, AttendanceStatus, CitationStatus, Role, DocumentType, TeacherStatus, IncidentStatus } from '../types';
 import { addOrUpdateTeachers, addOrUpdateStudents, getTeachers, addOrUpdateGuardians } from '../db';
 import { GRADES, GROUPS, GRADE_GROUP_MAP } from '../constants';
@@ -17,6 +17,7 @@ import AddStudentModal from '../components/AddStudentModal';
 import ImportGuardiansModal from '../components/ImportGuardiansModal';
 import AddTeacherModal from '../components/AddTeacherModal';
 import AddGuardianModal from '../components/AddGuardianModal';
+import AttentionReportModal from '../components/AttentionReportModal';
 
 
 type EnrichedAttendanceRecord = AttendanceRecord & { student: Student };
@@ -133,6 +134,7 @@ interface IncidentsProps {
     guardians: Guardian[];
     onUpdateGuardians: (guardians: Guardian[]) => Promise<void>;
     onShowSystemMessage: (message: string, type?: 'success' | 'error') => void;
+    onReportAttention: (report: AttentionReport) => void;
 }
 
 const getAttendanceStatusTextColor = (status: AttendanceStatus): string => {
@@ -176,6 +178,7 @@ const Incidents: React.FC<IncidentsProps> = ({
     guardians,
     onUpdateGuardians,
     onShowSystemMessage,
+    onReportAttention,
 }) => {
     const [activeTab, setActiveTab] = useState<CoordinationTab>('incidents');
     const [communitySubTab, setCommunitySubTab] = useState<CommunitySubTab>('students');
@@ -193,6 +196,8 @@ const Incidents: React.FC<IncidentsProps> = ({
     const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
     const [isImportGuardiansModalOpen, setIsImportGuardiansModalOpen] = useState(false);
     const [isAddGuardianModalOpen, setIsAddGuardianModalOpen] = useState(false);
+    const [isAttentionReportModalOpen, setIsAttentionReportModalOpen] = useState(false);
+
 
     // Data for modals
     const [citationToCancel, setCitationToCancel] = useState<Citation | null>(null);
@@ -200,6 +205,7 @@ const Incidents: React.FC<IncidentsProps> = ({
     const [teacherToEdit, setTeacherToEdit] = useState<Teacher | null>(null);
     const [studentToEdit, setStudentToEdit] = useState<Student | null>(null);
     const [studentForIncident, setStudentForIncident] = useState<Student | null>(null);
+    const [studentForAttentionReport, setStudentForAttentionReport] = useState<Student | null>(null);
     
     // Filters for incidents
     const [incidentViewMode, setIncidentViewMode] = useState<'list' | 'byTeacher'>('list');
@@ -470,7 +476,6 @@ const Incidents: React.FC<IncidentsProps> = ({
         }
     };
     
-    // FIX: Changed component definition to use React.FC and removed the incorrect key prop from the inner div. This resolves TypeScript errors when mapping over this component.
     const IncidentCard: React.FC<{ inc: Incident }> = ({ inc }) => (
         <div className="p-4 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50">
             <div className="flex justify-between items-start">
@@ -517,7 +522,7 @@ const Incidents: React.FC<IncidentsProps> = ({
             {isCitationModalOpen && <CitationModal students={students} onClose={() => setIsCitationModalOpen(false)} onSave={handleSaveCitations} currentUser={currentUser} />}
             {isCancelModalOpen && citationToCancel && <CancelCitationModal onClose={() => setIsCancelModalOpen(false)} onConfirm={handleConfirmCancelCitation} />}
             {isEditCitationModalOpen && citationToEdit && <EditCitationModal citation={citationToEdit} onClose={() => setIsEditCitationModalOpen(false)} onSave={handleSaveEditedCitation} />}
-            {isIncidentModalOpen && studentForIncident && <IncidentModal student={studentForIncident} students={students} onClose={() => setIsIncidentModalOpen(false)} onSave={handleSaveIncident} reporter={currentUser} />}
+            {isIncidentModalOpen && <IncidentModal student={studentForIncident} students={students} onClose={() => { setIsIncidentModalOpen(false); setStudentForIncident(null); }} onSave={handleSaveIncident} reporter={currentUser} />}
             
             {isImportTeachersModalOpen && <ImportTeachersModal onClose={() => setIsImportTeachersModalOpen(false)} onSave={handleImportTeachers} />}
             {isEditTeacherModalOpen && teacherToEdit && <EditTeacherModal teacher={teacherToEdit} onClose={() => setIsEditTeacherModalOpen(false)} onSave={handleSaveTeacher} />}
@@ -529,6 +534,22 @@ const Incidents: React.FC<IncidentsProps> = ({
 
             {isImportGuardiansModalOpen && <ImportGuardiansModal students={students} onClose={() => setIsImportGuardiansModalOpen(false)} onSave={handleImportGuardians} />}
             {isAddGuardianModalOpen && <AddGuardianModal onClose={() => setIsAddGuardianModalOpen(false)} onSave={handleSaveNewGuardian} />}
+
+            {isAttentionReportModalOpen && studentForAttentionReport && (
+                <AttentionReportModal
+                    student={studentForAttentionReport}
+                    reporter={currentUser}
+                    onClose={() => {
+                        setIsAttentionReportModalOpen(false);
+                        setStudentForAttentionReport(null);
+                    }}
+                    onSave={(report) => {
+                        onReportAttention(report);
+                        setIsAttentionReportModalOpen(false);
+                        setStudentForAttentionReport(null);
+                    }}
+                />
+            )}
 
 
             {activeTab === 'incidents' && (
@@ -728,6 +749,7 @@ const Incidents: React.FC<IncidentsProps> = ({
                             onImportClick={() => setIsImportStudentsModalOpen(true)}
                             onEditStudent={(student) => { setStudentToEdit(student); setIsEditStudentModalOpen(true); }}
                             onReportIncident={(student) => { setStudentForIncident(student); setIsIncidentModalOpen(true); }}
+                            onReportAttention={(student) => { setStudentForAttentionReport(student); setIsAttentionReportModalOpen(true); }}
                             grades={['all', ...GRADES]}
                             selectedGrade="all"
                             onGradeChange={() => {}}

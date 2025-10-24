@@ -1,4 +1,6 @@
-export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones' | 'Communication' | 'TutorMode' | 'Eventos' | 'SimulacroICFES' | 'Consolidado';
+
+
+export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones' | 'Communication' | 'TutorMode' | 'Eventos' | 'SimulacroICFES' | 'Consolidado' | 'Psychology';
 
 export enum DocumentType {
   REGISTRO_CIVIL = 'Registro Civil',
@@ -11,6 +13,7 @@ export enum Role {
   COORDINATOR = 'Coordinador',
   RECTOR = 'Rector',
   ADMIN = 'Administrador',
+  PSYCHOLOGY = 'Psicología',
 }
 
 export interface Student {
@@ -59,7 +62,6 @@ export interface Incident {
   teacherName: string;
   location: string;
   status: IncidentStatus;
-  // FIX: Added optional synced property to align with usage in IncidentModal and Incidents pages.
   synced?: boolean;
 }
 
@@ -84,7 +86,7 @@ export interface AssessmentData {
     studentAverage: number;
 }
 
-export type SubjectArea = 'Matemáticas' | 'Lengua Castellana' | 'Inglés' | 'Biología' | 'Química' | 'Física' | 'Historia' | 'Geografía' | 'Constitución Política y Democracia' | 'Educación Artística' | 'Música' | 'Educación Ética y en Valores Humanos' | 'Filosofía' | 'Educación Física' | 'Educación Religiosa' | 'Tecnología e Informática' | 'Convivencia' | 'Todas' | 'Coordinadores' | 'Administrativos';
+export type SubjectArea = 'Matemáticas' | 'Lengua Castellana' | 'Inglés' | 'Biología' | 'Química' | 'Física' | 'Historia' | 'Geografía' | 'Constitución Política y Democracia' | 'Educación Artística' | 'Música' | 'Educación Ética y en Valores Humanos' | 'Filosofía' | 'Educación Física' | 'Educación Religiosa' | 'Tecnología e Informática' | 'Convivencia' | 'Todas' | 'Coordinadores' | 'Administrativos' | 'Psicología';
 export type Competency = 'Comprensión Lectora' | 'Resolución de Problemas' | 'Pensamiento Crítico' | 'Competencias Ciudadanas' | 'Comunicación Escrita' | 'Análisis Científico' | 'Expresión Artística' | 'Competencia Digital' | 'Pensamiento Histórico' | 'Bilingüismo' | 'Competencia Motriz';
 
 export interface Question {
@@ -135,9 +137,7 @@ export interface AttendanceRecord {
     id: string; // e.g., `${studentId}-${date}`
     studentId: number;
     date: string; // YYYY-MM-DD
-    // FIX: Add missing status property
     status: AttendanceStatus;
-    // FIX: Added optional synced property to align with usage in AttendanceTaker.
     synced?: boolean;
 }
 
@@ -204,6 +204,27 @@ export enum TeacherStatus {
   ON_COMMISSION = 'En Comisión',
 }
 
+export interface Certification {
+  id: string;
+  name: string;
+  issuer: string;
+  year: string;
+}
+
+export interface Experience {
+  id: string;
+  position: string;
+  institution: string;
+  years: string;
+}
+
+export interface ProfessionalDevelopment {
+  id: string;
+  activity: string;
+  hours: number;
+  date: string;
+}
+
 export interface Teacher {
   id: string; // Cédula
   name: string;
@@ -225,6 +246,9 @@ export interface Teacher {
   notifications?: NotificationSettings;
   isDemo?: boolean;
   demoStartDate?: string;
+  certifications?: Certification[];
+  experience?: Experience[];
+  professionalDevelopment?: ProfessionalDevelopment[];
 }
 
 export interface InstitutionProfileData {
@@ -313,7 +337,6 @@ export interface Guardian {
   email?: string;
   phone?: string;
   studentIds: number[]; // Array of IDs of the students they are a guardian for
-  // FIX: Add missing password properties to support guardian login.
   password?: string;
   passwordChanged?: boolean;
 }
@@ -374,4 +397,52 @@ export interface Lesson {
   grade: string;
   subject: SubjectArea;
   content: LessonContent;
+}
+
+// --- Psychology Module Types ---
+export enum AttentionReportStatus {
+  OPEN = 'Abierto',
+  IN_PROGRESS = 'En Proceso',
+  CLOSED = 'Cerrado',
+}
+
+export interface Diagnosis {
+  id: string;
+  authorId: string;
+  text: string;
+  timestamp: string;
+  source?: string;
+}
+
+export type SessionProgress = 'Estancamiento' | 'Leve Mejora' | 'Progreso Notable' | 'Logro de Objetivo' | 'Sin Evaluar';
+
+export interface SessionLog {
+  id: string;
+  authorId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  sessionType: 'Individual' | 'Grupal' | 'Familiar';
+  notes: string;
+  progressIndicator: SessionProgress;
+}
+
+export interface AttentionReport {
+  id: string;
+  studentId: number;
+  reporterId: string;
+  reason: string; // Motivo de Consulta
+  timestamp: string;
+  status: AttentionReportStatus;
+  
+  // Historial Psicológico
+  familyBackground?: string;
+  schoolBackground?: string;
+  medicalBackground?: string;
+  interventionPlan?: string;
+  closingSummary?: string;
+
+  diagnoses: Diagnosis[];
+  sessions: SessionLog[]; // Replaces followUps
+  conversationId: string;
 }

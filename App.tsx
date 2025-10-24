@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, Suspense, lazy, useMemo } from 'react';
 
 // New Pages for Auth Flow
@@ -13,9 +14,8 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
 // Types and DB
-import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData, Conversation, Lesson } from './types';
-// FIX: Update import to include missing functions.
-import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian, getLessons, addLesson } from './db';
+import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData, Conversation, Lesson, AttentionReport } from './types';
+import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian, getLessons, addLesson, getAttentionReports, addAttentionReport, updateAttentionReport } from './db';
 
 // Constants
 import { SIDEBAR_ITEMS, MOCK_INSTITUTION_PROFILE, MOCK_CITATIONS, MOCK_CONVERSATIONS_DATA } from './constants';
@@ -39,6 +39,7 @@ const Eventos = lazy(() => import('./pages/Eventos'));
 const SimulacroICFES = lazy(() => import('./pages/SimulacroICFES'));
 const QuickAccess = lazy(() => import('./pages/QuickAccess'));
 const Consolidado = lazy(() => import('./pages/Consolidado'));
+const Psychology = lazy(() => import('./pages/Psychology'));
 
 
 interface NotificationToastProps {
@@ -118,7 +119,7 @@ const SystemToast: React.FC<SystemToastProps> = ({ message, type, onClose }) => 
 
 type User = Teacher | Student | Guardian;
 
-const App: React.FC = () => {
+export const App: React.FC = () => {
   // App State Management
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem('currentUser');
@@ -162,6 +163,7 @@ const App: React.FC = () => {
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS_DATA);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [attentionReports, setAttentionReports] = useState<AttentionReport[]>([]);
   const [downloadedResourceIds, setDownloadedResourceIds] = useState<Set<string>>(new Set());
   const [institutionProfile, setInstitutionProfile] = useState<InstitutionProfileData>(() => {
     const savedProfile = localStorage.getItem('institutionProfile');
@@ -277,7 +279,7 @@ const App: React.FC = () => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const [studentsData, teachersData, assessmentsData, resultsData, gradesData, attendanceData, announcementsData, guardiansData, lessonsData] = await Promise.all([
+        const [studentsData, teachersData, assessmentsData, resultsData, gradesData, attendanceData, announcementsData, guardiansData, lessonsData, attentionReportsData] = await Promise.all([
           getStudents(),
           getTeachers(),
           getAssessments(),
@@ -287,6 +289,7 @@ const App: React.FC = () => {
           getAnnouncements(),
           getGuardians(),
           getLessons(),
+          getAttentionReports(),
         ]);
         setStudents(studentsData);
         setTeachers(teachersData);
@@ -297,6 +300,7 @@ const App: React.FC = () => {
         setAnnouncements(announcementsData);
         setGuardians(guardiansData);
         setLessons(lessonsData);
+        setAttentionReports(attentionReportsData);
         setCitations(MOCK_CITATIONS);
         await loadIncidents();
         await loadResources();
@@ -452,9 +456,10 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSetInstitutionProfile = (profile: InstitutionProfileData) => {
-    setInstitutionProfile(profile);
-    localStorage.setItem('institutionProfile', JSON.stringify(profile));
+  const handleSetInstitutionProfile = (profile: React.SetStateAction<InstitutionProfileData>) => {
+    const newProfile = typeof profile === 'function' ? profile(institutionProfile) : profile;
+    setInstitutionProfile(newProfile);
+    localStorage.setItem('institutionProfile', JSON.stringify(newProfile));
   };
   
   const handleSetAssessments = async (assessments: Assessment[]) => {
@@ -553,6 +558,39 @@ const App: React.FC = () => {
     setLessons(data);
   };
 
+  const handleCreateAttentionReport = async (report: AttentionReport) => {
+      const student = allUsersMap.get(report.studentId) as Student;
+      const guardian = guardians.find(g => g.studentIds.includes(report.studentId));
+      const psychologist = teachers.find(t => t.role === Role.PSYCHOLOGY);
+      const rector = teachers.find(t => t.role === Role.RECTOR);
+
+      const participantIds: (string | number)[] = [report.reporterId];
+      if (guardian) participantIds.push(guardian.id);
+      if (psychologist) participantIds.push(psychologist.id);
+      if (rector) participantIds.push(rector.id);
+
+      const newConversation: Conversation = {
+          id: report.conversationId,
+          participantIds: [...new Set(participantIds)],
+          messages: [{
+              senderId: report.reporterId,
+              text: `Reporte de atención iniciado para ${student?.name}.\nMotivo: ${report.reason}`,
+              timestamp: new Date().toISOString()
+          }],
+      };
+      
+      await addAttentionReport(report);
+      setAttentionReports(prev => [report, ...prev].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+      handleCreateConversation(newConversation);
+      showSystemMessage("Reporte de atención enviado confidencialmente.", 'success');
+  };
+
+  const handleUpdateAttentionReport = async (report: AttentionReport) => {
+      await updateAttentionReport(report);
+      setAttentionReports(prev => prev.map(r => r.id === report.id ? report : r));
+      showSystemMessage("Reporte de psicología actualizado.", 'success');
+  };
+
 
   // Render Logic
   if (isLoading) {
@@ -600,6 +638,8 @@ const App: React.FC = () => {
                 return 'Rector';
             case Role.ADMIN:
                 return 'Administrador';
+            case Role.PSYCHOLOGY:
+                return 'Psicología';
             default:
                 return user.role; // Fallback for other cases.
         }
@@ -630,7 +670,7 @@ const App: React.FC = () => {
                 </main>
                  {notification && <NotificationToast title={notification.title} message={notification.message} studentName={notification.studentName} onClose={() => setNotification(null)} />}
                  {systemMessage && <SystemToast message={systemMessage.message} type={systemMessage.type} onClose={() => setSystemMessage(null)} />}
-                 {needsPasswordChange && <ChangePasswordModal user={currentUser} onPasswordChanged={handlePasswordChanged} />}
+                 {needsPasswordChange && <ChangePasswordModal user={currentUser as Teacher | Student} onPasswordChanged={handlePasswordChanged} />}
             </div>
         );
       }
@@ -650,36 +690,33 @@ const App: React.FC = () => {
                 <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto bg-neutral dark:bg-gray-800">
                     <Suspense fallback={<div className="flex items-center justify-center h-full text-gray-800 dark:text-gray-200">Cargando página...</div>}>
                         {currentPage === 'Dashboard' && <Dashboard students={students} teachers={teachers} citations={citations} onNavigate={setCurrentPage} />}
-                        {currentPage === 'Classroom' && !isUserStudent && <Classroom isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleAddOrUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendance} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onShowSystemMessage={showSystemMessage} />}
+                        {currentPage === 'Classroom' && !isUserStudent && <Classroom isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleAddOrUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendance} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onShowSystemMessage={showSystemMessage} onReportAttention={handleCreateAttentionReport} />}
                         {currentPage === 'Assessments' && !isUserStudent && <Assessments students={students} assessments={assessments} setAssessments={handleSetAssessments} studentResults={studentResults} />}
                         {currentPage === 'Resources' && <Resources resources={resources} downloadedIds={downloadedResourceIds} onUpdate={loadResources} />}
                         {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
                         {currentPage === 'Settings' && <Settings currentUser={currentUser as Teacher} onUpdateUser={handleUpdateUser} theme={theme} setTheme={setTheme} />}
-                        {currentPage === 'Incidents' && !isUserStudent && <Incidents isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} guardians={guardians} onUpdateGuardians={handleSetGuardians} onShowSystemMessage={showSystemMessage} />}
+                        {currentPage === 'Incidents' && !isUserStudent && <Incidents isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} guardians={guardians} onUpdateGuardians={handleSetGuardians} onShowSystemMessage={showSystemMessage} onReportAttention={handleCreateAttentionReport} />}
                         {currentPage === 'ParentPortal' && canSeeParentPortal && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} currentUser={currentUser} />}
                         {currentPage === 'StudentPortal' && <StudentPortal loggedInUser={isAdmin && students.length > 0 ? students[0] : (currentUser as Student)} allStudents={students} teachers={teachers} subjectGrades={subjectGrades} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleAddResult} citations={citations} icfesDrillSettings={icfesDrillSettings} />}
                         {currentPage === 'Rectory' && <Rectory students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} onShowSystemMessage={showSystemMessage} />}
-                        {currentPage === 'InstitutionProfile' && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile as any} />}
+                        {currentPage === 'InstitutionProfile' && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile} />}
                         {currentPage === 'Calificaciones' && !isUserStudent && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} onShowSystemMessage={showSystemMessage} />}
-                        {currentPage === 'Communication' && !isUserStudent && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} />}
+                        {currentPage === 'Communication' && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} guardians={guardians} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} />}
                         {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} currentUser={currentUser} />}
                         {currentPage === 'Eventos' && <Eventos />}
                         {currentPage === 'SimulacroICFES' && <SimulacroICFES settings={icfesDrillSettings} onSettingsChange={handleSetIcfesDrillSettings} />}
-                        {currentPage === 'Consolidado' && !isUserStudent && <Consolidado students={students} subjectGradesData={subjectGrades} />}
+                        {currentPage === 'Consolidado' && <Consolidado students={students} subjectGradesData={subjectGrades} />}
+                        {currentPage === 'Psychology' && <Psychology reports={attentionReports} onUpdateReport={handleUpdateAttentionReport} students={students} allUsersMap={allUsersMap} conversations={conversations} onUpdateConversation={handleUpdateConversation} currentUser={currentUser as Teacher} institutionProfile={institutionProfile} />}
                     </Suspense>
                 </main>
-                {notification && <NotificationToast title={notification.title} message={notification.message} studentName={notification.studentName} onClose={() => setNotification(null)} />}
-                {systemMessage && <SystemToast message={systemMessage.message} type={systemMessage.type} onClose={() => setSystemMessage(null)} />}
-                {needsPasswordChange && <ChangePasswordModal user={currentUser as (Teacher | Student)} onPasswordChanged={handlePasswordChanged as any} />}
-                {isDemoExpired && <DemoExpiredModal onUpgrade={handleUpgradeFromDemo} onLogout={handleLogout} />}
+                 {notification && <NotificationToast title={notification.title} message={notification.message} studentName={notification.studentName} onClose={() => setNotification(null)} />}
+                 {systemMessage && <SystemToast message={systemMessage.message} type={systemMessage.type} onClose={() => setSystemMessage(null)} />}
+                 {needsPasswordChange && <ChangePasswordModal user={currentUser as Teacher | Student} onPasswordChanged={handlePasswordChanged} />}
+                 {isDemoExpired && <DemoExpiredModal onUpgrade={handleUpgradeFromDemo} onLogout={handleLogout} />}
             </div>
         </div>
       );
   }
 
-  // Fallback if no state matches
-  return <LandingPage onShowLogin={() => setAppState('login')} onDemoRegister={handleDemoRegister} />;
-};
-
-// FIX: Add default export for App component
-export default App;
+  return <div className="flex items-center justify-center h-screen">Redirigiendo...</div>
+}

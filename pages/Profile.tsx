@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { Teacher, Student, Guardian } from '../types';
+import type { Teacher, Student, Guardian, Certification, Experience, ProfessionalDevelopment } from '../types';
 
 interface ProfileProps {
     currentUser: Teacher | Student | Guardian;
@@ -74,6 +74,49 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
       }
   };
 
+  const handleArrayChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number,
+    field: 'certifications' | 'experience' | 'professionalDevelopment'
+  ) => {
+    const { name, value } = e.target;
+    setUser(prevUser => {
+      if (!('subject' in prevUser)) return prevUser; 
+      
+      const list = [...((prevUser as Teacher)[field] || [])];
+      const itemToUpdate = { ...list[index] };
+      (itemToUpdate as any)[name] = (e.target.type === 'number') ? parseFloat(value) || 0 : value;
+      list[index] = itemToUpdate;
+      
+      return { ...prevUser, [field]: list };
+    });
+  };
+
+  const handleAddItem = (field: 'certifications' | 'experience' | 'professionalDevelopment') => {
+    setUser(prevUser => {
+        if (!('subject' in prevUser)) return prevUser;
+
+        let newItem;
+        switch (field) {
+            case 'certifications': newItem = { id: `cert_${Date.now()}`, name: '', issuer: '', year: '' }; break;
+            case 'experience': newItem = { id: `exp_${Date.now()}`, position: '', institution: '', years: '' }; break;
+            case 'professionalDevelopment': newItem = { id: `pd_${Date.now()}`, activity: '', hours: 0, date: '' }; break;
+        }
+
+        const list = (prevUser as any)[field] || [];
+        return { ...prevUser, [field]: [...list, newItem] };
+    });
+  };
+
+  const handleDeleteItem = (index: number, field: 'certifications' | 'experience' | 'professionalDevelopment') => {
+     setUser(prevUser => {
+        if (!('subject' in prevUser)) return prevUser;
+        const list = [...((prevUser as Teacher)[field] || [])];
+        list.splice(index, 1);
+        return { ...prevUser, [field]: list };
+    });
+  };
+
   const avatarUrl = 'avatarUrl' in user ? user.avatarUrl : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=005A9C&color=fff`;
   const userRole = 'role' in user ? user.role : 'Acudiente';
 
@@ -111,18 +154,18 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo Electrónico</label>
-                        <input type="email" name="email" value={user.email || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-200"/>
+                        <input type="email" name="email" value={user.email || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-100"/>
                     </div>
                     {'phone' in user && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono</label>
-                            <input type="tel" name="phone" value={user.phone || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-200"/>
+                            <input type="tel" name="phone" value={user.phone || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-100"/>
                         </div>
                     )}
                     {'dateOfBirth' in user && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Nacimiento</label>
-                            <input type="date" name="dateOfBirth" value={user.dateOfBirth || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-200"/>
+                            <input type="date" name="dateOfBirth" value={user.dateOfBirth || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-100"/>
                         </div>
                     )}
                 </div>
@@ -144,21 +187,118 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
             </div>
         )}
       </ProfileSection>
+      
+      {'subject' in user && (
+        <>
+          <ProfileSection title="Certificaciones Profesionales">
+            {isEditing ? (
+              <div className="space-y-4">
+                {(user as Teacher).certifications?.map((cert, index) => (
+                  <div key={cert.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center p-3 border dark:border-gray-700 rounded-lg">
+                    <input type="text" placeholder="Nombre de la Certificación" name="name" value={cert.name} onChange={e => handleArrayChange(e, index, 'certifications')} className="md:col-span-2 mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
+                    <input type="text" placeholder="Emisor" name="issuer" value={cert.issuer} onChange={e => handleArrayChange(e, index, 'certifications')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
+                    <div className="flex items-center gap-2">
+                      <input type="text" placeholder="Año" name="year" value={cert.year} onChange={e => handleArrayChange(e, index, 'certifications')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
+                      <button type="button" onClick={() => handleDeleteItem(index, 'certifications')} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">&times;</button>
+                    </div>
+                  </div>
+                ))}
+                <button type="button" onClick={() => handleAddItem('certifications')} className="text-sm font-medium text-primary hover:underline">+ Añadir Certificación</button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(user as Teacher).certifications?.length > 0 ? (
+                  (user as Teacher).certifications.map(cert => (
+                    <div key={cert.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
+                      <p className="font-semibold text-gray-800 dark:text-gray-100">{cert.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{cert.issuer} - {cert.year}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No hay certificaciones registradas.</p>
+                )}
+              </div>
+            )}
+          </ProfileSection>
+
+          <ProfileSection title="Experiencia Laboral">
+            {isEditing ? (
+              <div className="space-y-4">
+                {(user as Teacher).experience?.map((exp, index) => (
+                  <div key={exp.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center p-3 border dark:border-gray-700 rounded-lg">
+                    <input type="text" placeholder="Cargo" name="position" value={exp.position} onChange={e => handleArrayChange(e, index, 'experience')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
+                    <input type="text" placeholder="Institución" name="institution" value={exp.institution} onChange={e => handleArrayChange(e, index, 'experience')} className="md:col-span-2 mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
+                    <div className="flex items-center gap-2">
+                      <input type="text" placeholder="Años (ej. 2020-2023)" name="years" value={exp.years} onChange={e => handleArrayChange(e, index, 'experience')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
+                      <button type="button" onClick={() => handleDeleteItem(index, 'experience')} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">&times;</button>
+                    </div>
+                  </div>
+                ))}
+                <button type="button" onClick={() => handleAddItem('experience')} className="text-sm font-medium text-primary hover:underline">+ Añadir Experiencia</button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(user as Teacher).experience?.length > 0 ? (
+                  (user as Teacher).experience.map(exp => (
+                    <div key={exp.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
+                      <p className="font-semibold text-gray-800 dark:text-gray-100">{exp.position}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{exp.institution} ({exp.years})</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No hay experiencia laboral registrada.</p>
+                )}
+              </div>
+            )}
+          </ProfileSection>
+
+          <ProfileSection title="Desarrollo Profesional">
+             {isEditing ? (
+              <div className="space-y-4">
+                {(user as Teacher).professionalDevelopment?.map((dev, index) => (
+                  <div key={dev.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center p-3 border dark:border-gray-700 rounded-lg">
+                    <input type="text" placeholder="Actividad/Curso" name="activity" value={dev.activity} onChange={e => handleArrayChange(e, index, 'professionalDevelopment')} className="md:col-span-2 mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
+                    <input type="date" name="date" value={dev.date} onChange={e => handleArrayChange(e, index, 'professionalDevelopment')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
+                    <div className="flex items-center gap-2">
+                      <input type="number" placeholder="Horas" name="hours" value={dev.hours} onChange={e => handleArrayChange(e, index, 'professionalDevelopment')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
+                      <button type="button" onClick={() => handleDeleteItem(index, 'professionalDevelopment')} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">&times;</button>
+                    </div>
+                  </div>
+                ))}
+                <button type="button" onClick={() => handleAddItem('professionalDevelopment')} className="text-sm font-medium text-primary hover:underline">+ Añadir Actividad</button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                 {(user as Teacher).professionalDevelopment?.length > 0 ? (
+                  (user as Teacher).professionalDevelopment.map(dev => (
+                    <div key={dev.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
+                      <p className="font-semibold text-gray-800 dark:text-gray-100">{dev.activity}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(dev.date + 'T00:00:00').toLocaleDateString('es-CO')} - {dev.hours} horas</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No hay actividades de desarrollo profesional registradas.</p>
+                )}
+              </div>
+            )}
+          </ProfileSection>
+        </>
+      )}
 
       {'password' in user && (
         <ProfileSection title="Seguridad">
             <form className="space-y-4" onSubmit={handleChangePassword}>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña Actual</label>
-                    <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-200"/>
+                    <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-100"/>
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nueva Contraseña</label>
-                    <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-200"/>
+                    <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-100"/>
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirmar Nueva Contraseña</label>
-                    <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-200"/>
+                    <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-100"/>
                 </div>
                 <div className="text-right pt-2">
                     <button type="submit" className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Cambiar Contraseña</button>

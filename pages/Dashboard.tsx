@@ -74,7 +74,6 @@ const Dashboard: React.FC<DashboardProps> = ({ students, teachers, citations, on
                             model: 'gemini-2.5-flash',
                             contents: prompt,
                         });
-                        // FIX: Changed response.text() to response.text to correctly access the Gemini API response text.
                         return { name: person.name, message: response.text };
                     });
 

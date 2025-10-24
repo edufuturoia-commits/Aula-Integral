@@ -158,20 +158,20 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onSa
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grado</label>
-                        <select value={grade} onChange={e => handleGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                        <select value={grade} onChange={e => handleGradeChange(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                           {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                         </select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grupo</label>
-                        <select value={group} onChange={e => setGroup(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                        <select value={group} onChange={e => setGroup(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                           {availableGroups.map(g => <option key={g} value={g}>{g}</option>)}
                         </select>
                     </div>
                   </div>
                    <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Asignar Director de Grupo (Opcional)</label>
-                    <select value={homeroomTeacherId} onChange={e => setHomeroomTeacherId(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                    <select value={homeroomTeacherId} onChange={e => setHomeroomTeacherId(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                       <option value="">No asignar</option>
                       {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </select>
@@ -179,7 +179,7 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onSa
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Archivo de Estudiantes</label>
-                <input type="file" onChange={handleFileChange} accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
+                <input type="file" onChange={handleFileChange} accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="block w-full text-sm text-gray-500 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
               </div>
               {file && <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Archivo seleccionado: <strong>{file.name}</strong></p>}
               {error && <p className="text-red-600 dark:text-red-400 text-sm text-center mt-2">{error}</p>}
@@ -207,8 +207,8 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onSa
                         <tbody>
                             {extractedStudents.map((student, index) => (
                                 <tr key={index} className="border-b dark:border-gray-700">
-                                    <td className="p-2"><input type="text" value={student.id} onChange={(e) => handleStudentDataChange(index, 'id', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
-                                    <td className="p-2"><input type="text" value={student.name} onChange={(e) => handleStudentDataChange(index, 'name', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
+                                    <td className="p-2"><input type="text" value={student.id} onChange={(e) => handleStudentDataChange(index, 'id', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
+                                    <td className="p-2"><input type="text" value={student.name} onChange={(e) => handleStudentDataChange(index, 'name', e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent"/></td>
                                 </tr>
                             ))}
                         </tbody>

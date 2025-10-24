@@ -34,27 +34,27 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({ student, onClose, o
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre Completo</label>
-                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"/>
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"/>
                 </div>
                  <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo Electrónico (Opcional)</label>
-                    <input type="email" name="email" value={formData.email || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"/>
+                    <input type="email" name="email" value={formData.email || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"/>
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Grado</label>
-                    <select name="grade" value={formData.grade} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                    <select name="grade" value={formData.grade} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                       {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
                 </div>
                  <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Grupo</label>
-                    <select name="group" value={formData.group} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                    <select name="group" value={formData.group} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                       {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
                 </div>
                  <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Nacimiento</label>
-                    <input type="date" name="dateOfBirth" value={formData.dateOfBirth || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"/>
+                    <input type="date" name="dateOfBirth" value={formData.dateOfBirth || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"/>
                 </div>
             </div>
 
@@ -63,7 +63,7 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({ student, onClose, o
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de Documento</label>
-                        <select name="documentType" value={formData.documentType || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                        <select name="documentType" value={formData.documentType || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             <option value="">Seleccionar...</option>
                             <option value={DocumentType.REGISTRO_CIVIL}>{DocumentType.REGISTRO_CIVIL}</option>
                             <option value={DocumentType.TARJETA_IDENTIDAD}>{DocumentType.TARJETA_IDENTIDAD}</option>
@@ -71,7 +71,7 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({ student, onClose, o
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Número de Documento</label>
-                        <input type="text" name="documentNumber" value={formData.documentNumber || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"/>
+                        <input type="text" name="documentNumber" value={formData.documentNumber || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"/>
                     </div>
                 </div>
             </div>

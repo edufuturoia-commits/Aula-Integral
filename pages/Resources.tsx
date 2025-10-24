@@ -10,7 +10,6 @@ interface ResourcesProps {
     onUpdate: () => void;
 }
 
-// FIX: Changed JSX.Element to React.ReactElement to resolve namespace error.
 const ICONS: Record<ResourceType, React.ReactElement> = {
     PDF: <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 11-2 0V4h-3v9a1 1 0 11-2 0V4H6v12a1 1 0 11-2 0V4zm4-2a1 1 0 00-1 1v1h2V3a1 1 0 00-1-1z" clipRule="evenodd" /></svg>,
     Video: <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2-2H4a2 2 0 01-2-2V6zm14.553 1.398l-3.267 3.267c-.24.24-.24.63 0 .87l3.267 3.267A.5.5 0 0018 13.5V6.5a.5.5 0 00-.447-.498z" /></svg>,
@@ -155,13 +154,13 @@ const Resources: React.FC<ResourcesProps> = ({ resources, downloadedIds, onUpdat
                         placeholder="Buscar por título..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent md:col-span-1 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent md:col-span-1 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-300"
                     />
-                    <select value={areaFilter} onChange={e => setAreaFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                    <select value={areaFilter} onChange={e => setAreaFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                         <option value="all">Todas las Áreas</option>
                         {SUBJECT_AREAS.map(area => <option key={area} value={area}>{area}</option>)}
                     </select>
-                    <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                    <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                         <option value="all">Todos los Tipos</option>
                         {RESOURCE_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
                     </select>
@@ -175,31 +174,4 @@ const Resources: React.FC<ResourcesProps> = ({ resources, downloadedIds, onUpdat
             </div>
 
             {filteredResources.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {filteredResources.map(res => (
-                        <ResourceCard
-                            key={res.id}
-                            resource={res}
-                            isDownloaded={downloadedIds.has(res.id) || !!res.content}
-                            onDownload={handleDownload}
-                            onDelete={handleDelete}
-                            onView={setViewingResource}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-16 px-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-                    </svg>
-                    <h2 className="mt-2 text-xl font-semibold text-gray-700 dark:text-gray-200">No se encontraron recursos</h2>
-                    <p className="mt-1 text-gray-500 dark:text-gray-400">Intenta ajustar tus filtros de búsqueda o revisa los recursos descargados.</p>
-                </div>
-            )}
-            
-            {viewingResource && <ResourceViewerModal resource={viewingResource} onClose={() => setViewingResource(null)} />}
-        </div>
-    );
-};
-
-export default Resources;
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-

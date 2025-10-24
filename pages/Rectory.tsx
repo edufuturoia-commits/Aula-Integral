@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import type { Student, Teacher, Incident, Announcement, SubjectGrades } from '../types';
-// FIX: Import DocumentType for use in handleImportStudents.
-// FIX: Import IncidentStatus to filter incidents correctly.
 import { IncidentType, Role, DocumentType, IncidentStatus } from '../types';
-// FIX: Import addOrUpdateTeachers for use in handleImportStudents.
 import { getIncidents, addOrUpdateStudents, addOrUpdateTeachers } from '../db';
 import DashboardCard from '../components/DashboardCard';
 import ImportStudentsModal from '../components/ImportStudentsModal';
@@ -16,7 +13,6 @@ interface RectoryProps {
     students: Student[];
     setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
     teachers: Teacher[];
-    // FIX: Add setTeachers to props to allow updating teacher data.
     setTeachers: React.Dispatch<React.SetStateAction<Teacher[]>>;
     subjectGradesData: SubjectGrades[];
     setSubjectGradesData: (updater: React.SetStateAction<SubjectGrades[]>) => Promise<void>;
@@ -74,7 +70,6 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, setT
         const loadData = async () => {
             setLoading(true);
             const allIncidents = await getIncidents();
-            // FIX: The 'archived' property does not exist on the 'Incident' type. Filtering should be done using the 'status' property with the 'IncidentStatus.ARCHIVED' enum value.
             setIncidents(allIncidents.filter(inc => inc.status !== IncidentStatus.ARCHIVED));
             setLoading(false);
         };
@@ -421,5 +416,4 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, setT
     );
 };
 
-// FIX: Add default export to resolve lazy loading issue.
 export default Rectory;

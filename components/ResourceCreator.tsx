@@ -109,18 +109,18 @@ const ResourceCreator: React.FC<ResourceCreatorProps> = ({ onSave, onCancel }) =
                 <div>
                     <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">Paso 1: Describe el Recurso</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <select value={area} onChange={e => setArea(e.target.value as SubjectArea)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                        <select value={area} onChange={e => setArea(e.target.value as SubjectArea)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             {SUBJECT_AREAS.map(a => <option key={a} value={a}>{a}</option>)}
                         </select>
-                        <select value={grade} onChange={e => setGrade(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                        <select value={grade} onChange={e => setGrade(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
                         </select>
-                         <select value={resourceType} onChange={e => setResourceType(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                         <select value={resourceType} onChange={e => setResourceType(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             {GENERATABLE_RESOURCE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                     </div>
                     <div className="mb-6">
-                         <input type="text" value={topic} onChange={e => setTopic(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400" placeholder="Tema específico (Ej: El sistema solar, Los verbos regulares)"/>
+                         <input type="text" value={topic} onChange={e => setTopic(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-300" placeholder="Tema específico (Ej: El sistema solar, Los verbos regulares)"/>
                     </div>
                     {generationError && <p className="text-red-600 text-center mb-4">{generationError}</p>}
                     <div className="text-right">
@@ -143,7 +143,7 @@ const ResourceCreator: React.FC<ResourceCreatorProps> = ({ onSave, onCancel }) =
                                 name="title"
                                 value={generatedContent.title} 
                                 onChange={handleContentChange}
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400" 
+                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-300" 
                             />
                         </div>
                          <div>
@@ -154,7 +154,7 @@ const ResourceCreator: React.FC<ResourceCreatorProps> = ({ onSave, onCancel }) =
                                 rows={2}
                                 value={generatedContent.description}
                                 onChange={handleContentChange}
-                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
+                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-300"
                             ></textarea>
                         </div>
                         <div>
@@ -165,7 +165,7 @@ const ResourceCreator: React.FC<ResourceCreatorProps> = ({ onSave, onCancel }) =
                               rows={10}
                               value={generatedContent.content}
                               onChange={handleContentChange}
-                              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
+                              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-300"
                             ></textarea>
                         </div>
                     </div>
