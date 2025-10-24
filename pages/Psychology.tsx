@@ -5,13 +5,6 @@ import jsPDF from 'jspdf';
 // Switched to function-based usage of jspdf-autotable to resolve module augmentation issues.
 import autoTable, { type UserOptions } from 'jspdf-autotable';
 
-// Add autoTable to jsPDF declaration for TypeScript
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: UserOptions) => jsPDF;
-  }
-}
-
 interface PsychologyProps {
     reports: AttentionReport[];
     onUpdateReport: (report: AttentionReport) => Promise<void>;
@@ -338,7 +331,6 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
             doc.setFont('helvetica', 'bold');
             doc.text('DIAGNÓSTICOS / HIPÓTESIS', 15, y);
             y += 8;
-            // FIX: Changed doc.autoTable to autoTable(doc, ...)
             autoTable(doc, {
                 startY: y,
                 head: [['Fecha', 'Diagnóstico/Hipótesis', 'Fuente', 'Autor']],
@@ -362,7 +354,6 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
             doc.setFont('helvetica', 'bold');
             doc.text('SEGUIMIENTO DE SESIONES', 15, y);
             y += 8;
-            // FIX: Changed doc.autoTable to autoTable(doc, ...)
             autoTable(doc, {
                 startY: y,
                 head: [['Fecha', 'Tipo', 'Progreso', 'Notas de la Sesión']],

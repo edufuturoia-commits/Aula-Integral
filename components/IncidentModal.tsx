@@ -15,7 +15,8 @@ interface IncidentModalProps {
 }
 
 const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, incident, students, onClose, onSave, reporter }) => {
-  const [incidentType, setIncidentType] = useState<IncidentType>(incident?.type || IncidentType.CONVIVENCIA_ESCOLAR);
+  // FIX: Use correct enum member `SCHOOL_COEXISTENCE` instead of `CONVIVENCIA_ESCOLAR`.
+  const [incidentType, setIncidentType] = useState<IncidentType>(incident?.type || IncidentType.SCHOOL_COEXISTENCE);
   const [otherTypeDescription, setOtherTypeDescription] = useState(incident?.otherTypeDescription || '');
   const [isVictim, setIsVictim] = useState(incident?.isVictim || false);
   const [location, setLocation] = useState<string>(incident?.location || SCHOOL_LOCATIONS[0]);
@@ -61,7 +62,8 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, 
         alert("Por favor, ingrese una descripción para la incidencia.");
         return;
     }
-    if (incidentType === IncidentType.OTRO && !otherTypeDescription.trim()) {
+    // FIX: Use correct enum member `OTHER` instead of `OTRO`.
+    if (incidentType === IncidentType.OTHER && !otherTypeDescription.trim()) {
         alert("Por favor, especifique el motivo para el tipo 'Otro'.");
         return;
     }
@@ -70,7 +72,8 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, 
         studentId: selectedStudent.id,
         studentName: selectedStudent.name,
         type: incidentType,
-        otherTypeDescription: incidentType === IncidentType.OTRO ? otherTypeDescription : undefined,
+        // FIX: Use correct enum member `OTHER` instead of `OTRO`.
+        otherTypeDescription: incidentType === IncidentType.OTHER ? otherTypeDescription : undefined,
         isVictim,
         notes,
         timestamp: incident?.timestamp || new Date().toISOString(),
@@ -166,7 +169,8 @@ const IncidentModal: React.FC<IncidentModalProps> = ({ student: initialStudent, 
             </div>
           </div>
           
-          {incidentType === IncidentType.OTRO && (
+          {/* FIX: Use correct enum member `OTHER` instead of `OTRO`. */}
+          {incidentType === IncidentType.OTHER && (
             <div className="mb-4">
                 <label htmlFor="otherTypeDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Especifique el Motivo</label>
                 <input

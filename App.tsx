@@ -1,6 +1,6 @@
 
 
-import React, { useState, useCallback, useEffect, Suspense, lazy, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, Suspense, lazy, useMemo, createContext, useContext } from 'react';
 
 // New Pages for Auth Flow
 import LandingPage from './pages/LandingPage';
@@ -18,7 +18,24 @@ import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, S
 import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian, getLessons, addLesson, getAttentionReports, addAttentionReport, updateAttentionReport } from './db';
 
 // Constants
-import { SIDEBAR_ITEMS, MOCK_INSTITUTION_PROFILE, MOCK_CITATIONS, MOCK_CONVERSATIONS_DATA } from './constants';
+import { SIDEBAR_ITEMS, MOCK_INSTITUTION_PROFILE, MOCK_CITATIONS, MOCK_CONVERSATIONS_DATA, translations } from './constants';
+
+// --- I18N Context ---
+interface LanguageContextType {
+  lang: string;
+  setLang: (lang: string) => void;
+  t: (key: string, options?: { [key: string]: string | number }) => string;
+}
+
+const LanguageContext = createContext<LanguageContextType>({
+  lang: 'es',
+  setLang: () => {},
+  t: (key) => key,
+});
+
+export const useTranslation = () => useContext(LanguageContext);
+// --- End I18N Context ---
+
 
 // Lazy load page components for code splitting
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -50,6 +67,7 @@ interface NotificationToastProps {
 }
 
 const NotificationToast: React.FC<NotificationToastProps> = ({ title, message, studentName, onClose }) => {
+  const { t } = useTranslation();
   return (
     <div className="fixed top-24 right-6 w-full max-w-sm bg-white dark:bg-gray-800 shadow-lg rounded-xl p-4 z-[100] animate-slide-in-right border-l-4 border-primary">
       <div className="flex items-start">
@@ -60,12 +78,12 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ title, message, s
         </div>
         <div className="ml-3 w-0 flex-1">
           <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{title}</p>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300"><strong>Estudiante:</strong> {studentName}</p>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-300"><strong>{t('studentLabel')}:</strong> {studentName}</p>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{message}</p>
         </div>
         <div className="ml-4 flex-shrink-0 flex">
           <button onClick={onClose} className="bg-white dark:bg-gray-800 rounded-md inline-flex text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-            <span className="sr-only">Cerrar</span>
+            <span className="sr-only">{t('close')}</span>
             <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
@@ -83,6 +101,7 @@ interface SystemToastProps {
 }
 
 const SystemToast: React.FC<SystemToastProps> = ({ message, type, onClose }) => {
+  const { t } = useTranslation();
   const isSuccess = type === 'success';
   const bgColor = isSuccess ? 'bg-green-100 dark:bg-green-900/50 border-green-500' : 'bg-red-100 dark:bg-red-900/50 border-red-500';
   const textColor = isSuccess ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200';
@@ -101,12 +120,12 @@ const SystemToast: React.FC<SystemToastProps> = ({ message, type, onClose }) => 
       <div className="flex items-start">
         <div className="flex-shrink-0 pt-0.5">{icon}</div>
         <div className="ml-3 w-0 flex-1">
-          <p className={`text-sm font-bold ${textColor}`}>{isSuccess ? 'Éxito' : 'Error'}</p>
+          <p className={`text-sm font-bold ${textColor}`}>{isSuccess ? t('success') : t('error')}</p>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{message}</p>
         </div>
         <div className="ml-4 flex-shrink-0 flex">
           <button onClick={onClose} className="bg-transparent rounded-md inline-flex text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-            <span className="sr-only">Cerrar</span>
+            <span className="sr-only">{t('close')}</span>
             <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
@@ -119,7 +138,8 @@ const SystemToast: React.FC<SystemToastProps> = ({ message, type, onClose }) => 
 
 type User = Teacher | Student | Guardian;
 
-export const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { t } = useTranslation();
   // App State Management
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem('currentUser');
@@ -241,8 +261,8 @@ export const App: React.FC = () => {
             const randomIncidentType = Object.values(IncidentType)[Math.floor(Math.random() * Object.values(IncidentType).length)];
             
             setNotification({
-            title: 'Nueva Incidencia Reportada',
-            message: `Se ha reportado un nuevo incidente de tipo "${randomIncidentType}".`,
+            title: t('notifications.newIncident.title'),
+            message: t('notifications.newIncident.message', { incidentType: t(`incidentTypes.${randomIncidentType}`) }),
             studentName: randomStudent.name
             });
             setTimeout(() => setNotification(null), 7000);
@@ -253,7 +273,7 @@ export const App: React.FC = () => {
     timeoutId = setTimeout(showRandomNotification, 20000); 
 
     return () => clearTimeout(timeoutId);
-  }, [students, appState, currentUser]);
+  }, [students, appState, currentUser, t]);
 
 
   const loadResources = useCallback(async () => {
@@ -368,10 +388,10 @@ export const App: React.FC = () => {
             setCurrentPage('ParentPortal');
         }
         setAppState('app');
-        return { success: true, message: 'Login successful' };
+        return { success: true, message: t('login.success') };
     }
 
-    return { success: false, message: 'Credenciales inválidas. Por favor, intente de nuevo.' };
+    return { success: false, message: t('login.invalidCredentials') };
   };
 
   const handleLogout = () => {
@@ -390,7 +410,7 @@ export const App: React.FC = () => {
   const handleDemoRegister = async (userData: UserRegistrationData): Promise<{success: boolean, message: string}> => {
     const existingUser = await getTeacherByEmail(userData.email);
     if (existingUser) {
-        return { success: false, message: 'Este correo electrónico ya está registrado.' };
+        return { success: false, message: t('register.emailExists') };
     }
     const newDemoAdmin: Teacher = {
         id: `demo_${Date.now()}`,
@@ -411,7 +431,7 @@ export const App: React.FC = () => {
     localStorage.setItem('currentUser', JSON.stringify(newDemoAdmin));
     setCurrentUser(newDemoAdmin);
     setAppState('app');
-    return { success: true, message: '¡Registro de demostración exitoso!'};
+    return { success: true, message: t('register.demoSuccess')};
   };
 
   const handleUpgradeFromDemo = async () => {
@@ -421,7 +441,7 @@ export const App: React.FC = () => {
         localStorage.setItem('currentUser', JSON.stringify(upgradedUser));
         setCurrentUser(upgradedUser);
         setIsDemoExpired(false);
-        showSystemMessage("¡Gracias! Tu cuenta ha sido activada.", 'success');
+        showSystemMessage(t('notifications.accountUpgraded'), 'success');
     }
   };
 
@@ -582,19 +602,19 @@ export const App: React.FC = () => {
       await addAttentionReport(report);
       setAttentionReports(prev => [report, ...prev].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
       handleCreateConversation(newConversation);
-      showSystemMessage("Reporte de atención enviado confidencialmente.", 'success');
+      showSystemMessage(t('notifications.attentionReportSent'), 'success');
   };
 
   const handleUpdateAttentionReport = async (report: AttentionReport) => {
       await updateAttentionReport(report);
       setAttentionReports(prev => prev.map(r => r.id === report.id ? report : r));
-      showSystemMessage("Reporte de psicología actualizado.", 'success');
+      showSystemMessage(t('notifications.psychologyReportUpdated'), 'success');
   };
 
 
   // Render Logic
   if (isLoading) {
-    return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">Cargando aplicación...</div>;
+    return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">{t('loadingApp')}...</div>;
   }
   
   if (appState === 'landing') {
@@ -607,7 +627,7 @@ export const App: React.FC = () => {
   
   if (appState === 'quickAccess') {
     return (
-        <Suspense fallback={<div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">Cargando perfiles...</div>}>
+        <Suspense fallback={<div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">{t('loadingProfiles')}...</div>}>
             <QuickAccess onLogin={handleLogin} onBack={() => setAppState('login')} />
         </Suspense>
     );
@@ -622,27 +642,14 @@ export const App: React.FC = () => {
       
       const getDescriptiveRole = (user: User): string => {
         if (!('role' in user)) { // Guardian
-            return 'Acudiente';
+            return t('roles.GUARDIAN');
         }
 
         if (user.role === Role.TEACHER && 'subject' in user) {
-            return `Docente de ${user.subject}`;
+            return t('roles.SUBJECT_TEACHER', { subject: t(`subjects.${user.subject}`) });
         }
         
-        switch (user.role) {
-            case Role.STUDENT:
-                return 'Estudiante';
-            case Role.COORDINATOR:
-                return 'Coordinador Académico';
-            case Role.RECTOR:
-                return 'Rector';
-            case Role.ADMIN:
-                return 'Administrador';
-            case Role.PSYCHOLOGY:
-                return 'Psicología';
-            default:
-                return user.role; // Fallback for other cases.
-        }
+        return t(`roles.${user.role}`);
       };
       
       const userForHeader = {
@@ -656,67 +663,143 @@ export const App: React.FC = () => {
         return (
             <div className="flex flex-col h-screen bg-neutral dark:bg-gray-900 font-sans">
                 <Header 
-                    currentPage={SIDEBAR_ITEMS.find(item => item.name === currentPage)?.label || currentPage}
+                    currentPage={currentPage}
                     isOnline={isOnline}
                     currentUser={userForHeader}
                     onLogout={handleLogout}
                     onNavigate={setCurrentPage}
                 />
                 <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
-                    <Suspense fallback={<div className="flex items-center justify-center h-full">Cargando portal...</div>}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full">{t('loadingPortal')}...</div>}>
                         {currentPage === 'ParentPortal' && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} currentUser={currentUser as Guardian} />}
                         {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
                     </Suspense>
                 </main>
                  {notification && <NotificationToast title={notification.title} message={notification.message} studentName={notification.studentName} onClose={() => setNotification(null)} />}
                  {systemMessage && <SystemToast message={systemMessage.message} type={systemMessage.type} onClose={() => setSystemMessage(null)} />}
-                 {needsPasswordChange && <ChangePasswordModal user={currentUser as Teacher | Student} onPasswordChanged={handlePasswordChanged} />}
             </div>
         );
       }
-
-      // Default Layout for Teachers, Students, Admins, etc.
-      return (
-        <div className="flex h-screen bg-gray-100 dark:bg-gray-900 font-sans">
-            <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} currentUser={currentUser as (Teacher | Student)} onLogout={handleLogout} icfesDrillSettings={icfesDrillSettings} />
-            <div className="flex-1 flex flex-col overflow-hidden">
+      
+      // Student Layout
+      if (isUserStudent) {
+        return (
+           <div className="flex flex-col h-screen bg-neutral dark:bg-gray-900 font-sans">
                 <Header 
-                    currentPage={SIDEBAR_ITEMS.find(item => item.name === currentPage)?.label || currentPage} 
-                    isOnline={isOnline} 
-                    currentUser={userForHeader} 
+                    currentPage={currentPage}
+                    isOnline={isOnline}
+                    currentUser={userForHeader}
                     onLogout={handleLogout}
                     onNavigate={setCurrentPage}
                 />
-                <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto bg-neutral dark:bg-gray-800">
-                    <Suspense fallback={<div className="flex items-center justify-center h-full text-gray-800 dark:text-gray-200">Cargando página...</div>}>
-                        {currentPage === 'Dashboard' && <Dashboard students={students} teachers={teachers} citations={citations} onNavigate={setCurrentPage} />}
-                        {currentPage === 'Classroom' && !isUserStudent && <Classroom isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleAddOrUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendance} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onShowSystemMessage={showSystemMessage} onReportAttention={handleCreateAttentionReport} />}
-                        {currentPage === 'Assessments' && !isUserStudent && <Assessments students={students} assessments={assessments} setAssessments={handleSetAssessments} studentResults={studentResults} />}
-                        {currentPage === 'Resources' && <Resources resources={resources} downloadedIds={downloadedResourceIds} onUpdate={loadResources} />}
+                <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+                    <Suspense fallback={<div className="flex items-center justify-center h-full">{t('loadingPortal')}...</div>}>
+                        {currentPage === 'StudentPortal' && <StudentPortal loggedInUser={currentUser as Student} allStudents={students} teachers={teachers} subjectGrades={subjectGrades} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleAddResult} citations={citations} icfesDrillSettings={icfesDrillSettings} />}
                         {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
-                        {currentPage === 'Settings' && <Settings currentUser={currentUser as Teacher} onUpdateUser={handleUpdateUser} theme={theme} setTheme={setTheme} />}
-                        {currentPage === 'Incidents' && !isUserStudent && <Incidents isOnline={isOnline} students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} guardians={guardians} onUpdateGuardians={handleSetGuardians} onShowSystemMessage={showSystemMessage} onReportAttention={handleCreateAttentionReport} />}
-                        {currentPage === 'ParentPortal' && canSeeParentPortal && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} currentUser={currentUser} />}
-                        {currentPage === 'StudentPortal' && <StudentPortal loggedInUser={isAdmin && students.length > 0 ? students[0] : (currentUser as Student)} allStudents={students} teachers={teachers} subjectGrades={subjectGrades} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleAddResult} citations={citations} icfesDrillSettings={icfesDrillSettings} />}
-                        {currentPage === 'Rectory' && <Rectory students={students} setStudents={setStudents} teachers={teachers} setTeachers={setTeachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} onShowSystemMessage={showSystemMessage} />}
-                        {currentPage === 'InstitutionProfile' && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile} />}
-                        {currentPage === 'Calificaciones' && !isUserStudent && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} onShowSystemMessage={showSystemMessage} />}
-                        {currentPage === 'Communication' && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} guardians={guardians} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} />}
-                        {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} currentUser={currentUser} />}
-                        {currentPage === 'Eventos' && <Eventos />}
-                        {currentPage === 'SimulacroICFES' && <SimulacroICFES settings={icfesDrillSettings} onSettingsChange={handleSetIcfesDrillSettings} />}
-                        {currentPage === 'Consolidado' && <Consolidado students={students} subjectGradesData={subjectGrades} />}
-                        {currentPage === 'Psychology' && <Psychology reports={attentionReports} onUpdateReport={handleUpdateAttentionReport} students={students} allUsersMap={allUsersMap} conversations={conversations} onUpdateConversation={handleUpdateConversation} currentUser={currentUser as Teacher} institutionProfile={institutionProfile} />}
+                        {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} currentUser={currentUser}/>}
                     </Suspense>
                 </main>
                  {notification && <NotificationToast title={notification.title} message={notification.message} studentName={notification.studentName} onClose={() => setNotification(null)} />}
                  {systemMessage && <SystemToast message={systemMessage.message} type={systemMessage.type} onClose={() => setSystemMessage(null)} />}
-                 {needsPasswordChange && <ChangePasswordModal user={currentUser as Teacher | Student} onPasswordChanged={handlePasswordChanged} />}
-                 {isDemoExpired && <DemoExpiredModal onUpgrade={handleUpgradeFromDemo} onLogout={handleLogout} />}
             </div>
+        )
+      }
+
+      // Teacher / Admin Layout
+      return (
+        <div className="flex h-screen bg-neutral dark:bg-gray-800 font-sans">
+          {isDemoExpired && <DemoExpiredModal onUpgrade={handleUpgradeFromDemo} onLogout={handleLogout} />}
+          {needsPasswordChange && <ChangePasswordModal user={currentUser as Teacher | Student} onPasswordChanged={handlePasswordChanged} />}
+          
+          <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} currentUser={currentUser as Teacher} onLogout={handleLogout} icfesDrillSettings={icfesDrillSettings}/>
+          
+          <div className="flex-1 flex flex-col">
+            <Header 
+                currentPage={currentPage}
+                isOnline={isOnline}
+                currentUser={userForHeader}
+                onLogout={handleLogout}
+                onNavigate={setCurrentPage}
+            />
+            <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+              <Suspense fallback={<div className="flex items-center justify-center h-full text-gray-600 dark:text-gray-300">Cargando página...</div>}>
+                {currentPage === 'Dashboard' && <Dashboard students={students} teachers={teachers} citations={citations} onNavigate={setCurrentPage} />}
+                {currentPage === 'Classroom' && <Classroom isOnline={isOnline} students={students} setStudents={async (updater) => { const newStudents = typeof updater === 'function' ? updater(students) : updater; await addOrUpdateStudents(newStudents); setStudents(newStudents); }} teachers={teachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleAddOrUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendance} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onShowSystemMessage={showSystemMessage} onReportAttention={handleCreateAttentionReport} />}
+                {currentPage === 'Assessments' && <Assessments students={students} assessments={assessments} setAssessments={handleSetAssessments} studentResults={studentResults} />}
+                {currentPage === 'Resources' && <Resources resources={resources} downloadedIds={downloadedResourceIds} onUpdate={loadResources} />}
+                {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
+                {currentPage === 'Settings' && <Settings currentUser={currentUser as Teacher} onUpdateUser={handleUpdateUser} theme={theme} setTheme={setTheme} />}
+                {currentPage === 'Incidents' && <Incidents isOnline={isOnline} students={students} setStudents={async (updater) => { const newStudents = typeof updater === 'function' ? updater(students) : updater; await addOrUpdateStudents(newStudents); setStudents(newStudents); }} teachers={teachers} setTeachers={async (updater) => { const newTeachers = typeof updater === 'function' ? updater(teachers) : updater; await addOrUpdateTeachers(newTeachers); setTeachers(newTeachers); }} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} guardians={guardians} onUpdateGuardians={handleSetGuardians} onShowSystemMessage={showSystemMessage} onReportAttention={handleCreateAttentionReport} />}
+                {currentPage === 'Rectory' && <Rectory students={students} setStudents={async (updater) => { const newStudents = typeof updater === 'function' ? updater(students) : updater; await addOrUpdateStudents(newStudents); setStudents(newStudents); }} teachers={teachers} setTeachers={async (updater) => { const newTeachers = typeof updater === 'function' ? updater(teachers) : updater; await addOrUpdateTeachers(newTeachers); setTeachers(newTeachers); }} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} announcements={announcements} onUpdateAnnouncements={handleUpdateAnnouncements} onShowSystemMessage={showSystemMessage} />}
+                {currentPage === 'InstitutionProfile' && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile} />}
+                {currentPage === 'Calificaciones' && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} onShowSystemMessage={showSystemMessage} />}
+                {currentPage === 'Communication' && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} guardians={guardians} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} />}
+                {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} currentUser={currentUser}/>}
+                {currentPage === 'Eventos' && <Eventos />}
+                {currentPage === 'SimulacroICFES' && (isAdmin || userRole === Role.RECTOR) && <SimulacroICFES settings={icfesDrillSettings} onSettingsChange={handleSetIcfesDrillSettings} />}
+                {currentPage === 'Consolidado' && <Consolidado students={students} subjectGradesData={subjectGrades}/>}
+                {currentPage === 'Psychology' && <Psychology reports={attentionReports} onUpdateReport={handleUpdateAttentionReport} students={students} allUsersMap={allUsersMap} conversations={conversations} onUpdateConversation={handleUpdateConversation} currentUser={currentUser as Teacher} institutionProfile={institutionProfile} />}
+                
+                {/* Admin-only views of portals */}
+                {canSeeParentPortal && currentPage === 'ParentPortal' && guardians.length > 0 && <ParentPortal students={students.filter(s => guardians[0].studentIds.includes(s.id))} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} currentUser={guardians[0]} />}
+                {isAdmin && currentPage === 'StudentPortal' && <StudentPortal loggedInUser={currentUser as Teacher} allStudents={students} teachers={teachers} subjectGrades={subjectGrades} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleAddResult} citations={citations} icfesDrillSettings={icfesDrillSettings} />}
+
+              </Suspense>
+            </main>
+          </div>
+           {notification && <NotificationToast title={notification.title} message={notification.message} studentName={notification.studentName} onClose={() => setNotification(null)} />}
+           {systemMessage && <SystemToast message={systemMessage.message} type={systemMessage.type} onClose={() => setSystemMessage(null)} />}
         </div>
       );
   }
 
-  return <div className="flex items-center justify-center h-screen">Redirigiendo...</div>
-}
+  return (
+    <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
+        <p className="text-gray-600 dark:text-gray-300">Redirigiendo...</p>
+    </div>
+  );
+};
+
+
+export const App: React.FC = () => {
+  const [lang, setLang] = useState(() => {
+    return localStorage.getItem('lang') || 'es';
+  });
+
+  const setLanguage = useCallback((newLang: string) => {
+    if (newLang === 'en' || newLang === 'es') {
+      localStorage.setItem('lang', newLang);
+      setLang(newLang);
+    }
+  }, []);
+
+  const t = useCallback((key: string, options?: { [key: string]: string | number }) => {
+    const langPack = translations[lang as keyof typeof translations] || translations.es;
+    
+    let translation = key.split('.').reduce((obj: any, k: string) => {
+        return (obj && typeof obj === 'object' && k in obj) ? obj[k] : undefined;
+    }, langPack) as string | undefined;
+
+    // Fallback to Spanish if key not found
+    if (translation === undefined) {
+        const esLangPack = translations.es;
+        translation = key.split('.').reduce((obj: any, k: string) => {
+            return (obj && typeof obj === 'object' && k in obj) ? obj[k] : undefined;
+        }, esLangPack) as string | undefined;
+    }
+
+    if (translation && options) {
+      Object.keys(options).forEach(optKey => {
+        translation = translation!.replace(`{{${optKey}}}`, String(options[optKey]));
+      });
+    }
+
+    return translation || key;
+  }, [lang]);
+
+  return (
+    <LanguageContext.Provider value={{ lang, setLang: setLanguage, t }}>
+      <AppContent />
+    </LanguageContext.Provider>
+  );
+};

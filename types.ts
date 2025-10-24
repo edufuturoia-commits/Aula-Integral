@@ -3,17 +3,17 @@
 export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones' | 'Communication' | 'TutorMode' | 'Eventos' | 'SimulacroICFES' | 'Consolidado' | 'Psychology';
 
 export enum DocumentType {
-  REGISTRO_CIVIL = 'Registro Civil',
-  TARJETA_IDENTIDAD = 'Tarjeta de Identidad',
+  CIVIL_REGISTRY = 'CIVIL_REGISTRY',
+  IDENTITY_CARD = 'IDENTITY_CARD',
 }
 
 export enum Role {
-  STUDENT = 'Estudiante',
-  TEACHER = 'Docente',
-  COORDINATOR = 'Coordinador',
-  RECTOR = 'Rector',
-  ADMIN = 'Administrador',
-  PSYCHOLOGY = 'Psicología',
+  STUDENT = 'STUDENT',
+  TEACHER = 'TEACHER',
+  COORDINATOR = 'COORDINATOR',
+  RECTOR = 'RECTOR',
+  ADMIN = 'ADMIN',
+  PSYCHOLOGY = 'PSYCHOLOGY',
 }
 
 export interface Student {
@@ -33,20 +33,20 @@ export interface Student {
 }
 
 export enum IncidentType {
-  CONVIVENCIA_ESCOLAR = 'Convivencia Escolar',
-  USO_UNIFORME = 'Uso inapropiado del uniforme',
-  DANOS_INFRAESTRUCTRUCTURA = 'Daños a la infraestructura',
-  ACOSO_CIBERACOSO = 'Acoso y ciberacoso',
-  INCUMPLIMIENTO = 'Incumplimiento',
-  FALTAS_ACADEMICAS = 'Faltas Académicas',
-  OTRO = 'Otro',
+  SCHOOL_COEXISTENCE = 'SCHOOL_COEXISTENCE',
+  UNIFORM_MISUSE = 'UNIFORM_MISUSE',
+  INFRASTRUCTURE_DAMAGE = 'INFRASTRUCTURE_DAMAGE',
+  BULLYING_CYBERBULLYING = 'BULLYING_CYBERBULLYING',
+  NON_COMPLIANCE = 'NON_COMPLIANCE',
+  ACADEMIC_MISCONDUCT = 'ACADEMIC_MISCONDUCT',
+  OTHER = 'OTHER',
 }
 
 export enum IncidentStatus {
-  ACTIVE = 'Activa',
-  DECLINED = 'Declinada',
-  ATTENDED = 'Atendida',
-  ARCHIVED = 'Archivada',
+  ACTIVE = 'ACTIVE',
+  DECLINED = 'DECLINED',
+  ATTENDED = 'ATTENDED',
+  ARCHIVED = 'ARCHIVED',
 }
 
 
@@ -111,8 +111,8 @@ export interface Assessment {
 export enum ResourceType {
     PDF = 'PDF',
     Video = 'Video',
-    Image = 'Imagen',
-    Document = 'Documento',
+    Image = 'Image',
+    Document = 'Document',
 }
 
 export interface Resource {
@@ -126,11 +126,11 @@ export interface Resource {
 }
 
 export enum AttendanceStatus {
-    PRESENT = 'Presente',
-    ABSENT = 'Ausente',
-    TARDY = 'Tarde',
-    EXCUSED = 'Excusa',
-    SPECIAL_PERMIT = 'Permiso Especial',
+    PRESENT = 'PRESENT',
+    ABSENT = 'ABSENT',
+    TARDY = 'TARDY',
+    EXCUSED = 'EXCUSED',
+    SPECIAL_PERMIT = 'SPECIAL_PERMIT',
 }
 
 export interface AttendanceRecord {
@@ -169,11 +169,11 @@ export interface CoordinationMessage {
 }
 
 export enum CitationStatus {
-    PENDING = 'Pendiente',
-    CONFIRMED = 'Confirmada',
-    COMPLETED = 'Realizada',
-    CANCELLED = 'Cancelada',
-    RESCHEDULE_REQUESTED = 'Reasignación Solicitada',
+    PENDING = 'PENDING',
+    CONFIRMED = 'CONFIRMED',
+    COMPLETED = 'COMPLETED',
+    CANCELLED = 'CANCELLED',
+    RESCHEDULE_REQUESTED = 'RESCHEDULE_REQUESTED',
 }
 
 export interface Citation {
@@ -199,9 +199,9 @@ export interface Announcement {
 }
 
 export enum TeacherStatus {
-  ACTIVE = 'Activo',
-  RETIRED = 'Pensionado',
-  ON_COMMISSION = 'En Comisión',
+  ACTIVE = 'ACTIVE',
+  RETIRED = 'RETIRED',
+  ON_COMMISSION = 'ON_COMMISSION',
 }
 
 export interface Certification {
@@ -275,17 +275,17 @@ export interface EventPoster {
 // --- Grade Management System Types ---
 
 export enum AcademicPeriod {
-  PRIMERO = 'Primer Período',
-  SEGUNDO = 'Segundo Período',
-  TERCERO = 'Tercer Período',
-  CUARTO = 'Cuarto Período',
+  FIRST = 'FIRST',
+  SECOND = 'SECOND',
+  THIRD = 'THIRD',
+  FOURTH = 'FOURTH',
 }
 
 export enum Desempeno {
-    SUPERIOR = 'Superior',
-    ALTO = 'Alto',
-    BASICO = 'Básico',
-    BAJO = 'Bajo',
+    SUPERIOR = 'SUPERIOR',
+    HIGH = 'HIGH',
+    BASIC = 'BASIC',
+    LOW = 'LOW',
 }
 
 export interface DesempenoDescriptor {
@@ -401,9 +401,9 @@ export interface Lesson {
 
 // --- Psychology Module Types ---
 export enum AttentionReportStatus {
-  OPEN = 'Abierto',
-  IN_PROGRESS = 'En Proceso',
-  CLOSED = 'Cerrado',
+  OPEN = 'OPEN',
+  IN_PROGRESS = 'IN_PROGRESS',
+  CLOSED = 'CLOSED',
 }
 
 export interface Diagnosis {

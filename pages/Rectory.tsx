@@ -178,7 +178,8 @@ const Rectory: React.FC<RectoryProps> = ({ students, setStudents, teachers, setT
                 group,
                 role: Role.STUDENT,
                 documentNumber: s.id || undefined,
-                documentType: s.id ? DocumentType.TARJETA_IDENTIDAD : undefined,
+                // FIX: Use correct enum member `IDENTITY_CARD` instead of `TARJETA_IDENTIDAD`.
+                documentType: s.id ? DocumentType.IDENTITY_CARD : undefined,
             });
         });
     
