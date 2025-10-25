@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { AttentionReport, Student, Teacher, Conversation, Message, Guardian, Diagnosis, SessionLog, SessionProgress, InstitutionProfileData } from '../types';
-import { Role, AttentionReportStatus } from '../types';
+import { Role, AttentionReportStatus, DiagnosisArea } from '../types';
 import jsPDF from 'jspdf';
 // Switched to function-based usage of jspdf-autotable to resolve module augmentation issues.
 import autoTable, { type UserOptions } from 'jspdf-autotable';
@@ -15,6 +15,13 @@ interface PsychologyProps {
     currentUser: Teacher;
     institutionProfile: InstitutionProfileData;
 }
+
+// --- Translations ---
+const attentionStatusTranslations: Record<AttentionReportStatus, string> = {
+    [AttentionReportStatus.OPEN]: 'Abierto',
+    [AttentionReportStatus.IN_PROGRESS]: 'En Progreso',
+    [AttentionReportStatus.CLOSED]: 'Cerrado',
+};
 
 // --- Helper Components ---
 const Accordion: React.FC<{ title: string; children: React.ReactNode; isOpen: boolean; onToggle: () => void; action?: React.ReactNode }> = ({ title, children, isOpen, onToggle, action }) => (
@@ -51,6 +58,7 @@ const DiagnosisForm: React.FC<{
 }> = ({ initialDiagnosis, onSave, onCancel, currentUser }) => {
     const [text, setText] = useState(initialDiagnosis?.text || '');
     const [source, setSource] = useState(initialDiagnosis?.source || 'Entrevista');
+    const [area, setArea] = useState<DiagnosisArea>(initialDiagnosis?.area || DiagnosisArea.FAMILY_DEVELOPMENT);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -60,6 +68,7 @@ const DiagnosisForm: React.FC<{
             authorId: initialDiagnosis?.authorId || currentUser.id,
             text,
             source,
+            area,
             timestamp: initialDiagnosis?.timestamp || new Date().toISOString(),
         };
         onSave(diagnosisData);
@@ -67,6 +76,15 @@ const DiagnosisForm: React.FC<{
 
     return (
         <form onSubmit={handleSubmit} className="p-4 mt-2 bg-gray-100 dark:bg-gray-700 rounded-lg space-y-3">
+            <select
+                value={area}
+                onChange={e => setArea(e.target.value as DiagnosisArea)}
+                className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
+            >
+                {Object.values(DiagnosisArea).map(areaValue => (
+                    <option key={areaValue} value={areaValue}>{areaValue}</option>
+                ))}
+            </select>
             <textarea
                 value={text}
                 onChange={e => setText(e.target.value)}
@@ -150,6 +168,41 @@ const SessionForm: React.FC<{
         </form>
     );
 };
+
+const EditableField: React.FC<{
+    label: string;
+    value: string | undefined;
+    onSave: () => void;
+    isEditing: boolean;
+    onStartEdit: () => void;
+    onCancel: () => void;
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+    editingValue: string;
+    disabled: boolean;
+}> = ({ label, value, onSave, isEditing, onStartEdit, onCancel, onChange, editingValue, disabled }) => (
+    <div>
+        <label className="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-1">{label}</label>
+        {isEditing ? (
+            <div>
+                <textarea
+                    value={editingValue}
+                    onChange={onChange}
+                    rows={6}
+                    className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-primary"
+                    autoFocus
+                />
+                <div className="flex justify-end gap-2 mt-2">
+                    <button onClick={onCancel} className="text-sm px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
+                    <button onClick={onSave} className="text-sm px-3 py-1 rounded-md bg-primary text-white hover:bg-primary-focus">Guardar</button>
+                </div>
+            </div>
+        ) : (
+            <div onClick={!disabled ? onStartEdit : undefined} className={`text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words p-2 rounded-md min-h-[4rem] ${!disabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer' : 'opacity-70'}`}>
+                {value || <span className="text-gray-400 italic">No hay información. Haz clic para añadir.</span>}
+            </div>
+        )}
+    </div>
+);
 
 
 // --- Main Component ---
@@ -356,7 +409,7 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
             y += 8;
             autoTable(doc, {
                 startY: y,
-                head: [['Fecha', 'Tipo', 'Progreso', 'Notas de la Sesión']],
+                head: [['Fecha', 'Tipo', 'Progreso', 'Notas']],
                 body: selectedReport.sessions.map(s => [
                     new Date(s.date + 'T00:00:00').toLocaleDateString(),
                     s.sessionType,
@@ -365,173 +418,199 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
                 ]),
                 theme: 'grid',
                 headStyles: { fillColor: [0, 90, 156] },
-                styles: { fontSize: 9 },
-                columnStyles: { 3: { cellWidth: 80 } }
+                styles: { fontSize: 9, cellWidth: 'wrap' },
+                columnStyles: { 3: { cellWidth: 80 } },
             });
             y = (doc as any).lastAutoTable.finalY + 10;
         }
 
-        addSection('RESUMEN DE CIERRE', selectedReport.closingSummary);
-
-        // --- Footer with Page Numbers ---
-        const pageCount = (doc as any).internal.getNumberOfPages();
-        for(let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setFontSize(8);
-            doc.text(`Página ${i} de ${pageCount}`, 200, 285, { align: 'right' });
-        }
-
-        doc.save(`Informe_Psicologico_${student.name.replace(/\s/g, '_')}.pdf`);
+        // --- Closing Summary ---
+        addSection('CIERRE DEL CASO', selectedReport.closingSummary);
+        
+        doc.save(`Informe_Psicologico_${student.name}.pdf`);
     };
 
 
-    if (!reports) {
-        return <div className="p-8 text-center">Cargando reportes...</div>;
-    }
-
     return (
-        <div className="flex h-[calc(100vh-112px)] gap-6">
-            {/* Report List */}
-            <div className="w-1/3 bg-white dark:bg-gray-800 rounded-xl shadow-md flex flex-col p-4">
-                <h2 className="text-xl font-bold mb-4 flex-shrink-0">Casos de Atención</h2>
-                <div className="flex gap-2 mb-4 flex-shrink-0">
-                    <input 
+        <div className="flex flex-col lg:flex-row gap-6 h-full max-h-[calc(100vh-112px)]">
+            {/* Reports List Panel */}
+            <div className="w-full lg:w-1/3 xl:w-1/4 flex-shrink-0 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md flex flex-col">
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex-shrink-0">Casos de Atención</h2>
+                <div className="flex flex-col md:flex-row gap-2 mb-4 flex-shrink-0">
+                    <input
                         type="text"
+                        placeholder="Buscar por estudiante..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        placeholder="Buscar por estudiante..."
-                        className="flex-grow p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+                        className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
                     />
-                    <select 
-                        value={statusFilter} 
+                    <select
+                        value={statusFilter}
                         onChange={e => setStatusFilter(e.target.value as any)}
-                        className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+                        className="w-full md:w-auto p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
                     >
-                        <option value="all">Todos</option>
-                        {Object.values(AttentionReportStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                        <option value="all">Todos los Estados</option>
+                        {Object.values(AttentionReportStatus).map(status => (
+                            <option key={status} value={status}>{attentionStatusTranslations[status]}</option>
+                        ))}
                     </select>
                 </div>
-                <div className="flex-1 overflow-y-auto space-y-2 pr-2 -mr-2">
-                    {filteredReports.map(report => {
-                        const student = studentMap.get(report.studentId);
-                        const { bg, border } = getStatusClass(report.status);
+                <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-2">
+                    {filteredReports.map(r => {
+                        const student = studentMap.get(r.studentId);
+                        const statusClasses = getStatusClass(r.status);
                         return (
                             <div
-                                key={report.id}
-                                onClick={() => setSelectedReportId(report.id)}
-                                className={`p-3 rounded-lg cursor-pointer border-l-4 transition-colors ${selectedReportId === report.id ? `${bg} ${border}`: `bg-gray-50 dark:bg-gray-900/50 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700`}`}
+                                key={r.id}
+                                onClick={() => setSelectedReportId(r.id)}
+                                className={`p-3 rounded-lg cursor-pointer border-l-4 ${selectedReportId === r.id ? `${statusClasses.bg} ${statusClasses.border}` : 'bg-gray-50 dark:bg-gray-900/50 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                             >
-                                <p className="font-bold text-gray-800 dark:text-gray-100">{student?.name || 'Estudiante Desconocido'}</p>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{report.reason}</p>
-                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{new Date(report.timestamp).toLocaleDateString()}</p>
+                                <div className="flex justify-between items-start">
+                                    <p className="font-bold text-gray-800 dark:text-gray-100 truncate">{student?.name}</p>
+                                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${statusClasses.bg} ${statusClasses.text}`}>
+                                        {attentionStatusTranslations[r.status]}
+                                    </span>
+                                </div>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{r.reason}</p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{new Date(r.timestamp).toLocaleDateString()}</p>
                             </div>
-                        )
+                        );
                     })}
-                     {filteredReports.length === 0 && <p className="text-center text-gray-500 py-8">No se encontraron reportes.</p>}
+                     {filteredReports.length === 0 && <p className="text-center text-gray-500 py-10">No se encontraron casos.</p>}
                 </div>
             </div>
 
-            {/* Report Details */}
-            <div className="w-2/3 bg-white dark:bg-gray-800 rounded-xl shadow-md flex flex-col p-6">
-                {selectedReport && studentMap.get(selectedReport.studentId) ? (
-                    (() => {
-                        const student = studentMap.get(selectedReport.studentId)!;
-                        const { bg, text } = getStatusClass(selectedReport.status);
-                        return (
-                            <div className="flex flex-col h-full">
-                                {/* Header */}
-                                <div className="flex justify-between items-start pb-4 border-b dark:border-gray-700 flex-shrink-0">
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{student.name}</h2>
-                                        <p className="text-gray-500 dark:text-gray-400">{student.grade} - {student.group}</p>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <select value={selectedReport.status} onChange={e => handleStatusChange(e.target.value as AttentionReportStatus)} className={`p-2 border rounded-md font-semibold text-sm ${bg} ${text} ${getStatusClass(selectedReport.status).border}`}>
-                                            {Object.values(AttentionReportStatus).map(s => <option key={s}>{s}</option>)}
+            {/* Content Panel */}
+            <div className="flex-1 bg-white dark:bg-gray-800 p-2 md:p-6 rounded-xl shadow-md overflow-y-auto">
+                {selectedReport ? (
+                    <div className="space-y-6">
+                        <div className="flex flex-col md:flex-row justify-between items-start gap-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{studentMap.get(selectedReport.studentId)?.name}</h2>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">{studentMap.get(selectedReport.studentId)?.grade} - Grupo {studentMap.get(selectedReport.studentId)?.group}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2"><strong>Motivo:</strong> {selectedReport.reason}</p>
+                            </div>
+                            <div className="flex-shrink-0 flex flex-col items-end gap-2">
+                                {(() => {
+                                    const statusClasses = getStatusClass(selectedReport.status);
+                                    return (
+                                        <select
+                                            value={selectedReport.status}
+                                            onChange={e => handleStatusChange(e.target.value as AttentionReportStatus)}
+                                            className={`p-1 rounded-md text-sm font-semibold border-2 ${statusClasses.bg} ${statusClasses.text} ${statusClasses.border}`}
+                                            disabled={!selectedReport}
+                                        >
+                                            {Object.values(AttentionReportStatus).map(status => (
+                                                <option key={status} value={status}>{attentionStatusTranslations[status]}</option>
+                                            ))}
                                         </select>
-                                        <button onClick={handleGeneratePdf} className="p-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200" title="Generar Reporte PDF">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                                        </button>
+                                    );
+                                })()}
+                                <button onClick={handleGeneratePdf} className="text-sm bg-red-100 text-red-700 font-semibold py-2 px-3 rounded-lg hover:bg-red-200 dark:bg-red-900/50 dark:text-red-200">Exportar a PDF</button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <Accordion title="Historial Psicológico" isOpen={openAccordion === 'historial'} onToggle={() => setOpenAccordion(openAccordion === 'historial' ? null : 'historial')}>
+                               <div className="space-y-4">
+                                    <EditableField label="Antecedentes Familiares y Desarrollo" value={selectedReport.familyBackground} onSave={() => handleUpdateField('familyBackground')} isEditing={editingField?.field === 'familyBackground'} onStartEdit={() => setEditingField({ field: 'familyBackground', value: selectedReport.familyBackground || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status === 'CLOSED'} />
+                                    <EditableField label="Antecedentes Escolares" value={selectedReport.schoolBackground} onSave={() => handleUpdateField('schoolBackground')} isEditing={editingField?.field === 'schoolBackground'} onStartEdit={() => setEditingField({ field: 'schoolBackground', value: selectedReport.schoolBackground || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status === 'CLOSED'}/>
+                                    <EditableField label="Antecedentes Médicos" value={selectedReport.medicalBackground} onSave={() => handleUpdateField('medicalBackground')} isEditing={editingField?.field === 'medicalBackground'} onStartEdit={() => setEditingField({ field: 'medicalBackground', value: selectedReport.medicalBackground || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status === 'CLOSED'}/>
+                               </div>
+                            </Accordion>
+                            
+                            <Accordion title="Diagnósticos e Hipótesis" isOpen={openAccordion === 'diagnosticos'} onToggle={() => setOpenAccordion(openAccordion === 'diagnosticos' ? null : 'diagnosticos')}>
+                                {selectedReport.diagnoses.map(diag => (
+                                    <div key={diag.id} className="p-3 mb-2 border-b dark:border-gray-700 last:border-b-0">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-semibold text-primary dark:text-secondary">{diag.area}</p>
+                                                <p className="text-sm text-gray-700 dark:text-gray-300 break-words">{diag.text}</p>
+                                                <p className="text-xs text-gray-500 mt-1">Fuente: {diag.source} | Por: {allUsersMap.get(diag.authorId)?.name} el {new Date(diag.timestamp).toLocaleDateString()}</p>
+                                            </div>
+                                            {selectedReport.status !== 'CLOSED' && (
+                                                <div className="flex gap-2 flex-shrink-0 ml-2">
+                                                    <button onClick={() => setEditingDiagnosis(diag)} className="text-xs text-blue-600 hover:underline">Editar</button>
+                                                    <button onClick={() => handleDeleteDiagnosis(diag.id)} className="text-xs text-red-600 hover:underline">Eliminar</button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                {/* Content */}
-                                <div className="flex-1 overflow-y-auto pt-4 space-y-4 pr-2 -mr-6 pl-2 -ml-2">
-                                    {/* Accordions */}
-                                    <Accordion title="Historial Psicológico" isOpen={openAccordion === 'historial'} onToggle={() => setOpenAccordion(openAccordion === 'historial' ? null : 'historial')}>
-                                        {/* ... content for history ... */}
-                                    </Accordion>
-                                     <Accordion title={`Diagnósticos (${selectedReport.diagnoses.length})`} isOpen={openAccordion === 'diagnosticos'} onToggle={() => setOpenAccordion(openAccordion === 'diagnosticos' ? null : 'diagnosticos')} action={!isAddingDiagnosis && <button onClick={() => { setIsAddingDiagnosis(true); setEditingDiagnosis(null); }} className="text-xs font-semibold text-primary dark:text-secondary hover:underline">Añadir</button>}>
-                                        {(isAddingDiagnosis || editingDiagnosis) && (
-                                            <DiagnosisForm initialDiagnosis={editingDiagnosis} onSave={handleSaveDiagnosis} onCancel={() => { setIsAddingDiagnosis(false); setEditingDiagnosis(null); }} currentUser={currentUser} />
-                                        )}
-                                        <div className="space-y-3 mt-4">
-                                            {selectedReport.diagnoses.map(diagnosis => {
-                                                const author = allUsersMap.get(diagnosis.authorId);
-                                                const canEdit = currentUser.id === diagnosis.authorId;
+                                ))}
+                                {(isAddingDiagnosis || editingDiagnosis) && <DiagnosisForm currentUser={currentUser} initialDiagnosis={editingDiagnosis} onSave={handleSaveDiagnosis} onCancel={() => { setIsAddingDiagnosis(false); setEditingDiagnosis(null); }} />}
+                                {selectedReport.status !== 'CLOSED' && !isAddingDiagnosis && !editingDiagnosis && (
+                                    <button onClick={() => setIsAddingDiagnosis(true)} className="mt-2 text-sm font-semibold text-primary dark:text-secondary hover:underline">+ Añadir Diagnóstico</button>
+                                )}
+                            </Accordion>
+
+                             <Accordion title="Plan de Intervención" isOpen={openAccordion === 'intervencion'} onToggle={() => setOpenAccordion(openAccordion === 'intervencion' ? null : 'intervencion')}>
+                               <EditableField label="Estrategias y Objetivos" value={selectedReport.interventionPlan} onSave={() => handleUpdateField('interventionPlan')} isEditing={editingField?.field === 'interventionPlan'} onStartEdit={() => setEditingField({ field: 'interventionPlan', value: selectedReport.interventionPlan || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status === 'CLOSED'} />
+                            </Accordion>
+
+                             <Accordion title="Seguimiento de Sesiones" isOpen={openAccordion === 'sesiones'} onToggle={() => setOpenAccordion(openAccordion === 'sesiones' ? null : 'sesiones')}>
+                                {selectedReport.sessions.map(sess => (
+                                     <div key={sess.id} className="p-3 mb-2 border-b dark:border-gray-700 last:border-b-0">
+                                         <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-semibold text-primary dark:text-secondary">{new Date(sess.date + 'T00:00:00').toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })} - {sess.sessionType}</p>
+                                                <p className="text-sm text-gray-700 dark:text-gray-300 break-words mt-1">{sess.notes}</p>
+                                                <p className="text-xs text-gray-500 mt-2"><strong>Progreso:</strong> {sess.progressIndicator} | <strong>Por:</strong> {allUsersMap.get(sess.authorId)?.name}</p>
+                                            </div>
+                                            {selectedReport.status !== 'CLOSED' && (
+                                                <div className="flex gap-2 flex-shrink-0 ml-2">
+                                                    <button onClick={() => setEditingSession(sess)} className="text-xs text-blue-600 hover:underline">Editar</button>
+                                                    <button onClick={() => handleDeleteSession(sess.id)} className="text-xs text-red-600 hover:underline">Eliminar</button>
+                                                </div>
+                                            )}
+                                         </div>
+                                     </div>
+                                ))}
+                                {(isAddingSession || editingSession) && <SessionForm currentUser={currentUser} initialSession={editingSession} onSave={handleSaveSession} onCancel={() => { setIsAddingSession(false); setEditingSession(null); }} />}
+                                {selectedReport.status !== 'CLOSED' && !isAddingSession && !editingSession && (
+                                    <button onClick={() => setIsAddingSession(true)} className="mt-2 text-sm font-semibold text-primary dark:text-secondary hover:underline">+ Registrar Sesión</button>
+                                )}
+                            </Accordion>
+
+                             <Accordion title="Cierre del Caso" isOpen={openAccordion === 'cierre'} onToggle={() => setOpenAccordion(openAccordion === 'cierre' ? null : 'cierre')}>
+                                <EditableField label="Resumen de Cierre y Recomendaciones" value={selectedReport.closingSummary} onSave={() => handleUpdateField('closingSummary')} isEditing={editingField?.field === 'closingSummary'} onStartEdit={() => setEditingField({ field: 'closingSummary', value: selectedReport.closingSummary || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status !== 'IN_PROGRESS'}/>
+                            </Accordion>
+
+                             <Accordion title="Canal de Comunicación Confidencial" isOpen={openAccordion === 'comunicacion'} onToggle={() => setOpenAccordion(openAccordion === 'comunicacion' ? null : 'comunicacion')}>
+                                {selectedConversation ? (
+                                    <div className="flex flex-col h-96">
+                                        <div ref={chatContainerRef} className="flex-1 p-4 space-y-4 overflow-y-auto bg-gray-50 dark:bg-gray-800 rounded-t-lg">
+                                            {selectedConversation.messages.map((msg, index) => {
+                                                const sender = allUsersMap.get(msg.senderId);
+                                                const isSelf = msg.senderId === currentUser.id;
                                                 return (
-                                                    <div key={diagnosis.id} className="p-3 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-900/50">
-                                                        <p className="text-sm text-gray-800 dark:text-gray-200">{diagnosis.text}</p>
-                                                        <div className="flex justify-between items-center mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                                            <span>Fuente: {diagnosis.source} | Por: {author?.name || 'Desconocido'}</span>
-                                                            {canEdit && (
-                                                                <div className="flex gap-2">
-                                                                    <button onClick={() => { setEditingDiagnosis(diagnosis); setIsAddingDiagnosis(true); }} className="hover:underline">Editar</button>
-                                                                    <button onClick={() => handleDeleteDiagnosis(diagnosis.id)} className="hover:underline text-red-500">Eliminar</button>
-                                                                </div>
-                                                            )}
+                                                    <div key={index} className={`flex items-start gap-2 ${isSelf ? 'justify-end' : ''}`}>
+                                                        {!isSelf && <img src={sender && 'avatarUrl' in sender ? sender.avatarUrl : ''} className="w-8 h-8 rounded-full" alt="sender" />}
+                                                        <div className={`max-w-md p-3 rounded-lg ${isSelf ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>
+                                                            <p className="text-sm break-words">{msg.text}</p>
+                                                            <p className="text-xs opacity-70 mt-1 text-right">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                                         </div>
+                                                        {isSelf && <img src={currentUser.avatarUrl} className="w-8 h-8 rounded-full" alt="self" />}
                                                     </div>
                                                 );
                                             })}
-                                            {selectedReport.diagnoses.length === 0 && <p className="text-sm text-gray-500">No hay diagnósticos registrados.</p>}
                                         </div>
-                                    </Accordion>
-                                     <Accordion title={`Seguimiento de Sesiones (${selectedReport.sessions.length})`} isOpen={openAccordion === 'sesiones'} onToggle={() => setOpenAccordion(openAccordion === 'sesiones' ? null : 'sesiones')} action={!isAddingSession && <button onClick={() => { setIsAddingSession(true); setEditingSession(null); }} className="text-xs font-semibold text-primary dark:text-secondary hover:underline">Registrar Sesión</button>}>
-                                        {(isAddingSession || editingSession) && (
-                                            <SessionForm initialSession={editingSession} onSave={handleSaveSession} onCancel={() => { setIsAddingSession(false); setEditingSession(null); }} currentUser={currentUser} />
-                                        )}
-                                        <div className="space-y-3 mt-4">
-                                            {selectedReport.sessions.map(session => {
-                                                const author = allUsersMap.get(session.authorId);
-                                                const canEdit = currentUser.id === session.authorId;
-                                                return (
-                                                    <div key={session.id} className="p-3 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-900/50">
-                                                        <div className="flex justify-between items-start text-sm">
-                                                            <div>
-                                                                <p className="font-bold">{new Date(session.date + 'T00:00:00').toLocaleDateString()} ({session.startTime} - {session.endTime})</p>
-                                                                <p className="text-xs text-gray-500">Tipo: {session.sessionType} | Autor: {author?.name}</p>
-                                                            </div>
-                                                            <span className="font-semibold text-primary dark:text-secondary">{session.progressIndicator}</span>
-                                                        </div>
-                                                        <p className="text-sm mt-2 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{session.notes}</p>
-                                                        {canEdit && (
-                                                            <div className="text-right mt-2 flex gap-2 justify-end text-xs">
-                                                                <button onClick={() => { setEditingSession(session); setIsAddingSession(true); }} className="font-semibold hover:underline text-blue-600">Editar</button>
-                                                                <button onClick={() => handleDeleteSession(session.id)} className="font-semibold hover:underline text-red-500">Eliminar</button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )
-                                            })}
-                                             {selectedReport.sessions.length === 0 && <p className="text-sm text-gray-500">No hay sesiones registradas.</p>}
-                                        </div>
-                                    </Accordion>
-                                    <Accordion title="Plan de Intervención y Cierre" isOpen={openAccordion === 'cierre'} onToggle={() => setOpenAccordion(openAccordion === 'cierre' ? null : 'cierre')}>
-                                       {/* ... content for closing plan ... */}
-                                    </Accordion>
-                                </div>
-                                
-                                 {/* Chat */}
-                                <div className="mt-4 pt-4 border-t dark:border-gray-700 flex flex-col h-1/2 flex-shrink-0">
-                                   {/* ... chat implementation ... */}
-                                </div>
-                            </div>
-                        )
-                    })()
+                                        <form onSubmit={handleSendMessage} className="p-4 border-t dark:border-gray-600 bg-gray-50 dark:bg-gray-800 rounded-b-lg flex items-center gap-2">
+                                            <input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Escribe un mensaje..." className="flex-1 p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600" />
+                                            <button type="submit" className="bg-primary text-white rounded-full p-2 hover:bg-primary-focus"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg></button>
+                                        </form>
+                                    </div>
+                                ) : (
+                                    <p className="text-center text-gray-500 p-4">No hay un canal de comunicación para este caso.</p>
+                                )}
+                            </Accordion>
+                        </div>
+
+                    </div>
                 ) : (
-                    <div className="flex items-center justify-center h-full text-center text-gray-500">
-                        <p>Selecciona un reporte de la lista para ver los detalles.</p>
+                    <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547a2 2 0 00-.547 1.806l.477 2.387a6 6 0 00.517 3.86l.158.318a6 6 0 00.517 3.86l2.387.477a2 2 0 001.806.547a2 2 0 00.547-1.806l-.477-2.387a6 6 0 00-.517-3.86l-.158-.318a6 6 0 01-.517-3.86l-2.387-.477a2 2 0 01-.547-1.806zM15 9.5a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <h3 className="mt-4 text-lg font-semibold">Selecciona un caso</h3>
+                        <p className="max-w-sm">Elige un caso de la lista de la izquierda para ver los detalles, registrar sesiones y comunicarte con los involucrados.</p>
                     </div>
                 )}
             </div>

@@ -406,12 +406,19 @@ export enum AttentionReportStatus {
   CLOSED = 'CLOSED',
 }
 
+export enum DiagnosisArea {
+    FAMILY_DEVELOPMENT = "Area familiar y desarrollo",
+    ACADEMIC = "Area Academica",
+    SOCIAL_EMOTIONAL = "Area social y emocional",
+}
+
 export interface Diagnosis {
   id: string;
   authorId: string;
   text: string;
   timestamp: string;
   source?: string;
+  area?: DiagnosisArea;
 }
 
 export type SessionProgress = 'Estancamiento' | 'Leve Mejora' | 'Progreso Notable' | 'Logro de Objetivo' | 'Sin Evaluar';

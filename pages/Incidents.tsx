@@ -22,6 +22,23 @@ import AttentionReportModal from '../components/AttentionReportModal';
 
 type EnrichedAttendanceRecord = AttendanceRecord & { student: Student };
 
+// --- Translations ---
+const incidentStatusTranslations: Record<IncidentStatus, string> = {
+    [IncidentStatus.ACTIVE]: 'Activa',
+    [IncidentStatus.ATTENDED]: 'Atendida',
+    [IncidentStatus.ARCHIVED]: 'Archivada',
+    [IncidentStatus.DECLINED]: 'Declinada',
+};
+
+const citationStatusTranslations: Record<CitationStatus, string> = {
+    [CitationStatus.PENDING]: 'Pendiente',
+    [CitationStatus.CONFIRMED]: 'Confirmada',
+    [CitationStatus.COMPLETED]: 'Completada',
+    [CitationStatus.CANCELLED]: 'Cancelada',
+    [CitationStatus.RESCHEDULE_REQUESTED]: 'Reprogramación Solicitada',
+};
+
+
 // --- Helper Functions for Downloading ---
 
 const generateIncidentsCSV = (incidentsToExport: Incident[]): string => {
@@ -34,7 +51,7 @@ const generateIncidentsCSV = (incidentsToExport: Incident[]): string => {
         `"${inc.type}"`,
         `"${inc.notes.replace(/"/g, '""')}"`,
         `"${new Date(inc.timestamp).toLocaleString()}"`,
-        inc.status
+        incidentStatusTranslations[inc.status]
     ].join(','));
     return [headers.join(','), ...rows].join('\n');
 };
@@ -46,7 +63,7 @@ const generateIncidentsPDFHTML = (title: string, incidentsToExport: Incident[]):
             <td>${inc.teacherName}</td>
             <td>${inc.location}</td>
             <td>${inc.type}</td>
-            <td>${inc.status}</td>
+            <td>${incidentStatusTranslations[inc.status]}</td>
             <td>${new Date(inc.timestamp).toLocaleString('es-CO')}</td>
             <td class="notes">${inc.notes}</td>
         </tr>
@@ -159,6 +176,17 @@ const getCitationStatusClass = (status: CitationStatus) => {
     }
 };
 
+const getStatusClassForIncident = (status: IncidentStatus) => {
+    switch (status) {
+        case IncidentStatus.ACTIVE: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200';
+        case IncidentStatus.ATTENDED: return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200';
+        case IncidentStatus.ARCHIVED: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200';
+        case IncidentStatus.DECLINED: return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200';
+        default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+    }
+};
+
+
 const Incidents: React.FC<IncidentsProps> = ({
     isOnline,
     students,
@@ -245,7 +273,7 @@ const Incidents: React.FC<IncidentsProps> = ({
         const incident = incidents.find(i => i.id === incidentId);
         if (incident) {
             await onUpdateIncidents('update', { ...incident, status });
-            onShowSystemMessage(`Incidencia marcada como ${status}.`);
+            onShowSystemMessage(`Incidencia marcada como ${incidentStatusTranslations[status]}.`);
         }
     };
 
@@ -490,7 +518,7 @@ const Incidents: React.FC<IncidentsProps> = ({
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 p-2 bg-white dark:bg-gray-800 rounded-md">{inc.notes}</p>
             <div className="flex justify-end items-center gap-2 mt-3 text-sm">
-                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getCitationStatusClass(inc.status as any)}`}>{inc.status}</span>
+                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusClassForIncident(inc.status)}`}>{incidentStatusTranslations[inc.status]}</span>
 
                 {inc.status === IncidentStatus.ACTIVE && (
                     <>
@@ -576,7 +604,7 @@ const Incidents: React.FC<IncidentsProps> = ({
                                 </select>
                                 <select value={incidentStatusFilter} onChange={e => setIncidentStatusFilter(e.target.value as any)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                                     <option value="all">Todos los Estados</option>
-                                    {Object.values(IncidentStatus).map(status => <option key={status} value={status}>{status}</option>)}
+                                    {Object.values(IncidentStatus).map(status => <option key={status} value={status}>{incidentStatusTranslations[status]}</option>)}
                                 </select>
                                 <select value={incidentReporterFilter} onChange={e => setIncidentReporterFilter(e.target.value)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                                     <option value="all">Todos los Docentes</option>
@@ -670,7 +698,7 @@ const Incidents: React.FC<IncidentsProps> = ({
                                         <p className="font-bold text-gray-800 dark:text-gray-100">{cit.studentName}</p>
                                         <p className="text-sm text-gray-600 dark:text-gray-300">{cit.reason}</p>
                                     </div>
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCitationStatusClass(cit.status)}`}>{cit.status}</span>
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCitationStatusClass(cit.status)}`}>{citationStatusTranslations[cit.status]}</span>
                                 </div>
                                 <div className="flex justify-between items-end mt-3">
                                     <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(cit.date+'T00:00:00').toLocaleDateString()} a las {cit.time}</p>
