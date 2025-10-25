@@ -1,10 +1,11 @@
 
 
+
 export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones' | 'Communication' | 'TutorMode' | 'Eventos' | 'SimulacroICFES' | 'Consolidado' | 'Psychology';
 
 export enum DocumentType {
-  CIVIL_REGISTRY = 'CIVIL_REGISTRY',
-  IDENTITY_CARD = 'IDENTITY_CARD',
+  CIVIL_REGISTRY = 'Registro Civil',
+  IDENTITY_CARD = 'Tarjeta de Identidad',
 }
 
 export enum Role {
@@ -33,20 +34,20 @@ export interface Student {
 }
 
 export enum IncidentType {
-  SCHOOL_COEXISTENCE = 'SCHOOL_COEXISTENCE',
-  UNIFORM_MISUSE = 'UNIFORM_MISUSE',
-  INFRASTRUCTURE_DAMAGE = 'INFRASTRUCTURE_DAMAGE',
-  BULLYING_CYBERBULLYING = 'BULLYING_CYBERBULLYING',
-  NON_COMPLIANCE = 'NON_COMPLIANCE',
-  ACADEMIC_MISCONDUCT = 'ACADEMIC_MISCONDUCT',
-  OTHER = 'OTHER',
+  SCHOOL_COEXISTENCE = 'Convivencia Escolar',
+  UNIFORM_MISUSE = 'Uso inapropiado del uniforme',
+  INFRASTRUCTURE_DAMAGE = 'Daños a la infraestructura',
+  BULLYING_CYBERBULLYING = 'Acoso y ciberacoso',
+  NON_COMPLIANCE = 'Incumplimiento de deberes',
+  ACADEMIC_MISCONDUCT = 'Faltas Académicas',
+  OTHER = 'Otro',
 }
 
 export enum IncidentStatus {
-  ACTIVE = 'ACTIVE',
-  DECLINED = 'DECLINED',
-  ATTENDED = 'ATTENDED',
-  ARCHIVED = 'ARCHIVED',
+  ACTIVE = 'Activa',
+  DECLINED = 'Declinada',
+  ATTENDED = 'Atendida',
+  ARCHIVED = 'Archivada',
 }
 
 
@@ -111,8 +112,8 @@ export interface Assessment {
 export enum ResourceType {
     PDF = 'PDF',
     Video = 'Video',
-    Image = 'Image',
-    Document = 'Document',
+    Image = 'Imagen',
+    Document = 'Documento',
 }
 
 export interface Resource {
@@ -126,11 +127,11 @@ export interface Resource {
 }
 
 export enum AttendanceStatus {
-    PRESENT = 'PRESENT',
-    ABSENT = 'ABSENT',
-    TARDY = 'TARDY',
-    EXCUSED = 'EXCUSED',
-    SPECIAL_PERMIT = 'SPECIAL_PERMIT',
+    PRESENT = 'Presente',
+    ABSENT = 'Ausente',
+    TARDY = 'Tarde',
+    EXCUSED = 'Con Excusa',
+    SPECIAL_PERMIT = 'Permiso Especial',
 }
 
 export interface AttendanceRecord {
@@ -169,11 +170,11 @@ export interface CoordinationMessage {
 }
 
 export enum CitationStatus {
-    PENDING = 'PENDING',
-    CONFIRMED = 'CONFIRMED',
-    COMPLETED = 'COMPLETED',
-    CANCELLED = 'CANCELLED',
-    RESCHEDULE_REQUESTED = 'RESCHEDULE_REQUESTED',
+    PENDING = 'Pendiente',
+    CONFIRMED = 'Confirmada',
+    COMPLETED = 'Completada',
+    CANCELLED = 'Cancelada',
+    RESCHEDULE_REQUESTED = 'Reprogramación Solicitada',
 }
 
 export interface Citation {
@@ -199,9 +200,9 @@ export interface Announcement {
 }
 
 export enum TeacherStatus {
-  ACTIVE = 'ACTIVE',
-  RETIRED = 'RETIRED',
-  ON_COMMISSION = 'ON_COMMISSION',
+  ACTIVE = 'Activo',
+  RETIRED = 'Retirado',
+  ON_COMMISSION = 'En Comisión',
 }
 
 export interface Certification {
@@ -275,17 +276,17 @@ export interface EventPoster {
 // --- Grade Management System Types ---
 
 export enum AcademicPeriod {
-  FIRST = 'FIRST',
-  SECOND = 'SECOND',
-  THIRD = 'THIRD',
-  FOURTH = 'FOURTH',
+  FIRST = 'PRIMERO',
+  SECOND = 'SEGUNDO',
+  THIRD = 'TERCERO',
+  FOURTH = 'CUARTO',
 }
 
 export enum Desempeno {
     SUPERIOR = 'SUPERIOR',
-    HIGH = 'HIGH',
-    BASIC = 'BASIC',
-    LOW = 'LOW',
+    HIGH = 'ALTO',
+    BASIC = 'BASICO',
+    LOW = 'BAJO',
 }
 
 export interface DesempenoDescriptor {

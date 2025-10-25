@@ -128,281 +128,26 @@ export const LogoutIcon: React.FC<{className?: string}> = ({ className }) => (
 
 // --- SIDEBAR ---
 
-export const SIDEBAR_ITEMS: { name: Page; labelKey: string; icon: React.FC<{className?: string}> }[] = [
-    { name: 'Dashboard', labelKey: 'sidebar.dashboard', icon: DashboardIcon },
-    { name: 'Classroom', labelKey: 'sidebar.classroom', icon: ClassroomIcon },
-    { name: 'Incidents', labelKey: 'sidebar.incidents', icon: IncidentsIcon },
-    { name: 'Psychology', labelKey: 'sidebar.psychology', icon: PsychologyIcon },
-    { name: 'TutorMode', labelKey: 'sidebar.tutorMode', icon: TutorIcon },
-    { name: 'Communication', labelKey: 'sidebar.communication', icon: CommunicationIcon },
-    { name: 'Assessments', labelKey: 'sidebar.assessments', icon: AssessmentsIcon },
-    { name: 'Calificaciones', labelKey: 'sidebar.calificaciones', icon: GradesIcon },
-    { name: 'Consolidado', labelKey: 'sidebar.consolidado', icon: ConsolidadoIcon },
-    { name: 'Resources', labelKey: 'sidebar.resources', icon: ResourcesIcon },
-    { name: 'Eventos', labelKey: 'sidebar.eventos', icon: CalendarIcon },
-    { name: 'Profile', labelKey: 'sidebar.profile', icon: ProfileIcon },
-    { name: 'Settings', labelKey: 'sidebar.settings', icon: SettingsIcon },
-    { name: 'Rectory', labelKey: 'sidebar.rectory', icon: RectoryIcon },
-    { name: 'InstitutionProfile', labelKey: 'sidebar.institutionProfile', icon: InstitutionProfileIcon },
-    { name: 'ParentPortal', labelKey: 'sidebar.parentPortal', icon: ParentPortalIcon },
-    { name: 'StudentPortal', labelKey: 'sidebar.studentPortal', icon: StudentPortalIcon },
-    { name: 'SimulacroICFES', labelKey: 'sidebar.simulacroICFES', icon: ICFESIcon },
+export const SIDEBAR_ITEMS: { name: Page; label: string; icon: React.FC<{className?: string}> }[] = [
+    { name: 'Dashboard', label: "Panel de Control", icon: DashboardIcon },
+    { name: 'Classroom', label: "Mi Salón de Clases", icon: ClassroomIcon },
+    { name: 'Incidents', label: "Coordinación Académica", icon: IncidentsIcon },
+    { name: 'Psychology', label: "Psicología", icon: PsychologyIcon },
+    { name: 'TutorMode', label: "Modo Tutor", icon: TutorIcon },
+    { name: 'Communication', label: "Bandeja de Entrada", icon: CommunicationIcon },
+    { name: 'Assessments', label: "Evaluaciones", icon: AssessmentsIcon },
+    { name: 'Calificaciones', label: "Calificaciones", icon: GradesIcon },
+    { name: 'Consolidado', label: "Consolidados", icon: ConsolidadoIcon },
+    { name: 'Resources', label: "Biblioteca", icon: ResourcesIcon },
+    { name: 'Eventos', label: "Eventos", icon: CalendarIcon },
+    { name: 'Profile', label: "Mi Perfil", icon: ProfileIcon },
+    { name: 'Settings', label: "Ajustes", icon: SettingsIcon },
+    { name: 'Rectory', label: "Rectoría", icon: RectoryIcon },
+    { name: 'InstitutionProfile', label: "Perfil Institucional", icon: InstitutionProfileIcon },
+    { name: 'ParentPortal', label: "Portal de Acudientes", icon: ParentPortalIcon },
+    { name: 'StudentPortal', label: "Portal del Estudiante", icon: StudentPortalIcon },
+    { name: 'SimulacroICFES', label: "Simulacro ICFES", icon: ICFESIcon },
 ];
-
-// --- TRANSLATIONS ---
-export const translations = {
-  es: {
-    sidebar: {
-      dashboard: "Panel de Control",
-      classroom: "Mi Salón de Clases",
-      incidents: "Coordinación Académica",
-      psychology: "Psicología",
-      tutorMode: "Modo Tutor",
-      communication: "Bandeja de Entrada",
-      assessments: "Evaluaciones",
-      calificaciones: "Calificaciones",
-      consolidado: "Consolidados",
-      resources: "Biblioteca",
-      eventos: "Eventos",
-      profile: "Mi Perfil",
-      settings: "Ajustes",
-      rectory: "Rectoría",
-      institutionProfile: "Perfil Institucional",
-      parentPortal: "Portal de Acudientes",
-      studentPortal: "Portal del Estudiante",
-      simulacroICFES: "Simulacro ICFES",
-      logout: "Cerrar Sesión",
-      footerSlogan: "Transformando la educación, un aula a la vez."
-    },
-    header: {
-        online: "En Línea",
-        offline: "Sin Conexión",
-        viewProfile: "Ver Perfil"
-    },
-    roles: {
-        STUDENT: 'Estudiante',
-        TEACHER: 'Docente',
-        COORDINATOR: 'Coordinador(a)',
-        RECTOR: 'Rector(a)',
-        ADMIN: 'Administrador',
-        PSYCHOLOGY: 'Psicología',
-        GUARDIAN: 'Acudiente',
-        SUBJECT_TEACHER: 'Docente de {{subject}}'
-    },
-    subjects: {
-        'Matemáticas': 'Matemáticas',
-        'Lengua Castellana': 'Lengua Castellana',
-        'Inglés': 'Inglés',
-        'Biología': 'Biología',
-        'Química': 'Química',
-        'Física': 'Física',
-        'Historia': 'Historia',
-        'Geografía': 'Geografía',
-        'Constitución Política y Democracia': 'Constitución y Democracia',
-        'Educación Artística': 'Artística',
-        'Música': 'Música',
-        'Educación Ética y en Valores Humanos': 'Ética y Valores',
-        'Filosofía': 'Filosofía',
-        'Educación Física': 'Educación Física',
-        'Educación Religiosa': 'Religión',
-        'Tecnología e Informática': 'Tecnología',
-        'Convivencia': 'Convivencia',
-        'Todas': 'Todas',
-        'Coordinadores': 'Coordinadores',
-        'Administrativos': 'Administrativos',
-        'Psicología': 'Psicología'
-    },
-    incidentTypes: {
-        SCHOOL_COEXISTENCE: "Convivencia Escolar",
-        UNIFORM_MISUSE: "Uso inapropiado del uniforme",
-        INFRASTRUCTURE_DAMAGE: "Daños a la infraestructura",
-        BULLYING_CYBERBULLYING: "Acoso y ciberacoso",
-        NON_COMPLIANCE: "Incumplimiento de deberes",
-        ACADEMIC_MISCONDUCT: "Faltas Académicas",
-        OTHER: "Otro",
-    },
-    notifications: {
-        newIncident: {
-            title: "Nueva Incidencia Reportada",
-            message: "Se ha registrado una nueva incidencia de tipo: {{incidentType}}."
-        },
-        attentionReportSent: "Reporte de atención enviado a psicología.",
-        psychologyReportUpdated: "Reporte de psicología actualizado.",
-        accountUpgraded: "¡Tu cuenta ha sido activada! Gracias por unirte a nosotros.",
-    },
-    login: {
-        success: "Inicio de sesión exitoso.",
-        invalidCredentials: "Las credenciales son inválidas."
-    },
-    register: {
-        emailExists: "El correo electrónico ya está registrado.",
-        demoSuccess: "¡Registro de demostración exitoso! Bienvenido."
-    },
-    settings: {
-        notifications: {
-            title: "Ajustes de Notificaciones",
-            saveSuccess: "Ajustes de notificación guardados.",
-            newIncidentLabel: "Nueva Incidencia",
-            newIncidentDescription: "Recibir una notificación cuando se reporte una nueva incidencia.",
-            weeklySummaryLabel: "Resumen Semanal",
-            weeklySummaryDescription: "Recibir un resumen de actividad cada semana.",
-            assessmentRemindersLabel: "Recordatorios de Evaluación",
-            assessmentRemindersDescription: "Recibir recordatorios sobre evaluaciones pendientes."
-        },
-        language: {
-            title: "Idioma",
-            description: "Elige el idioma de la interfaz de la aplicación.",
-            spanish: "Español",
-            english: "Inglés",
-        },
-        appearance: {
-            title: "Apariencia",
-            description: "Elige cómo se ve la aplicación.",
-            light: "Claro",
-            dark: "Oscuro",
-            system: "Automático (Sistema)"
-        }
-    },
-    buttons: {
-        cancel: "Cancelar",
-        saveChanges: "Guardar Cambios",
-        edit: "Editar",
-    },
-    studentLabel: "Estudiante",
-    close: "Cerrar",
-    success: "Éxito",
-    error: "Error",
-    loadingApp: "Cargando aplicación",
-    loadingProfiles: "Cargando perfiles",
-    loadingPortal: "Cargando portal",
-  },
-  en: {
-    sidebar: {
-      dashboard: "Dashboard",
-      classroom: "My Classroom",
-      incidents: "Academic Coordination",
-      psychology: "Psychology",
-      tutorMode: "Tutor Mode",
-      communication: "Inbox",
-      assessments: "Assessments",
-      calificaciones: "Grades",
-      consolidado: "Consolidated",
-      resources: "Library",
-      eventos: "Events",
-      profile: "My Profile",
-      settings: "Settings",
-      rectory: "Rectory",
-      institutionProfile: "Institution Profile",
-      parentPortal: "Guardian Portal",
-      studentPortal: "Student Portal",
-      simulacroICFES: "ICFES Drill",
-      logout: "Logout",
-      footerSlogan: "Transforming education, one classroom at a time."
-    },
-    header: {
-        online: "Online",
-        offline: "Offline",
-        viewProfile: "View Profile"
-    },
-    roles: {
-        STUDENT: 'Student',
-        TEACHER: 'Teacher',
-        COORDINATOR: 'Coordinator',
-        RECTOR: 'Rector',
-        ADMIN: 'Admin',
-        PSYCHOLOGY: 'Psychology',
-        GUARDIAN: 'Guardian',
-        SUBJECT_TEACHER: '{{subject}} Teacher'
-    },
-     subjects: {
-        'Matemáticas': 'Mathematics',
-        'Lengua Castellana': 'Spanish Language',
-        'Inglés': 'English',
-        'Biología': 'Biology',
-        'Química': 'Chemistry',
-        'Física': 'Physics',
-        'Historia': 'History',
-        'Geografía': 'Geography',
-        'Constitución Política y Democracia': 'Constitution and Democracy',
-        'Educación Artística': 'Arts',
-        'Música': 'Music',
-        'Educación Ética y en Valores Humanos': 'Ethics and Values',
-        'Filosofía': 'Philosophy',
-        'Educación Física': 'Physical Education',
-        'Educación Religiosa': 'Religion',
-        'Tecnología e Informática': 'Technology',
-        'Convivencia': 'Coexistence',
-        'Todas': 'All',
-        'Coordinadores': 'Coordinators',
-        'Administrativos': 'Administrative',
-        'Psicología': 'Psychology'
-    },
-    incidentTypes: {
-        SCHOOL_COEXISTENCE: "School Coexistence",
-        UNIFORM_MISUSE: "Improper Uniform Use",
-        INFRASTRUCTURE_DAMAGE: "Infrastructure Damage",
-        BULLYING_CYBERBULLYING: "Bullying & Cyberbullying",
-        NON_COMPLIANCE: "Non-compliance with duties",
-        ACADEMIC_MISCONDUCT: "Academic Misconduct",
-        OTHER: "Other",
-    },
-    notifications: {
-        newIncident: {
-            title: "New Incident Reported",
-            message: "A new incident of type: {{incidentType}} has been registered."
-        },
-        attentionReportSent: "Attention report sent to psychology department.",
-        psychologyReportUpdated: "Psychology report updated.",
-        accountUpgraded: "Your account has been activated! Thank you for joining us.",
-    },
-    login: {
-        success: "Login successful.",
-        invalidCredentials: "Invalid credentials."
-    },
-    register: {
-        emailExists: "The email is already registered.",
-        demoSuccess: "Demo registration successful! Welcome."
-    },
-    settings: {
-        notifications: {
-            title: "Notification Settings",
-            saveSuccess: "Notification settings saved.",
-            newIncidentLabel: "New Incident",
-            newIncidentDescription: "Get a notification when a new incident is reported.",
-            weeklySummaryLabel: "Weekly Summary",
-            weeklySummaryDescription: "Receive a summary of activity every week.",
-            assessmentRemindersLabel: "Assessment Reminders",
-            assessmentRemindersDescription: "Receive reminders about pending assessments."
-        },
-        language: {
-            title: "Language",
-            description: "Choose the application's interface language.",
-            spanish: "Spanish",
-            english: "English",
-        },
-        appearance: {
-            title: "Appearance",
-            description: "Choose how the application looks.",
-            light: "Light",
-            dark: "Dark",
-            system: "System Automatic"
-        }
-    },
-    buttons: {
-        cancel: "Cancel",
-        saveChanges: "Save Changes",
-        edit: "Edit",
-    },
-    studentLabel: "Student",
-    close: "Close",
-    success: "Success",
-    error: "Error",
-    loadingApp: "Loading application",
-    loadingProfiles: "Loading profiles",
-    loadingPortal: "Loading portal",
-  }
-};
-
 
 // --- MOCK DATA & CONSTANTS ---
 
@@ -734,3 +479,203 @@ export const MOCK_SUBJECT_GRADES: SubjectGrades[] = [
     generalDesempenoIds: ['d-math-1', 'd-math-2'],
   },
 ];
+
+// FIX: Add missing 'translations' export
+export const translations = {
+    es: {
+        studentLabel: 'Estudiante',
+        close: 'Cerrar',
+        success: 'Éxito',
+        error: 'Error',
+        login: {
+            success: 'Inicio de sesión exitoso.',
+            invalidCredentials: 'Usuario o contraseña inválidos.',
+        },
+        register: {
+            emailExists: 'El correo electrónico ya está registrado.',
+            demoSuccess: '¡Cuenta de demostración creada con éxito!',
+        },
+        notifications: {
+            accountUpgraded: '¡Tu cuenta ha sido actualizada!',
+            attentionReportSent: 'Reporte de atención enviado correctamente.',
+            psychologyReportUpdated: 'Reporte psicológico actualizado.',
+            newIncident: {
+                title: 'Nueva Incidencia Reportada',
+                message: 'Se ha reportado una nueva incidencia: {{incidentType}}.',
+            },
+        },
+        loadingApp: 'Cargando aplicación',
+        loadingProfiles: 'Cargando perfiles',
+        loadingPortal: 'Cargando portal',
+        roles: {
+            GUARDIAN: 'Acudiente',
+            STUDENT: 'Estudiante',
+            TEACHER: 'Docente',
+            COORDINATOR: 'Coordinador(a)',
+            RECTOR: 'Rector(a)',
+            ADMIN: 'Administrador(a)',
+            PSYCHOLOGY: 'Psicólogo(a)',
+            SUBJECT_TEACHER: 'Docente de {{subject}}',
+        },
+        subjects: {
+            'Matemáticas': 'Matemáticas',
+            'Lengua Castellana': 'Lengua Castellana',
+            'Inglés': 'Inglés',
+            'Biología': 'Biología',
+            'Química': 'Química',
+            'Física': 'Física',
+            'Historia': 'Historia',
+            'Geografía': 'Geografía',
+            'Constitución Política y Democracia': 'Constitución Política y Democracia',
+            'Educación Artística': 'Educación Artística',
+            'Música': 'Música',
+            'Educación Ética y en Valores Humanos': 'Educación Ética y en Valores Humanos',
+            'Filosofía': 'Filosofía',
+            'Educación Física': 'Educación Física',
+            'Educación Religiosa': 'Educación Religiosa',
+            'Tecnología e Informática': 'Tecnología e Informática',
+            'Convivencia': 'Convivencia',
+            'Todas': 'Todas',
+            'Coordinadores': 'Coordinadores',
+            'Administrativos': 'Administrativos',
+            'Psicología': 'Psicología'
+        },
+        incidentTypes: {
+            [IncidentType.SCHOOL_COEXISTENCE]: 'Convivencia Escolar',
+            [IncidentType.UNIFORM_MISUSE]: 'Uso inapropiado del uniforme',
+            [IncidentType.INFRASTRUCTURE_DAMAGE]: 'Daños a la infraestructura',
+            [IncidentType.BULLYING_CYBERBULLYING]: 'Acoso y ciberacoso',
+            [IncidentType.NON_COMPLIANCE]: 'Incumplimiento de deberes',
+            [IncidentType.ACADEMIC_MISCONDUCT]: 'Faltas Académicas',
+            [IncidentType.OTHER]: 'Otro',
+        },
+        buttons: {
+            cancel: "Cancelar",
+            saveChanges: "Guardar Cambios",
+            edit: "Editar",
+        },
+        settings: {
+            notifications: {
+                title: "Notificaciones",
+                saveSuccess: "Configuración de notificaciones guardada.",
+                newIncidentLabel: "Nuevas Incidencias",
+                newIncidentDescription: "Recibir una notificación cuando se reporte una nueva incidencia.",
+                weeklySummaryLabel: "Resumen Semanal",
+                weeklySummaryDescription: "Recibir un resumen de actividad semanal por correo.",
+                assessmentRemindersLabel: "Recordatorios de Evaluaciones",
+                assessmentRemindersDescription: "Recibir recordatorios sobre evaluaciones pendientes.",
+            },
+            language: {
+                title: "Idioma",
+                description: "Selecciona el idioma de la interfaz.",
+                spanish: "Español",
+                english: "Inglés",
+            },
+            appearance: {
+                title: "Apariencia",
+                description: "Elige cómo se ve la aplicación.",
+                light: "Claro",
+                dark: "Oscuro",
+                system: "Sistema",
+            }
+        }
+    },
+    en: {
+        studentLabel: 'Student',
+        close: 'Close',
+        success: 'Success',
+        error: 'Error',
+        login: {
+            success: 'Login successful.',
+            invalidCredentials: 'Invalid username or password.',
+        },
+        register: {
+            emailExists: 'Email is already registered.',
+            demoSuccess: 'Demo account created successfully!',
+        },
+        notifications: {
+            accountUpgraded: 'Your account has been upgraded!',
+            attentionReportSent: 'Attention report sent successfully.',
+            psychologyReportUpdated: 'Psychology report updated.',
+            newIncident: {
+                title: 'New Incident Reported',
+                message: 'A new incident has been reported: {{incidentType}}.',
+            },
+        },
+        loadingApp: 'Loading application',
+        loadingProfiles: 'Loading profiles',
+        loadingPortal: 'Loading portal',
+        roles: {
+            GUARDIAN: 'Guardian',
+            STUDENT: 'Student',
+            TEACHER: 'Teacher',
+            COORDINATOR: 'Coordinator',
+            RECTOR: 'Rector',
+            ADMIN: 'Administrator',
+            PSYCHOLOGY: 'Psychologist',
+            SUBJECT_TEACHER: '{{subject}} Teacher',
+        },
+        subjects: {
+            'Matemáticas': 'Mathematics',
+            'Lengua Castellana': 'Spanish Language',
+            'Inglés': 'English',
+            'Biología': 'Biology',
+            'Química': 'Chemistry',
+            'Física': 'Physics',
+            'Historia': 'History',
+            'Geografía': 'Geography',
+            'Constitución Política y Democracia': 'Political Constitution and Democracy',
+            'Educación Artística': 'Art Education',
+            'Música': 'Music',
+            'Educación Ética y en Valores Humanos': 'Ethics and Human Values Education',
+            'Filosofía': 'Philosophy',
+            'Educación Física': 'Physical Education',
+            'Educación Religiosa': 'Religious Education',
+            'Tecnología e Informática': 'Technology and Informatics',
+            'Convivencia': 'Coexistence',
+            'Todas': 'All',
+            'Coordinadores': 'Coordinators',
+            'Administrativos': 'Administrative',
+            'Psicología': 'Psychology'
+        },
+         incidentTypes: {
+            [IncidentType.SCHOOL_COEXISTENCE]: 'School Coexistence',
+            [IncidentType.UNIFORM_MISUSE]: 'Improper Uniform Use',
+            [IncidentType.INFRASTRUCTURE_DAMAGE]: 'Infrastructure Damage',
+            [IncidentType.BULLYING_CYBERBULLYING]: 'Bullying and Cyberbullying',
+            [IncidentType.NON_COMPLIANCE]: 'Non-compliance with Duties',
+            [IncidentType.ACADEMIC_MISCONDUCT]: 'Academic Misconduct',
+            [IncidentType.OTHER]: 'Other',
+        },
+        buttons: {
+            cancel: "Cancel",
+            saveChanges: "Save Changes",
+            edit: "Edit",
+        },
+        settings: {
+            notifications: {
+                title: "Notifications",
+                saveSuccess: "Notification settings saved.",
+                newIncidentLabel: "New Incidents",
+                newIncidentDescription: "Receive a notification when a new incident is reported.",
+                weeklySummaryLabel: "Weekly Summary",
+                weeklySummaryDescription: "Receive a weekly activity summary by email.",
+                assessmentRemindersLabel: "Assessment Reminders",
+                assessmentRemindersDescription: "Receive reminders about pending assessments.",
+            },
+            language: {
+                title: "Language",
+                description: "Select the interface language.",
+                spanish: "Spanish",
+                english: "English",
+            },
+            appearance: {
+                title: "Appearance",
+                description: "Choose how the application looks.",
+                light: "Light",
+                dark: "Dark",
+                system: "System",
+            }
+        }
+    },
+};

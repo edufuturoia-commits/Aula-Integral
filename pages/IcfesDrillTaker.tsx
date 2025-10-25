@@ -276,7 +276,6 @@ const IcfesDrillTaker: React.FC = () => {
                         <h3 className="text-xl font-bold mb-4">Rendimiento por Área</h3>
                         <div className="space-y-4">
                             {Object.entries(resultsByArea).map(([area, result]) => {
-                                // FIX: Cast `result` to its expected type, as Object.entries returns `unknown` for values.
                                 const typedResult = result as { correct: number; total: number };
                                 if (typedResult.total === 0) return null;
                                 const percentage = (typedResult.correct / typedResult.total) * 100;
@@ -308,30 +307,38 @@ const IcfesDrillTaker: React.FC = () => {
                 <div>
                     <h3 className="text-2xl font-bold mb-4 pt-6 border-t dark:border-gray-700">Revisión de Preguntas</h3>
                     <div className="space-y-6 max-h-[50vh] overflow-y-auto pr-3">
-                         {questions.map((q, index) => (
-                            <div key={index} className="p-4 border dark:border-gray-700 rounded-lg">
-                                <p className="font-semibold text-gray-800 dark:text-gray-200 mb-3">{index + 1}. {q.question}</p>
-                                <div className="space-y-2">
-                                    {q.options.map((option, optIndex) => {
-                                        const isCorrect = optIndex === q.correctAnswerIndex;
-                                        const isUserAnswer = optIndex === answers[index];
-                                        let optionClass = 'border-gray-300 dark:border-gray-600';
-                                        if (isCorrect) optionClass = 'bg-green-100 border-green-500 text-green-800 dark:bg-green-900/50 dark:border-green-600 dark:text-green-200';
-                                        if (isUserAnswer && !isCorrect) optionClass = 'bg-red-100 border-red-500 text-red-800 dark:bg-red-900/50 dark:border-red-600 dark:text-red-200';
-                                        
-                                        return (
-                                            <div key={optIndex} className={`p-3 border rounded-md text-sm ${optionClass}`}>
-                                                {option} {isUserAnswer && <span className="font-bold text-xs"> (Tu respuesta)</span>}
-                                            </div>
-                                        );
-                                    })}
+                         {questions.map((q, index) => {
+                            const userAnswerIndex = answers[index];
+                            const isCorrect = userAnswerIndex === q.correctAnswerIndex;
+                            
+                            return (
+                                <div key={index} className="p-4 border dark:border-gray-700 rounded-lg">
+                                    <p className="font-semibold text-gray-800 dark:text-gray-200 mb-3">{index + 1}. {q.question}</p>
+                                    <div className="space-y-2">
+                                        {q.options?.map((option, optIndex) => {
+                                            const isCorrectAnswer = optIndex === q.correctAnswerIndex;
+                                            const isUserAnswer = optIndex === userAnswerIndex;
+                                            let optionClass = 'border-gray-300 dark:border-gray-600';
+                                            if (isCorrectAnswer) {
+                                                optionClass = 'bg-green-100 border-green-500 text-green-800 dark:bg-green-900/50 dark:border-green-600 dark:text-green-200';
+                                            } else if (isUserAnswer && !isCorrectAnswer) {
+                                                optionClass = 'bg-red-100 border-red-500 text-red-800 dark:bg-red-900/50 dark:border-red-600 dark:text-red-200';
+                                            }
+                                            
+                                            return (
+                                                <div key={optIndex} className={`p-3 border rounded-md text-sm ${optionClass}`}>
+                                                    {option} {isUserAnswer && <span className="font-bold text-xs"> (Tu respuesta)</span>}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/40 border-l-4 border-yellow-400 dark:border-yellow-500 rounded-r-md">
+                                        <h4 className="font-bold text-yellow-800 dark:text-yellow-200 text-sm">Explicación</h4>
+                                        <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{q.explanation}</p>
+                                    </div>
                                 </div>
-                                <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/40 border-l-4 border-yellow-400 dark:border-yellow-500 rounded-r-md">
-                                    <h4 className="font-bold text-yellow-800 dark:text-yellow-200 text-sm">Explicación</h4>
-                                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{q.explanation}</p>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </div>
@@ -382,8 +389,9 @@ const IcfesDrillTaker: React.FC = () => {
 
                  {/* Options */}
                 <div className="space-y-3">
-                    {currentQuestion.options.map((option, index) => {
-                        const isSelected = userAnswer === index;
+                    {currentQuestion.options?.map((option, index) => {
+                        const letter = String.fromCharCode(65 + index);
+                        const isSelected = answers[currentQuestionIndex] === index;
                         let optionClass = 'border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-800 dark:text-gray-200';
                         if (drillMode === 'practice' && userAnswer !== undefined) {
                              if (index === currentQuestion.correctAnswerIndex) {
@@ -396,7 +404,7 @@ const IcfesDrillTaker: React.FC = () => {
                         }
                         return (
                             <button key={index} onClick={() => handleAnswerSelect(index)} disabled={drillMode === 'practice' && userAnswer !== undefined} className={`w-full text-left p-4 border-2 rounded-lg flex items-center space-x-4 transition-colors ${optionClass}`}>
-                                <span className={`font-bold flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-sm ${isSelected ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200'}`}>{String.fromCharCode(65 + index)}</span>
+                                <span className={`font-bold flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-sm ${isSelected ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200'}`}>{letter}</span>
                                 <span className="font-medium text-gray-800 dark:text-gray-200">{option}</span>
                             </button>
                         );

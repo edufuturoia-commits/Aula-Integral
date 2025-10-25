@@ -65,10 +65,8 @@ const EditStudentModal: React.FC<EditStudentModalProps> = ({ student, onClose, o
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de Documento</label>
                         <select name="documentType" value={formData.documentType || ''} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             <option value="">Seleccionar...</option>
-                            {/* FIX: Use correct enum member `CIVIL_REGISTRY` instead of `REGISTRO_CIVIL`. */}
-                            <option value={DocumentType.CIVIL_REGISTRY}>{DocumentType.CIVIL_REGISTRY}</option>
-                            {/* FIX: Use correct enum member `IDENTITY_CARD` instead of `TARJETA_IDENTIDAD`. */}
-                            <option value={DocumentType.IDENTITY_CARD}>{DocumentType.IDENTITY_CARD}</option>
+                            <option value="Registro Civil">Registro Civil</option>
+                            <option value="Tarjeta de Identidad">Tarjeta de Identidad</option>
                         </select>
                     </div>
                     <div>

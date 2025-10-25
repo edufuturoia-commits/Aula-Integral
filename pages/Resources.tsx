@@ -10,12 +10,11 @@ interface ResourcesProps {
     onUpdate: () => void;
 }
 
-// FIX: Corrected object keys 'Imagen' to 'Image' and 'Documento' to 'Document' to match the ResourceType enum.
 const ICONS: Record<ResourceType, React.ReactElement> = {
-    PDF: <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 11-2 0V4h-3v9a1 1 0 11-2 0V4H6v12a1 1 0 11-2 0V4zm4-2a1 1 0 00-1 1v1h2V3a1 1 0 00-1-1z" clipRule="evenodd" /></svg>,
-    Video: <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2-2H4a2 2 0 01-2-2V6zm14.553 1.398l-3.267 3.267c-.24.24-.24.63 0 .87l3.267 3.267A.5.5 0 0018 13.5V6.5a.5.5 0 00-.447-.498z" /></svg>,
-    Image: <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" /></svg>,
-    Document: <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>,
+    'PDF': <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 11-2 0V4h-3v9a1 1 0 11-2 0V4H6v12a1 1 0 11-2 0V4zm4-2a1 1 0 00-1 1v1h2V3a1 1 0 00-1-1z" clipRule="evenodd" /></svg>,
+    'Video': <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2-2H4a2 2 0 01-2-2V6zm14.553 1.398l-3.267 3.267c-.24.24-.24.63 0 .87l3.267 3.267A.5.5 0 0018 13.5V6.5a.5.5 0 00-.447-.498z" /></svg>,
+    'Imagen': <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" /></svg>,
+    'Documento': <svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>,
 };
 
 const ResourceCard: React.FC<{
@@ -30,8 +29,8 @@ const ResourceCard: React.FC<{
     const typeClasses = {
         PDF: 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400',
         Video: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400',
-        Image: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400',
-        Document: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
+        Imagen: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400',
+        Documento: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
     };
 
     return (

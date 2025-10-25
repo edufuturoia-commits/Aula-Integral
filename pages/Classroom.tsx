@@ -8,8 +8,9 @@ import CitationModal from '../components/CitationModal';
 import GroupMessageModal from '../components/GroupMessageModal';
 import CancelCitationModal from '../components/CancelCitationModal';
 import AddStudentModal from '../components/AddStudentModal'; // Import new modal
-import type { Student, Incident, ParentMessage, Citation, CoordinationMessage, Teacher, SubjectGrades, AttendanceRecord, Announcement, IncidentType, AttentionReport } from '../types';
-import { CitationStatus, Role, IncidentStatus } from '../types';
+// FIX: Move IncidentType from 'import type' to a value import
+import type { Student, Incident, ParentMessage, Citation, CoordinationMessage, Teacher, SubjectGrades, AttendanceRecord, Announcement, AttentionReport } from '../types';
+import { CitationStatus, Role, IncidentStatus, IncidentType } from '../types';
 import { addOrUpdateStudents } from '../db';
 import { GRADES, GROUPS, MOCK_CITATIONS, MOCK_COORDINATOR_USER, GRADE_GROUP_MAP } from '../constants';
 import AttendanceTaker from '../components/AttendanceTaker';
@@ -90,13 +91,13 @@ const OtroIcon: React.FC<{className?: string}> = ({className}) => (
 
 const IncidentTypeIcon: React.FC<{type: IncidentType, className?: string}> = ({ type, className = "h-5 w-5" }) => {
     switch (type) {
-        case 'Convivencia Escolar': return <ConvivenciaIcon className={className} />;
-        case 'Uso inapropiado del uniforme': return <UniformeIcon className={className} />;
-        case 'Daños a la infraestructura': return <DanosIcon className={className} />;
-        case 'Acoso y ciberacoso': return <AcosoIcon className={className} />;
-        case 'Incumplimiento': return <IncumplimientoIcon className={className} />;
-        case 'Faltas Académicas': return <FaltasAcademicasIcon className={className} />;
-        case 'Otro': return <OtroIcon className={className} />;
+        case IncidentType.SCHOOL_COEXISTENCE: return <ConvivenciaIcon className={className} />;
+        case IncidentType.UNIFORM_MISUSE: return <UniformeIcon className={className} />;
+        case IncidentType.INFRASTRUCTURE_DAMAGE: return <DanosIcon className={className} />;
+        case IncidentType.BULLYING_CYBERBULLYING: return <AcosoIcon className={className} />;
+        case IncidentType.NON_COMPLIANCE: return <IncumplimientoIcon className={className} />;
+        case IncidentType.ACADEMIC_MISCONDUCT: return <FaltasAcademicasIcon className={className} />;
+        case IncidentType.OTHER: return <OtroIcon className={className} />;
         default: return <OtroIcon className={className} />;
     }
 };
