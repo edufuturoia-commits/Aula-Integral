@@ -1,5 +1,6 @@
 
 
+
 import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades, Guardian, Lesson, AttentionReport } from './types';
 import { MOCK_STUDENTS, MOCK_TEACHERS, MOCK_RESOURCES, MOCK_STUDENT_ASSESSMENT_RESULTS, MOCK_SUBJECT_GRADES, MOCK_ANNOUNCEMENTS, MOCK_GUARDIANS } from './constants';
 
@@ -182,5 +183,12 @@ export const addOrUpdateSubjectGrades = (grades: SubjectGrades[]): Promise<void>
 export const getLessons = (): Promise<Lesson[]> => simulateApiCall(lessons);
 export const addLesson = (lesson: Lesson): Promise<void> => {
     lessons.unshift(lesson); // Add to the top of the list
+    return simulateApiCall(undefined);
+};
+export const updateLesson = (updatedLesson: Lesson): Promise<void> => {
+    const index = lessons.findIndex(l => l.id === updatedLesson.id);
+    if (index > -1) {
+        lessons[index] = updatedLesson;
+    }
     return simulateApiCall(undefined);
 };

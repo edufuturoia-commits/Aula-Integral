@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { SUBJECT_AREAS, GRADES } from '../constants';
-import type { SubjectArea, Lesson, LessonContent, Student, Teacher, Guardian } from '../types';
+import type { SubjectArea, Lesson, LessonContent, Student, Teacher, Guardian, PracticalTask } from '../types';
 
 interface TutorModeProps {
   lessons: Lesson[];
   onAddLesson: (lesson: Lesson) => Promise<void>;
+  onUpdateLesson: (lesson: Lesson) => Promise<void>;
   currentUser: Student | Teacher | Guardian;
 }
 
@@ -99,8 +100,120 @@ const renderMarkdown = (text: string) => {
     return elements;
 };
 
+interface TaskFormProps {
+    onSave: (task: PracticalTask) => void;
+    onCancel: () => void;
+}
 
-const TutorMode: React.FC<TutorModeProps> = ({ lessons, onAddLesson, currentUser }) => {
+const TaskForm: React.FC<TaskFormProps> = ({ onSave, onCancel }) => {
+    const [statement, setStatement] = useState('');
+    const [options, setOptions] = useState<string[]>(['', '']);
+    const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number>(0);
+
+    const handleOptionChange = (index: number, value: string) => {
+        const newOptions = [...options];
+        newOptions[index] = value;
+        setOptions(newOptions);
+    };
+
+    const addOption = () => {
+        setOptions([...options, '']);
+    };
+    
+    const removeOption = (index: number) => {
+        if (options.length <= 2) return; // Must have at least 2 options
+        const newOptions = options.filter((_, i) => i !== index);
+        // Adjust correct answer index if it's affected
+        if (correctAnswerIndex === index) {
+            setCorrectAnswerIndex(0);
+        } else if (correctAnswerIndex > index) {
+            setCorrectAnswerIndex(prev => prev - 1);
+        }
+        setOptions(newOptions);
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!statement.trim() || options.some(opt => !opt.trim())) {
+            alert('Por favor, completa el enunciado y todas las opciones.');
+            return;
+        }
+
+        const newTask: PracticalTask = {
+            id: `task_${Date.now()}`,
+            statement,
+            options,
+            correctAnswerIndex,
+        };
+        onSave(newTask);
+    };
+    
+    return (
+        <form onSubmit={handleSubmit} className="p-4 mt-6 bg-gray-100 dark:bg-gray-700/50 rounded-lg border dark:border-gray-600 animate-fade-in">
+            <h4 className="text-lg font-bold mb-4 text-gray-800 dark:text-gray-100">Nueva Tarea Práctica</h4>
+            <div className="space-y-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Enunciado</label>
+                    <textarea
+                        value={statement}
+                        onChange={e => setStatement(e.target.value)}
+                        rows={3}
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
+                        required
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Opciones de Respuesta</label>
+                    <div className="space-y-2">
+                        {options.map((option, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                                <input
+                                    type="radio"
+                                    name="correctAnswer"
+                                    checked={correctAnswerIndex === index}
+                                    onChange={() => setCorrectAnswerIndex(index)}
+                                    className="h-5 w-5 text-primary focus:ring-primary"
+                                    title="Marcar como correcta"
+                                />
+                                <input
+                                    type="text"
+                                    value={option}
+                                    onChange={e => handleOptionChange(index, e.target.value)}
+                                    className="flex-grow p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
+                                    placeholder={`Opción ${index + 1}`}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => removeOption(index)}
+                                    disabled={options.length <= 2}
+                                    className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full disabled:text-gray-400 disabled:hover:bg-transparent"
+                                    title="Eliminar opción"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                     <button
+                        type="button"
+                        onClick={addOption}
+                        className="mt-2 text-sm font-semibold text-primary hover:underline"
+                    >
+                        + Añadir opción
+                    </button>
+                </div>
+            </div>
+             <div className="flex justify-end space-x-3 mt-6">
+                <button type="button" onClick={onCancel} className="px-4 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">Cancelar</button>
+                <button type="submit" className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Guardar Tarea</button>
+            </div>
+        </form>
+    );
+};
+
+
+const TutorMode: React.FC<TutorModeProps> = ({ lessons, onAddLesson, onUpdateLesson, currentUser }) => {
     const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
     
     // Form state
@@ -114,6 +227,7 @@ const TutorMode: React.FC<TutorModeProps> = ({ lessons, onAddLesson, currentUser
     const [error, setError] = useState<string | null>(null);
     const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number | null>>({});
     const [historySearchTerm, setHistorySearchTerm] = useState('');
+    const [isAddingTask, setIsAddingTask] = useState(false);
 
     const userLessons = useMemo(() => {
         if (!currentUser) return [];
@@ -129,6 +243,7 @@ const TutorMode: React.FC<TutorModeProps> = ({ lessons, onAddLesson, currentUser
         setSelectedLesson(lesson);
         setSelectedAnswers({});
         setError(null);
+        setIsAddingTask(false);
     };
 
     const handleGenerate = async () => {
@@ -225,6 +340,23 @@ La salida final debe ser un único objeto JSON que contenga:
 
     const handleAnswerSelect = (questionIndex: number, answerIndex: number) => {
         setSelectedAnswers(prev => ({ ...prev, [questionIndex]: answerIndex }));
+    };
+
+    const handleSaveTask = (task: PracticalTask) => {
+        if (!selectedLesson) return;
+
+        const updatedTasks = [...(selectedLesson.content.practicalTasks || []), task];
+        const updatedLesson: Lesson = {
+            ...selectedLesson,
+            content: {
+                ...selectedLesson.content,
+                practicalTasks: updatedTasks,
+            },
+        };
+
+        onUpdateLesson(updatedLesson);
+        setSelectedLesson(updatedLesson);
+        setIsAddingTask(false);
     };
 
     const handleDownloadPdf = (lessonContent: LessonContent) => {
@@ -326,6 +458,45 @@ La salida final debe ser un único objeto JSON que contenga:
                         <div>
                            <h3 className="text-xl font-bold text-primary dark:text-secondary border-b-2 border-primary-focus/30 pb-2 mb-4">Preguntas de Práctica</h3>
                            {/* ... a lot of code for questions ... */}
+                        </div>
+                        {/* Practical Tasks Section */}
+                        <div className="mt-8">
+                            <h3 className="text-xl font-bold text-primary dark:text-secondary border-b-2 border-primary-focus/30 pb-2 mb-4">
+                                Tareas Prácticas Personalizadas
+                            </h3>
+                            
+                            {selectedLesson.content.practicalTasks?.map((task, index) => (
+                                <div key={task.id} className="p-4 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50 mb-4">
+                                    <p className="font-semibold text-gray-800 dark:text-gray-200 mb-3">{index + 1}. {task.statement}</p>
+                                    <div className="space-y-2">
+                                        {task.options.map((option, optIndex) => (
+                                            <div
+                                                key={optIndex}
+                                                className={`p-2 border rounded-md text-sm ${
+                                                    optIndex === task.correctAnswerIndex
+                                                        ? 'bg-green-100 border-green-500 text-green-800 dark:bg-green-900/50 dark:border-green-600 dark:text-green-200 font-semibold'
+                                                        : 'bg-white border-gray-300 dark:bg-gray-800 dark:border-gray-600'
+                                                }`}
+                                            >
+                                                {String.fromCharCode(65 + optIndex)}. {option}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+
+                            {isAddingTask ? (
+                                <TaskForm onSave={handleSaveTask} onCancel={() => setIsAddingTask(false)} />
+                            ) : (
+                                <div className="text-center mt-6">
+                                    <button
+                                        onClick={() => setIsAddingTask(true)}
+                                        className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+                                    >
+                                        + Añadir Tarea Práctica
+                                    </button>
+                                </div>
+                            )}
                         </div>
                      </div>
                 ) : (

@@ -6,6 +6,8 @@
 
 
 
+
+
 import React, { useState, useCallback, useEffect, Suspense, lazy, useMemo, createContext, useContext } from 'react';
 
 // New Pages for Auth Flow
@@ -21,7 +23,7 @@ import Header from './components/Header';
 
 // Types and DB
 import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData, Conversation, Lesson, AttentionReport, Message } from './types';
-import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian, getLessons, addLesson, getAttentionReports, addAttentionReport, updateAttentionReport } from './db';
+import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian, getLessons, addLesson, updateLesson, getAttentionReports, addAttentionReport, updateAttentionReport } from './db';
 
 // Constants
 import { SIDEBAR_ITEMS, MOCK_INSTITUTION_PROFILE, MOCK_CITATIONS, MOCK_CONVERSATIONS_DATA, translations } from './constants';
@@ -586,6 +588,12 @@ const AppContent: React.FC = () => {
     setLessons(data);
   };
 
+  const handleUpdateLesson = async (lesson: Lesson) => {
+    await updateLesson(lesson);
+    const data = await getLessons();
+    setLessons(data);
+  };
+
   const handleCreateAttentionReport = async (report: AttentionReport) => {
       const student = allUsersMap.get(report.studentId) as Student;
       const guardian = guardians.find(g => g.studentIds.includes(report.studentId));
@@ -706,7 +714,7 @@ const AppContent: React.FC = () => {
                     <Suspense fallback={<div className="flex items-center justify-center h-full">{t('loadingPortal')}...</div>}>
                         {currentPage === 'StudentPortal' && <StudentPortal loggedInUser={currentUser as Student} allStudents={students} teachers={teachers} subjectGrades={subjectGrades} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleAddResult} citations={citations} icfesDrillSettings={icfesDrillSettings} />}
                         {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
-                        {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} currentUser={currentUser}/>}
+                        {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} onUpdateLesson={handleUpdateLesson} currentUser={currentUser}/>}
                     </Suspense>
                 </main>
                  {notification && <NotificationToast title={notification.title} message={notification.message} studentName={notification.studentName} onClose={() => setNotification(null)} />}
@@ -753,7 +761,7 @@ const AppContent: React.FC = () => {
                 {currentPage === 'InstitutionProfile' && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile} />}
                 {currentPage === 'Calificaciones' && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} onShowSystemMessage={showSystemMessage} />}
                 {currentPage === 'Communication' && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} guardians={guardians} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} />}
-                {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} currentUser={currentUser}/>}
+                {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} onUpdateLesson={handleUpdateLesson} currentUser={currentUser}/>}
                 {currentPage === 'Eventos' && <Eventos />}
                 {currentPage === 'SimulacroICFES' && (isAdmin || userRole === Role.RECTOR) && <SimulacroICFES settings={icfesDrillSettings} onSettingsChange={handleSetIcfesDrillSettings} />}
                 {currentPage === 'Consolidado' && <Consolidado students={students} subjectGradesData={subjectGrades}/>}

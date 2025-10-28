@@ -381,6 +381,13 @@ export interface GeneratedQuestion {
     area: string;
 }
 
+export interface PracticalTask {
+  id: string;
+  statement: string;
+  options: string[];
+  correctAnswerIndex: number;
+}
+
 export interface LessonContent {
     title: string;
     introduction: string;
@@ -388,6 +395,7 @@ export interface LessonContent {
     deepening: string;
     conclusion: string;
     practiceQuestions: GeneratedQuestion[];
+    practicalTasks?: PracticalTask[];
 }
 
 export interface Lesson {
