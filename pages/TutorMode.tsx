@@ -262,24 +262,21 @@ const TutorMode: React.FC<TutorModeProps> = ({ lessons, onAddLesson, onUpdateLes
 
             const prompt = `Actúa como un tutor experto y amigable para un estudiante de '${grade}'. El tema a explicar es '${topic}' en la materia de '${subject}'.
 
-Tu tarea es generar una lección completa, didáctica y moderna. La lección debe ser fácil de entender y seguir un flujo lógico.
+Tu tarea es generar una lección completa, didáctica y moderna. La lección debe ser fácil de entender y seguir un flujo lógico y bien organizado.
 
 La salida final debe ser un único objeto JSON que contenga:
 1. 'title': Un título claro y atractivo para la lección.
 2. 'introduction': Un párrafo que introduce el tema, captura el interés del estudiante y explica su importancia.
-3. 'development': La explicación principal del tema. **Organiza el contenido de forma clara y estructurada.** Utiliza párrafos cortos separados por saltos de línea para facilitar la lectura. **Divide la explicación en secciones lógicas usando subtítulos (formato: ## Título de la Sección).** Para listar características o elementos, usa viñetas (formato: * Elemento de la lista). Para pasos secuenciales, usa listas numeradas (formato: 1. Primer paso). Incluye ejemplos claros donde sea pertinente. **Asegúrate de usar correctamente los signos de puntuación como puntos aparte para separar ideas.**
+3. 'development': La explicación principal del tema. Organiza el contenido de forma clara y estructurada. Utiliza párrafos cortos separados por saltos de línea para facilitar la lectura. Divide la explicación en secciones lógicas usando subtítulos (formato: ## Título de la Sección). Para listar características o elementos, usa viñetas (formato: * Elemento de la lista). Para pasos secuenciales, usa listas numeradas (formato: 1. Primer paso). Incluye ejemplos claros donde sea pertinente. Asegúrate de usar correctamente los signos de puntuación como puntos aparte para separar ideas.
 4. 'deepening': Una sección de "Profundización". Aquí puedes incluir aplicaciones en el mundo real, conexiones con otras áreas del conocimiento, o un dato curioso avanzado sobre el tema.
 5. 'conclusion': Un párrafo que resume los puntos más importantes de la lección.
 6. 'practiceQuestions': Un array con exactamente ${numQuestions} preguntas de práctica de opción múltiple (4 opciones) para verificar la comprensión, cada una con su explicación.
 
-**Reglas de formato del texto:**
-- Dentro de los campos de texto ('introduction', 'development', etc.), usa una sintaxis similar a Markdown para estructurar el contenido:
-  - Subtítulos con '## '.
-  - Listas con viñetas usando '* '.
-  - Listas enumeradas usando '1. ', '2. ', etc.
-  - Citas o texto destacado usando '> '.
-- **Separa los párrafos con un salto de línea en blanco.**
-- Asegúrate de que el JSON esté bien formado y que el contenido sea pedagógicamente sólido.`;
+**Reglas de formato del texto (MUY IMPORTANTE):**
+- **No uses negrilla (formato markdown \`**texto**\`) en ninguna parte del contenido.** La única negrilla permitida es la que se genera a partir de los subtítulos con '##'. Los párrafos, listas, ejemplos y explicaciones deben estar en texto normal, sin negrilla.
+- Usa los formatos de lista ('* ' para viñetas, '1. ' para numeradas) y subtítulos ('## ') como se indicó para mantener la estructura.
+- Separa los párrafos con un salto de línea en blanco para mayor claridad.
+- El JSON final debe estar perfectamente formado.`;
             
             const responseSchema = {
                 type: Type.OBJECT,
