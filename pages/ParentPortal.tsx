@@ -317,7 +317,6 @@ const ComunicadosView: React.FC<{ announcements: Announcement[], teachers: Teach
     
     const studentTeachers = useMemo(() => {
         const teacherIds = new Set<string>();
-        // FIX: Cannot find name 'subjectGrades'. Pass subjectGrades as a prop to the component.
         subjectGrades.filter(sg => sg.grade === student.grade && sg.group === student.group).forEach(sg => teacherIds.add(sg.teacherId));
         return teachers.filter(t => teacherIds.has(t.id));
     }, [teachers, student, subjectGrades]);

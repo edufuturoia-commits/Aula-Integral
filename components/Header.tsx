@@ -12,6 +12,7 @@ interface HeaderProps {
   };
   onLogout: () => void;
   onNavigate: (page: Page) => void;
+  onToggleMobileSidebar: () => void;
 }
 
 const StatusIndicator: React.FC<{isOnline: boolean}> = ({ isOnline }) => {
@@ -28,13 +29,24 @@ const StatusIndicator: React.FC<{isOnline: boolean}> = ({ isOnline }) => {
   );
 };
 
-const Header: React.FC<HeaderProps> = ({ currentPage, isOnline, currentUser, onLogout, onNavigate }) => {
+const Header: React.FC<HeaderProps> = ({ currentPage, isOnline, currentUser, onLogout, onNavigate, onToggleMobileSidebar }) => {
   
   const pageLabel = SIDEBAR_ITEMS.find(item => item.name === currentPage)?.label || currentPage;
 
   return (
     <header className="h-20 bg-base-100 dark:bg-gray-800 shadow-md dark:shadow-none dark:border-b dark:border-gray-700 flex items-center justify-between px-4 md:px-6">
-      <h1 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 truncate pr-4">{pageLabel}</h1>
+      <div className="flex items-center">
+        <button
+          onClick={onToggleMobileSidebar}
+          className="lg:hidden p-2 -ml-2 mr-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+          aria-label="Abrir menú"
+        >
+          <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 truncate pr-4">{pageLabel}</h1>
+      </div>
       <div className="flex items-center space-x-2 md:space-x-4">
         <StatusIndicator isOnline={isOnline} />
         <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
@@ -51,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, isOnline, currentUser, onL
         </button>
         <button
             onClick={onLogout}
-            className="p-3 rounded-full text-gray-500 dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+            className="p-3 rounded-full text-gray-500 dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-600 dark:hover:text-red-400 transition-colors hidden sm:inline-flex"
             title={'Cerrar Sesión'}
         >
             <LogoutIcon className="h-6 w-6" />

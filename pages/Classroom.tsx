@@ -118,56 +118,14 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   const [isAttentionReportModalOpen, setIsAttentionReportModalOpen] = useState(false);
   const [studentForAttention, setStudentForAttention] = useState<Student | null>(null);
 
-  const availableGrades = useMemo(() => {
-    if (!currentUser) return ['all'];
-    
-    if (currentUser.role === Role.ADMIN || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR) {
-        return ['all', ...GRADES];
-    }
-    
-    // For teachers, only show grades they teach or are homeroom teacher for
-    const teacherGrades = new Set<string>();
-    if (currentUser.isHomeroomTeacher && currentUser.assignedGroup) {
-      teacherGrades.add(currentUser.assignedGroup.grade);
-    }
-    subjectGradesData.forEach(sg => {
-      if (sg.teacherId === currentUser.id) {
-        teacherGrades.add(sg.grade);
-      }
-    });
-
-    if (teacherGrades.size === 0) return ['all'];
-    return ['all', ...Array.from(teacherGrades)].sort();
-  }, [currentUser, subjectGradesData]);
+  const availableGrades = useMemo(() => ['all', ...GRADES], []);
   
   const availableGroups = useMemo(() => {
-    if (!currentUser) return ['all'];
-
-    if (currentUser.role === Role.ADMIN || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR) {
-        if (gradeFilter === 'all') {
-            return ['all', ...GROUPS];
-        }
-        return ['all', ...GRADE_GROUP_MAP[gradeFilter] || []];
+    if (gradeFilter === 'all') {
+        return ['all', ...GROUPS];
     }
-    
-    const teacherGroups = new Set<string>();
-    
-    // If homeroom teacher, add their assigned group
-    const isHomeroom = currentUser.isHomeroomTeacher && currentUser.assignedGroup;
-    if (isHomeroom && (gradeFilter === 'all' || gradeFilter === currentUser.assignedGroup?.grade)) {
-      teacherGroups.add(currentUser.assignedGroup!.group);
-    }
-    
-    // Also add groups from subject gradebooks
-    subjectGradesData.forEach(sg => {
-        if (sg.teacherId === currentUser.id && (gradeFilter === 'all' || sg.grade === gradeFilter)) {
-            teacherGroups.add(sg.group);
-        }
-    });
-    
-    return ['all', ...Array.from(teacherGroups)].sort();
-
-  }, [currentUser, gradeFilter, subjectGradesData]);
+    return ['all', ...GRADE_GROUP_MAP[gradeFilter] || []];
+  }, [gradeFilter]);
 
 
   useEffect(() => {

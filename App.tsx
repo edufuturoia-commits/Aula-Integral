@@ -4,6 +4,8 @@
 
 
 
+
+
 import React, { useState, useCallback, useEffect, Suspense, lazy, useMemo, createContext, useContext } from 'react';
 
 // New Pages for Auth Flow
@@ -169,6 +171,7 @@ const AppContent: React.FC = () => {
 
   // Main App Page
   const [currentPage, setCurrentPage] = useState<Page>('Dashboard');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   
   // Theme state
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
@@ -673,6 +676,7 @@ const AppContent: React.FC = () => {
                     currentUser={userForHeader}
                     onLogout={handleLogout}
                     onNavigate={setCurrentPage}
+                    onToggleMobileSidebar={() => {}} 
                 />
                 <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
                     <Suspense fallback={<div className="flex items-center justify-center h-full">{t('loadingPortal')}...</div>}>
@@ -696,6 +700,7 @@ const AppContent: React.FC = () => {
                     currentUser={userForHeader}
                     onLogout={handleLogout}
                     onNavigate={setCurrentPage}
+                    onToggleMobileSidebar={() => {}}
                 />
                 <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
                     <Suspense fallback={<div className="flex items-center justify-center h-full">{t('loadingPortal')}...</div>}>
@@ -716,15 +721,24 @@ const AppContent: React.FC = () => {
           {isDemoExpired && <DemoExpiredModal onUpgrade={handleUpgradeFromDemo} onLogout={handleLogout} />}
           {needsPasswordChange && <ChangePasswordModal user={currentUser as Teacher | Student} onPasswordChanged={handlePasswordChanged} />}
           
-          <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} currentUser={currentUser as Teacher} onLogout={handleLogout} icfesDrillSettings={icfesDrillSettings}/>
+          <Sidebar
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            currentUser={currentUser as Teacher}
+            onLogout={handleLogout}
+            icfesDrillSettings={icfesDrillSettings}
+            isMobileOpen={isMobileSidebarOpen}
+            setIsMobileOpen={setIsMobileSidebarOpen}
+          />
           
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col overflow-hidden">
             <Header 
                 currentPage={currentPage}
                 isOnline={isOnline}
                 currentUser={userForHeader}
                 onLogout={handleLogout}
                 onNavigate={setCurrentPage}
+                onToggleMobileSidebar={() => setIsMobileSidebarOpen(prev => !prev)}
             />
             <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
               <Suspense fallback={<div className="flex items-center justify-center h-full text-gray-600 dark:text-gray-300">Cargando página...</div>}>

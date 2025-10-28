@@ -2,8 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar } from 'recharts';
 import DashboardCard from '../components/DashboardCard';
 import { MOCK_ASSESSMENT_DATA } from '../constants';
-import type { AssessmentData, Student, Teacher, Citation, Page } from '../types';
-import { CitationStatus } from '../types';
+import { CitationStatus, type AssessmentData, type Student, type Teacher, type Citation, type Page } from '../types';
 import { GoogleGenAI } from "@google/genai";
 
 // Custom Tooltip for Recharts

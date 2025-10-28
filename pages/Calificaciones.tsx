@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { Student, SubjectGrades, GradeItem, AcademicPeriod, SubjectArea, Teacher, DesempenoDescriptor } from '../types';
 import { Role, Desempeno } from '../types';
@@ -331,58 +332,12 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
             .map(sg => sg.subject)));
     }, [subjectGradesData, currentUser.id, canAdminGrades]);
 
-    const availableGradeGroups = useMemo(() => {
-        const gradeGroupSet = new Set<string>();
-        subjectGradesData.forEach(sg => gradeGroupSet.add(`${sg.grade}|${sg.group}`));
-        students.forEach(s => gradeGroupSet.add(`${s.grade}|${s.group}`));
-        teachers.forEach(t => {
-            if (t.isHomeroomTeacher && t.assignedGroup) {
-                gradeGroupSet.add(`${t.assignedGroup.grade}|${t.assignedGroup.group}`);
-            }
-        });
-
-        const allGroups = Array.from(gradeGroupSet).map(gg => {
-            const [grade, group] = gg.split('|');
-            return { grade, group };
-        });
-
-        if (!canAdminGrades) {
-            const teacherOwnedGroups = new Set<string>();
-            subjectGradesData.forEach(sg => {
-                if (sg.teacherId === currentUser.id) teacherOwnedGroups.add(`${sg.grade}|${sg.group}`);
-            });
-             if (currentUser.isHomeroomTeacher && currentUser.assignedGroup) {
-                teacherOwnedGroups.add(`${currentUser.assignedGroup.grade}|${currentUser.assignedGroup.group}`);
-            }
-            return allGroups.filter(gg => teacherOwnedGroups.has(`${gg.grade}|${gg.group}`));
-        }
-
-        return allGroups.sort((a, b) => {
-            const gradeA = parseInt(a.grade.replace('º', ''));
-            const gradeB = parseInt(b.grade.replace('º', ''));
-            if (!isNaN(gradeA) && !isNaN(gradeB)) {
-                if (gradeA !== gradeB) return gradeA - gradeB;
-            } else {
-                if (a.grade.localeCompare(b.grade) !== 0) return a.grade.localeCompare(b.grade);
-            }
-            return a.group.localeCompare(b.group);
-        });
-    }, [subjectGradesData, students, teachers, currentUser, canAdminGrades]);
-
-    const availableGradesForSelect = useMemo(() => {
-        // FIX: Explicitly type sort parameters to resolve TS error
-        return Array.from(new Set(availableGradeGroups.map(gg => gg.grade))).sort((a: string, b: string) => {
-            const gradeA = parseInt(a.replace('º', ''));
-            const gradeB = parseInt(b.replace('º', ''));
-            if (!isNaN(gradeA) && !isNaN(gradeB)) return gradeA - gradeB;
-            return a.localeCompare(b);
-        });
-    }, [availableGradeGroups]);
+    const availableGradesForSelect = useMemo(() => GRADES, []);
 
     const availableGroupsForSelect = useMemo(() => {
         if (!selectedGrade) return [];
-        return Array.from(new Set(availableGradeGroups.filter(gg => gg.grade === selectedGrade).map(gg => gg.group))).sort();
-    }, [availableGradeGroups, selectedGrade]);
+        return GRADE_GROUP_MAP[selectedGrade] || [];
+    }, [selectedGrade]);
 
     useEffect(() => {
         if (teacherSubjects.length > 0 && !selectedSubject) {
@@ -615,7 +570,7 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
                                                     <span>{item.name}</span>
                                                     <span className="font-normal text-gray-500 dark:text-gray-400">({(item.weight * 100).toFixed(0)}%)</span>
                                                     <div className="mt-1 flex flex-wrap justify-center gap-1">{item.desempenoIds?.map(id => (<span key={id} className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 text-[10px] px-1.5 py-0.5 rounded-full" title={desempenoMap.get(id)}>{desempenoMap.get(id)?.substring(0, 15) + (desempenoMap.get(id)!.length > 15 ? '...' : '')}</span>))}</div>
-                                                     {!selectedGradebook.isLocked && (<div className="flex justify-center items-center mt-1"><button onClick={() => { setEditingItem(item); setIsItemModalOpen(true); }} className="text-blue-500 hover:underline text-xs">Editar</button><span className="mx-1 text-gray-300">|</span><button onClick={() => handleItemDelete(item.id)} className="text-red-500 hover:underline text-xs">Eliminar</button></div>)}
+                                                     {!selectedGradebook.isLocked && (!viewMode || canAdminGrades) && (<div className="flex justify-center items-center mt-1"><button onClick={() => { setEditingItem(item); setIsItemModalOpen(true); }} className="text-blue-500 hover:underline text-xs">Editar</button><span className="mx-1 text-gray-300">|</span><button onClick={() => handleItemDelete(item.id)} className="text-red-500 hover:underline text-xs">Eliminar</button></div>)}
                                                 </div>
                                             </th>
                                         ))}

@@ -9,6 +9,8 @@ interface SidebarProps {
   currentUser: Teacher | Student;
   onLogout: () => void;
   icfesDrillSettings?: { isActive: boolean, grades: string[] };
+  isMobileOpen: boolean;
+  setIsMobileOpen: (isOpen: boolean) => void;
 }
 
 const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
@@ -20,7 +22,7 @@ const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
   [Role.PSYCHOLOGY]: ['Dashboard', 'Psychology', 'Communication', 'Resources', 'Profile', 'Settings'],
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser, onLogout, icfesDrillSettings }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser, onLogout, icfesDrillSettings, isMobileOpen, setIsMobileOpen }) => {
   const visibleItems = useMemo(() => {
     if (!currentUser) return [];
 
@@ -28,52 +30,71 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentU
     return SIDEBAR_ITEMS.filter(item => allowedPages.includes(item.name));
   }, [currentUser]);
 
+  const handleNavigation = (page: Page) => {
+    setCurrentPage(page);
+    // Close sidebar on navigation, especially for mobile
+    setIsMobileOpen(false);
+  };
 
   return (
-    <div className="w-20 lg:w-64 bg-primary text-white flex flex-col">
-      <div className="flex items-center justify-center h-16 border-b border-primary-focus">
-        <h1 className="text-xl font-bold hidden lg:block">AULA INTEGRAL MAYA</h1>
-        <h1 className="text-xl font-bold lg:hidden">AIM</h1>
-      </div>
-      <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
-        {visibleItems.map((item) => (
-          <a
-            key={item.name}
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              setCurrentPage(item.name);
-            }}
-            className={`flex items-center p-3 rounded-lg transition-colors duration-200 ${
-              currentPage === item.name
-                ? 'bg-primary-focus text-white'
-                : 'text-gray-300 hover:bg-primary-focus hover:text-white dark:text-gray-400 dark:hover:text-white'
-            }`}
-          >
-            <item.icon className="h-6 w-6" />
-            <span className="ml-4 font-medium hidden lg:block">{item.label}</span>
-          </a>
-        ))}
-      </nav>
-       <div className="px-2 py-4 mt-auto border-t border-primary-focus/50">
-        <a
-            href="#"
-            onClick={(e) => {
+    <>
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setIsMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      <div
+        className={`bg-primary text-white flex flex-col fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out
+          transform ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} 
+          w-64 lg:w-20 xl:w-64
+          lg:relative lg:translate-x-0`}
+      >
+        <div className="flex items-center justify-center h-16 border-b border-primary-focus flex-shrink-0">
+          <h1 className="text-xl font-bold hidden xl:block">AULA INTEGRAL MAYA</h1>
+          <h1 className="text-xl font-bold xl:hidden">AIM</h1>
+        </div>
+        <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
+          {visibleItems.map((item) => (
+            <a
+              key={item.name}
+              href="#"
+              onClick={(e) => {
                 e.preventDefault();
-                onLogout();
-            }}
-            className="flex items-center p-3 rounded-lg transition-colors duration-200 text-gray-300 hover:bg-red-500/80 hover:text-white"
-            title={"Cerrar Sesión"}
-        >
-            <LogoutIcon className="h-6 w-6" />
-            <span className="ml-4 font-medium hidden lg:block">{"Cerrar Sesión"}</span>
-        </a>
+                handleNavigation(item.name);
+              }}
+              className={`flex items-center p-3 rounded-lg transition-colors duration-200 lg:justify-center xl:justify-start ${
+                currentPage === item.name
+                  ? 'bg-primary-focus text-white'
+                  : 'text-gray-300 hover:bg-primary-focus hover:text-white dark:text-gray-400 dark:hover:text-white'
+              }`}
+            >
+              <item.icon className="h-6 w-6 flex-shrink-0" />
+              <span className="ml-4 font-medium hidden xl:block">{item.label}</span>
+            </a>
+          ))}
+        </nav>
+        <div className="px-2 py-4 mt-auto border-t border-primary-focus/50">
+          <a
+              href="#"
+              onClick={(e) => {
+                  e.preventDefault();
+                  onLogout();
+              }}
+              className="flex items-center p-3 rounded-lg transition-colors duration-200 text-gray-300 hover:bg-red-500/80 hover:text-white lg:justify-center xl:justify-start"
+              title={"Cerrar Sesión"}
+          >
+              <LogoutIcon className="h-6 w-6 flex-shrink-0" />
+              <span className="ml-4 font-medium hidden xl:block">{"Cerrar Sesión"}</span>
+          </a>
+        </div>
+        <div className="p-4 text-center text-xs text-gray-400 dark:text-gray-500 hidden xl:block">
+          <p>Derechos de autor - EduFuturo</p>
+          <p>Educadores que trascienden</p>
+        </div>
       </div>
-      <div className="p-4 text-center text-xs text-gray-400 dark:text-gray-500 hidden lg:block">
-        <p>Derechos de autor - EduFuturo</p>
-        <p>Educadores que trascienden</p>
-      </div>
-    </div>
+    </>
   );
 };
 

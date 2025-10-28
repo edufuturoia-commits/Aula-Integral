@@ -55,7 +55,7 @@ export const ProfileIcon: React.FC<{className?: string}> = ({ className }) => (
 
 export const SettingsIcon: React.FC<{className?: string}> = ({ className }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
 );
@@ -284,16 +284,12 @@ export const MOCK_DESEMPENOS_BANK: DesempenoDescriptor[] = [
 export const SUBJECT_AREAS: SubjectArea[] = ['Matemáticas', 'Lengua Castellana', 'Inglés', 'Biología', 'Química', 'Física', 'Historia', 'Geografía', 'Constitución Política y Democracia', 'Educación Artística', 'Música', 'Educación Ética y en Valores Humanos', 'Filosofía', 'Educación Física', 'Educación Religiosa', 'Tecnología e Informática', 'Convivencia', 'Todas', 'Coordinadores', 'Administrativos', 'Psicología'];
 export const COMPETENCIES: Competency[] = ['Comprensión Lectora', 'Resolución de Problemas', 'Pensamiento Crítico', 'Competencias Ciudadanas', 'Comunicación Escrita', 'Análisis Científico', 'Expresión Artística', 'Competencia Digital', 'Pensamiento Histórico', 'Bilingüismo', 'Competencia Motriz'];
 export const RESOURCE_TYPES: ResourceType[] = [ResourceType.PDF, ResourceType.Video, ResourceType.Image, ResourceType.Document];
-export const GRADES = ['6º', '7º', '8º', '9º', '10º', '11º'];
-export const GROUPS = ['A', 'B', 'C', 'D'];
-export const GRADE_GROUP_MAP: { [key: string]: string[] } = {
-    '6º': ['A', 'B', 'C'],
-    '7º': ['A', 'B'],
-    '8º': ['A', 'B', 'C'],
-    '9º': ['A', 'B'],
-    '10º': ['A', 'B'],
-    '11º': ['A', 'B'],
-};
+export const GRADES = ['Jardín', 'Prejardín', 'Transición', '1º', '2º', '3º', '4º', '5º', '6º', '7º', '8º', '9º', '10º', '11º'];
+export const GROUPS = ['A', 'B', 'C', 'D', 'E', 'F', '1', '2', '3', '4', '5', '6', '7'];
+export const GRADE_GROUP_MAP: { [key: string]: string[] } = {};
+GRADES.forEach(grade => {
+    GRADE_GROUP_MAP[grade] = [...GROUPS];
+});
 export const ACADEMIC_PERIODS: AcademicPeriod[] = [AcademicPeriod.FIRST, AcademicPeriod.SECOND, AcademicPeriod.THIRD, AcademicPeriod.FOURTH];
 export const SCHOOL_LOCATIONS = ['Salón de Clase', 'Patio de Recreo', 'Baños', 'Cafetería', 'Biblioteca', 'Auditorio', 'Pasillos', 'Fuera de la Institución'];
 
