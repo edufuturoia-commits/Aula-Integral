@@ -1,13 +1,3 @@
-
-
-
-
-
-
-
-
-
-
 import React, { useState, useCallback, useEffect, Suspense, lazy, useMemo, createContext, useContext } from 'react';
 
 // New Pages for Auth Flow
@@ -714,7 +704,7 @@ const AppContent: React.FC = () => {
                     <Suspense fallback={<div className="flex items-center justify-center h-full">{t('loadingPortal')}...</div>}>
                         {currentPage === 'StudentPortal' && <StudentPortal loggedInUser={currentUser as Student} allStudents={students} teachers={teachers} subjectGrades={subjectGrades} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleAddResult} citations={citations} icfesDrillSettings={icfesDrillSettings} />}
                         {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />}
-                        {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} onUpdateLesson={handleUpdateLesson} currentUser={currentUser}/>}
+                        {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} onUpdateLesson={handleUpdateLesson} currentUser={currentUser} institutionProfile={institutionProfile}/>}
                     </Suspense>
                 </main>
                  {notification && <NotificationToast title={notification.title} message={notification.message} studentName={notification.studentName} onClose={() => setNotification(null)} />}
@@ -761,7 +751,7 @@ const AppContent: React.FC = () => {
                 {currentPage === 'InstitutionProfile' && <InstitutionProfile profile={institutionProfile} setProfile={handleSetInstitutionProfile} />}
                 {currentPage === 'Calificaciones' && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} onShowSystemMessage={showSystemMessage} />}
                 {currentPage === 'Communication' && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} guardians={guardians} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} />}
-                {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} onUpdateLesson={handleUpdateLesson} currentUser={currentUser}/>}
+                {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} onUpdateLesson={handleUpdateLesson} currentUser={currentUser} institutionProfile={institutionProfile}/>}
                 {currentPage === 'Eventos' && <Eventos />}
                 {currentPage === 'SimulacroICFES' && (isAdmin || userRole === Role.RECTOR) && <SimulacroICFES settings={icfesDrillSettings} onSettingsChange={handleSetIcfesDrillSettings} />}
                 {currentPage === 'Consolidado' && <Consolidado students={students} subjectGradesData={subjectGrades}/>}

@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { SUBJECT_AREAS, GRADES } from '../constants';
-import type { SubjectArea, Lesson, LessonContent, Student, Teacher, Guardian, PracticalTask } from '../types';
+import type { SubjectArea, Lesson, LessonContent, Student, Teacher, Guardian, PracticalTask, InstitutionProfileData } from '../types';
 
 interface TutorModeProps {
   lessons: Lesson[];
   onAddLesson: (lesson: Lesson) => Promise<void>;
   onUpdateLesson: (lesson: Lesson) => Promise<void>;
   currentUser: Student | Teacher | Guardian;
+  institutionProfile: InstitutionProfileData;
 }
 
 const Spinner: React.FC = () => (
@@ -213,7 +214,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onSave, onCancel }) => {
 };
 
 
-const TutorMode: React.FC<TutorModeProps> = ({ lessons, onAddLesson, onUpdateLesson, currentUser }) => {
+const TutorMode: React.FC<TutorModeProps> = ({ lessons, onAddLesson, onUpdateLesson, currentUser, institutionProfile }) => {
     const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
     
     // Form state
@@ -232,7 +233,7 @@ const TutorMode: React.FC<TutorModeProps> = ({ lessons, onAddLesson, onUpdateLes
     const userLessons = useMemo(() => {
         if (!currentUser) return [];
         return lessons
-            .filter(l => l.userId === currentUser.id)
+            .filter(l => 'id' in currentUser && l.userId === currentUser.id)
             .filter(l => 
                 l.content.title.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
                 l.topic.toLowerCase().includes(historySearchTerm.toLowerCase())
@@ -320,7 +321,7 @@ La salida final debe ser un único objeto JSON que contenga:
 
             const newLesson: Lesson = {
                 id: `lesson_${Date.now()}`,
-                userId: currentUser.id,
+                userId: 'id' in currentUser ? currentUser.id : 'guardian_user',
                 createdAt: new Date().toISOString(),
                 topic,
                 grade,
@@ -359,8 +360,25 @@ La salida final debe ser un único objeto JSON que contenga:
         setIsAddingTask(false);
     };
 
-    const handleDownloadPdf = (lessonContent: LessonContent) => {
-        if (!lessonContent) return;
+    const handleDownloadPdf = (lesson: Lesson) => {
+        if (!lesson) return;
+        const lessonContent = lesson.content;
+
+        const headerHtml = `
+            <div class="header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center;">
+                    <img src="${institutionProfile.logoUrl}" alt="Logo" style="height: 50px; width: 50px; object-fit: contain; margin-right: 15px;"/>
+                    <div>
+                        <h2 style="margin: 0; font-size: 16pt; color: #333;">${institutionProfile.name}</h2>
+                        <p style="margin: 0; font-size: 10pt; color: #666;">Lección generada por IA</p>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <p style="margin: 0; font-weight: bold;">Grado: ${lesson.grade}</p>
+                    <p style="margin: 0; font-size: 9pt; color: #666;">Usuario: ${currentUser.name}</p>
+                </div>
+            </div>
+        `;
 
         const renderMarkdownToHtml = (text: string): string => {
             if (!text) return '';
@@ -385,11 +403,27 @@ La salida final debe ser un único objeto JSON que contenga:
             <div class="section"><h2>Conclusión</h2>${renderMarkdownToHtml(lessonContent.conclusion)}</div>
         `;
 
-        const questionsHtml = lessonContent.practiceQuestions.map((q, index) => `...`).join('');
-        const answerKeyHtml = `...`;
+        const questionsHtml = lessonContent.practiceQuestions.map((q, index) => `
+            <div class="question">
+                <p><strong>${index + 1}.</strong> ${q.question}</p>
+                <ol type="A" style="list-style-type: upper-alpha; padding-left: 20px;">
+                    ${q.options.map(opt => `<li>${opt}</li>`).join('')}
+                </ol>
+            </div>
+        `).join('');
+        
+        const answerKeyHtml = `
+            <h2>Hoja de Respuestas (Para el Docente)</h2>
+            <ol>
+                ${lessonContent.practiceQuestions.map(q => `<li><strong>${String.fromCharCode(65 + q.correctAnswerIndex)}</strong> - ${q.explanation}</li>`).join('')}
+            </ol>
+        `;
 
         const htmlContent = `
-            <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${lessonContent.title}</title><style>body{font-family:sans-serif;line-height:1.6;margin:40px}p{text-align:justify}h1{color:#005A9C;border-bottom:2px solid #ddd;padding-bottom:10px}h2{color:#333;margin-top:2em;border-bottom:1px solid #eee;padding-bottom:5px}h3{color:#555;margin-top:1.5em}ul,ol{margin-bottom:1em}blockquote{border-left:4px solid #ccc;padding-left:1em;margin-left:0;font-style:italic;color:#666}.question{margin-bottom:20px}.page-break{page-break-after:always}@media print{.no-print{display:none}}</style></head><body><div class="no-print" style="background-color:#fffae6;border:1px solid #ffecb3;padding:15px;border-radius:5px;margin-bottom:20px;"><strong>Instrucción:</strong> Para guardar como PDF, use la función de Imprimir de su navegador (Ctrl+P o Cmd+P) y seleccione "Guardar como PDF" como destino.</div><h1>${lessonContent.title}</h1><div>${explanationHtml}</div><hr style="margin:2em 0;" /><h2>Preguntas de Práctica</h2><div>${questionsHtml}</div><div class="page-break"></div><div class="no-print">${answerKeyHtml}</div></body></html>`;
+            <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${lessonContent.title}</title><style>body{font-family:sans-serif;line-height:1.6;margin:40px}p{text-align:justify}h1{color:#005A9C;border-bottom:2px solid #ddd;padding-bottom:10px; font-size: 24pt;}h2{color:#333;margin-top:2em;border-bottom:1px solid #eee;padding-bottom:5px; font-size: 18pt;}h3{color:#555;margin-top:1.5em; font-size: 14pt;}ul,ol{margin-bottom:1em}blockquote{border-left:4px solid #ccc;padding-left:1em;margin-left:0;font-style:italic;color:#666}.question{margin-bottom:20px}.page-break{page-break-after:always}@media print{.no-print{display:none}}</style></head><body><div class="no-print" style="background-color:#fffae6;border:1px solid #ffecb3;padding:15px;border-radius:5px;margin-bottom:20px;"><strong>Instrucción:</strong> Para guardar como PDF, use la función de Imprimir de su navegador (Ctrl+P o Cmd+P) y seleccione "Guardar como PDF" como destino.</div>
+            ${headerHtml}
+            <h1>${lessonContent.title}</h1>
+            <div>${explanationHtml}</div><hr style="margin:2em 0;" /><h2>Preguntas de Práctica</h2><div>${questionsHtml}</div><div class="page-break"></div><div class="no-print">${answerKeyHtml}</div></body></html>`;
 
         const pdfWindow = window.open("", "_blank");
         pdfWindow?.document.write(htmlContent);
@@ -440,9 +474,24 @@ La salida final debe ser un único objeto JSON que contenga:
                 {isLoading ? <Spinner /> : error ? <p className="text-red-600 text-center">{error}</p> : selectedLesson ? (
                     // Display existing/generated lesson
                      <div className="space-y-8 animate-fade-in">
+                        <div className="p-4 border-b-2 border-gray-200 dark:border-gray-700">
+                            <div className="flex justify-between items-start">
+                                <div className="flex items-center space-x-4">
+                                    <img src={institutionProfile.logoUrl} alt={institutionProfile.name} className="h-16 w-16 object-contain rounded-md p-1 border dark:border-gray-600"/>
+                                    <div>
+                                        <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{institutionProfile.name}</h1>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">Lección generada por IA</p>
+                                    </div>
+                                </div>
+                                <div className="text-right flex-shrink-0 ml-4">
+                                    <p className="font-semibold text-gray-700 dark:text-gray-200">Grado: {selectedLesson.grade}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Usuario: {currentUser.name}</p>
+                                </div>
+                            </div>
+                        </div>
                          <div className="flex justify-between items-center border-b dark:border-gray-700 pb-4">
                             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{selectedLesson.content.title}</h2>
-                            <button onClick={() => handleDownloadPdf(selectedLesson.content)} className="bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-200 dark:hover:bg-blue-900/80 transition-colors flex items-center space-x-2">
+                            <button onClick={() => handleDownloadPdf(selectedLesson)} className="bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-200 dark:hover:bg-blue-900/80 transition-colors flex items-center space-x-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                                 <span>Descargar PDF</span>
                             </button>
