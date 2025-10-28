@@ -156,6 +156,36 @@ const LandingPage: React.FC<LandingPageProps> = ({ onShowLogin, onDemoRegister }
                     title="Acceso Móvil y Offline"
                     description="Funciona en cualquier dispositivo y guarda los datos localmente para que puedas seguir trabajando sin conexión."
                 />
+                <FeatureCard 
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+                    title="Módulo de Psicología"
+                    description="Gestiona reportes de atención, realiza seguimiento confidencial de casos y facilita la comunicación directa con el departamento de psicología."
+                />
+                 <FeatureCard 
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}
+                    title="Tutor Personal con IA"
+                    description="Genera lecciones personalizadas y actividades de refuerzo sobre cualquier tema, permitiendo a los estudiantes aprender a su propio ritmo."
+                />
+                 <FeatureCard 
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
+                    title="Análisis y Consolidados"
+                    description="Visualiza el rendimiento académico de forma global con gráficos interactivos. Analiza promedios por grupo, asignatura o estudiante."
+                />
+                 <FeatureCard 
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+                    title="Portal de Eventos"
+                    description="Comunica las actividades institucionales con un portal de afiches dinámico. Mantén informada a toda la comunidad educativa."
+                />
+                 <FeatureCard 
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
+                    title="Panel de Rectoría"
+                    description="Obtén una vista panorámica de la institución con estadísticas clave, reportes consolidados y herramientas de comunicación masiva."
+                />
+                 <FeatureCard 
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /><path d="M12 14l9-5-9-5-9 5 9 5z" /><path d="M12 14l9-5-9-5-9 5 9 5z" transform="translate(0, 6)"/></svg>}
+                    title="Preparación Pruebas Saber 11"
+                    description="Ofrece a tus estudiantes un simulacro completo de las pruebas ICFES, generado por IA y con retroalimentación detallada."
+                />
             </div>
           </div>
         </section>

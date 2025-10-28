@@ -265,25 +265,18 @@ const calculateFinalScore = (studentId: number, gradebook: SubjectGrades | null)
 };
 
 const getDesempeno = (score: number | null): Desempeno => {
-    // FIX: Use correct enum member `LOW` instead of `BAJO`.
     if (score === null) return Desempeno.LOW;
     if (score >= 4.6) return Desempeno.SUPERIOR;
-    // FIX: Use correct enum member `HIGH` instead of `ALTO`.
     if (score >= 4.0) return Desempeno.HIGH;
-    // FIX: Use correct enum member `BASIC` instead of `BASICO`.
     if (score >= 3.0) return Desempeno.BASIC;
-    // FIX: Use correct enum member `LOW` instead of `BAJO`.
     return Desempeno.LOW;
 };
 
 const getDesempenoClass = (desempeno: Desempeno) => {
     switch (desempeno) {
         case Desempeno.SUPERIOR: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200';
-        // FIX: Use correct enum member `HIGH` instead of `ALTO`.
         case Desempeno.HIGH: return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200';
-        // FIX: Use correct enum member `BASIC` instead of `BASICO`.
         case Desempeno.BASIC: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200';
-        // FIX: Use correct enum member `LOW` instead of `BAJO`.
         case Desempeno.LOW: return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200';
         default: return 'bg-gray-100 text-gray-800';
     }
@@ -376,17 +369,40 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
         });
     }, [subjectGradesData, students, teachers, currentUser, canAdminGrades]);
 
+    const availableGradesForSelect = useMemo(() => {
+        // FIX: Explicitly type sort parameters to resolve TS error
+        return Array.from(new Set(availableGradeGroups.map(gg => gg.grade))).sort((a: string, b: string) => {
+            const gradeA = parseInt(a.replace('º', ''));
+            const gradeB = parseInt(b.replace('º', ''));
+            if (!isNaN(gradeA) && !isNaN(gradeB)) return gradeA - gradeB;
+            return a.localeCompare(b);
+        });
+    }, [availableGradeGroups]);
+
+    const availableGroupsForSelect = useMemo(() => {
+        if (!selectedGrade) return [];
+        return Array.from(new Set(availableGradeGroups.filter(gg => gg.grade === selectedGrade).map(gg => gg.group))).sort();
+    }, [availableGradeGroups, selectedGrade]);
 
     useEffect(() => {
         if (teacherSubjects.length > 0 && !selectedSubject) {
             setSelectedSubject(teacherSubjects[0]);
         }
-        if (availableGradeGroups.length > 0 && (!selectedGrade || !selectedGroup)) {
-            const firstGroup = availableGradeGroups[0];
-            setSelectedGrade(firstGroup.grade);
-            setSelectedGroup(firstGroup.group);
+        if (availableGradesForSelect.length > 0 && !selectedGrade) {
+            setSelectedGrade(availableGradesForSelect[0]);
         }
-    }, [teacherSubjects, availableGradeGroups, selectedSubject, selectedGrade, selectedGroup]);
+    }, [teacherSubjects, availableGradesForSelect, selectedSubject, selectedGrade]);
+
+    useEffect(() => {
+        if (selectedGrade && availableGroupsForSelect.length > 0) {
+            if (!selectedGroup || !availableGroupsForSelect.includes(selectedGroup)) {
+                setSelectedGroup(availableGroupsForSelect[0]);
+            }
+        } else if (selectedGrade && availableGroupsForSelect.length === 0) {
+            setSelectedGroup(null);
+        }
+    }, [selectedGrade, availableGroupsForSelect, selectedGroup]);
+
 
     const desempenoMap = useMemo(() => new Map(desempenosBank.map(d => [d.id, d.description])), [desempenosBank]);
 
@@ -529,8 +545,6 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
         setTimeout(() => setShowSnackbar(''), 3000);
     };
 
-    const getGradeSelectorOptions = () => availableGradeGroups.map(gg => <option key={`${gg.grade}-${gg.group}`} value={`${gg.grade}|${gg.group}`}>{`${gg.grade} - Grupo ${gg.group}`}</option>);
-
     return (
         <div className="space-y-6">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
@@ -543,8 +557,11 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
                          <select value={selectedSubject || ''} onChange={e => setSelectedSubject(e.target.value as SubjectArea)} className="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" disabled={teacherSubjects.length === 0}>
                             {teacherSubjects.length > 0 ? teacherSubjects.map(s => <option key={s} value={s}>{s}</option>) : <option>No hay asignaturas</option>}
                         </select>
-                        <select value={`${selectedGrade || ''}|${selectedGroup || ''}`} onChange={e => { const [g, gr] = e.target.value.split('|'); setSelectedGrade(g); setSelectedGroup(gr); }} className="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" disabled={availableGradeGroups.length === 0}>
-                           {availableGradeGroups.length > 0 ? getGradeSelectorOptions() : <option>No hay grupos</option>}
+                        <select value={selectedGrade || ''} onChange={e => setSelectedGrade(e.target.value)} className="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" disabled={availableGradesForSelect.length === 0}>
+                           {availableGradesForSelect.length > 0 ? availableGradesForSelect.map(g => <option key={g} value={g}>{g}</option>) : <option>No hay grados</option>}
+                        </select>
+                        <select value={selectedGroup || ''} onChange={e => setSelectedGroup(e.target.value)} className="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" disabled={availableGroupsForSelect.length === 0}>
+                           {availableGroupsForSelect.length > 0 ? availableGroupsForSelect.map(g => <option key={g} value={g}>{g}</option>) : <option>No hay grupos</option>}
                         </select>
                     </div>
                 </div>

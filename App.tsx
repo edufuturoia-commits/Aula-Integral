@@ -1,6 +1,9 @@
 
 
 
+
+
+
 import React, { useState, useCallback, useEffect, Suspense, lazy, useMemo, createContext, useContext } from 'react';
 
 // New Pages for Auth Flow
@@ -15,7 +18,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
 // Types and DB
-import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData, Conversation, Lesson, AttentionReport } from './types';
+import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData, Conversation, Lesson, AttentionReport, Message } from './types';
 import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian, getLessons, addLesson, getAttentionReports, addAttentionReport, updateAttentionReport } from './db';
 
 // Constants
@@ -58,6 +61,7 @@ const SimulacroICFES = lazy(() => import('./pages/SimulacroICFES'));
 const QuickAccess = lazy(() => import('./pages/QuickAccess'));
 const Consolidado = lazy(() => import('./pages/Consolidado'));
 const Psychology = lazy(() => import('./pages/Psychology'));
+const Secretaria = lazy(() => import('./pages/Secretaria'));
 
 
 interface NotificationToastProps {
@@ -740,6 +744,8 @@ const AppContent: React.FC = () => {
                 {currentPage === 'SimulacroICFES' && (isAdmin || userRole === Role.RECTOR) && <SimulacroICFES settings={icfesDrillSettings} onSettingsChange={handleSetIcfesDrillSettings} />}
                 {currentPage === 'Consolidado' && <Consolidado students={students} subjectGradesData={subjectGrades}/>}
                 {currentPage === 'Psychology' && <Psychology reports={attentionReports} onUpdateReport={handleUpdateAttentionReport} students={students} allUsersMap={allUsersMap} conversations={conversations} onUpdateConversation={handleUpdateConversation} currentUser={currentUser as Teacher} institutionProfile={institutionProfile} />}
+                {currentPage === 'Secretaria' && <Secretaria students={students} setStudents={async (updater) => { const newStudents = typeof updater === 'function' ? updater(students) : updater; await addOrUpdateStudents(newStudents); setStudents(newStudents); }} guardians={guardians} onUpdateGuardians={handleSetGuardians} subjectGradesData={subjectGrades} institutionProfile={institutionProfile} onShowSystemMessage={showSystemMessage} currentUser={currentUser as Teacher} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} />}
+
                 
                 {/* Admin-only views of portals */}
                 {canSeeParentPortal && currentPage === 'ParentPortal' && guardians.length > 0 && <ParentPortal students={students.filter(s => guardians[0].studentIds.includes(s.id))} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} currentUser={guardians[0]} />}

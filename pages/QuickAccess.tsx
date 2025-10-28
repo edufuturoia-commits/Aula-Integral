@@ -26,13 +26,13 @@ const TEST_PROFILES = [
     {
         ...MOCK_STUDENTS[0],
         loginId: MOCK_STUDENTS[0].documentNumber!,
-        password: MOCK_STUDENTS[0].password!
+        password: 'password123'
     },
     {
         ...MOCK_GUARDIANS[0],
         role: 'Acudiente',
         loginId: MOCK_GUARDIANS[0].id,
-        password: MOCK_GUARDIANS[0].password!
+        password: 'password123'
     }
 ];
 
@@ -41,12 +41,16 @@ const ProfileCard: React.FC<{ profile: any, onSelect: () => Promise<void>, isLoa
         <button
             onClick={onSelect}
             disabled={isLoading}
-            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md flex flex-col items-center space-y-3 transition-transform transform hover:-translate-y-1 text-center disabled:opacity-50 disabled:cursor-wait"
+            className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md flex flex-col items-center space-y-3 transition-transform transform hover:-translate-y-1 text-center disabled:opacity-50 disabled:cursor-wait w-full h-full"
         >
-            <img src={profile.avatarUrl} alt={profile.name} className="w-20 h-20 rounded-full object-cover border-4 border-gray-200 dark:border-gray-700" />
-            <div>
-                <p className="font-bold text-gray-800 dark:text-gray-100">{profile.name}</p>
-                <p className="text-sm font-medium text-primary dark:text-secondary">{profile.role}</p>
+            <img src={profile.avatarUrl} alt={profile.name} className="w-16 h-16 rounded-full object-cover border-4 border-gray-200 dark:border-gray-700 flex-shrink-0" />
+            <div className="flex-grow">
+                <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{profile.name}</p>
+                <p className="text-xs font-medium text-primary dark:text-secondary">{profile.role}</p>
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t w-full border-gray-200 dark:border-gray-700">
+                <p>Usuario: <span className="font-mono font-semibold text-gray-600 dark:text-gray-300 break-all">{profile.loginId}</span></p>
+                <p>Clave: <span className="font-mono font-semibold text-gray-600 dark:text-gray-300 break-all">{profile.password}</span></p>
             </div>
         </button>
     );

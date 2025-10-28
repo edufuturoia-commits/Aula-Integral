@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades, Guardian, AttentionReport } from '../types';
 import { IncidentType, AttendanceStatus, CitationStatus, Role, DocumentType, TeacherStatus, IncidentStatus } from '../types';
@@ -193,6 +195,8 @@ const Incidents: React.FC<IncidentsProps> = ({
 }) => {
     const [activeTab, setActiveTab] = useState<CoordinationTab>('incidents');
     const [communitySubTab, setCommunitySubTab] = useState<CommunitySubTab>('students');
+    const [communityGradeFilter, setCommunityGradeFilter] = useState('all');
+    const [communityGroupFilter, setCommunityGroupFilter] = useState('all');
 
     // Modals state
     const [isCitationModalOpen, setIsCitationModalOpen] = useState(false);
@@ -236,6 +240,21 @@ const Incidents: React.FC<IncidentsProps> = ({
     const [commTitle, setCommTitle] = useState('');
     const [commContent, setCommContent] = useState('');
     const [commRecipients, setCommRecipients] = useState<'all' | 'all_teachers' | 'all_parents'>('all');
+
+    const communityAvailableGroups = useMemo(() => {
+        if (communityGradeFilter === 'all') {
+            return ['all', ...GROUPS];
+        }
+        return ['all', ...(GRADE_GROUP_MAP[communityGradeFilter] || [])];
+    }, [communityGradeFilter]);
+
+    const filteredCommunityStudents = useMemo(() => {
+        return students.filter(s => {
+            const gradeMatch = communityGradeFilter === 'all' || s.grade === communityGradeFilter;
+            const groupMatch = communityGroupFilter === 'all' || s.group === communityGroupFilter;
+            return gradeMatch && groupMatch;
+        });
+    }, [students, communityGradeFilter, communityGroupFilter]);
 
     const sentHistory = useMemo(() => {
         return announcements.filter(ann => ann.sentBy === currentUser.name || ann.sentBy === 'Rectoría' || ann.sentBy === 'Coordinación')
@@ -755,18 +774,21 @@ const Incidents: React.FC<IncidentsProps> = ({
                     </div>
                     {communitySubTab === 'students' && (
                          <StudentList 
-                            students={students}
+                            students={filteredCommunityStudents}
                             onAddStudentClick={() => setIsAddStudentModalOpen(true)}
                             onImportClick={() => setIsImportStudentsModalOpen(true)}
                             onEditStudent={(student) => { setStudentToEdit(student); setIsEditStudentModalOpen(true); }}
                             onReportIncident={(student) => { setStudentForIncident(student); setIsIncidentModalOpen(true); }}
                             onReportAttention={(student) => { setStudentForAttentionReport(student); setIsAttentionReportModalOpen(true); }}
                             grades={['all', ...GRADES]}
-                            selectedGrade="all"
-                            onGradeChange={() => {}}
-                            groups={['all', ...GROUPS]}
-                            selectedGroup="all"
-                            onGroupChange={() => {}}
+                            selectedGrade={communityGradeFilter}
+                            onGradeChange={(grade) => {
+                                setCommunityGradeFilter(grade);
+                                setCommunityGroupFilter('all');
+                            }}
+                            groups={communityAvailableGroups}
+                            selectedGroup={communityGroupFilter}
+                            onGroupChange={setCommunityGroupFilter}
                         />
                     )}
                     {communitySubTab === 'teachers' && (

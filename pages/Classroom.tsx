@@ -260,9 +260,14 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
                  <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`capitalize whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab ? 'border-primary text-primary dark:text-secondary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                    className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab ? 'border-primary text-primary dark:text-secondary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
                  >
-                     {tab === 'calificaciones' ? 'Calificaciones' : tab === 'manual' ? 'Manual y Eventos' : tab}
+                     {
+                         tab === 'students' ? 'Estudiantes' :
+                         tab === 'attendance' ? 'Asistencia' :
+                         tab === 'calificaciones' ? 'Calificaciones' :
+                         'Manual y Eventos'
+                     }
                  </button>
             ))}
         </nav>

@@ -12,9 +12,9 @@ interface SidebarProps {
 }
 
 const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
-  [Role.ADMIN]: ['Dashboard', 'Classroom', 'Incidents', 'Psychology', 'TutorMode', 'Communication', 'Assessments', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'Rectory', 'InstitutionProfile', 'ParentPortal', 'StudentPortal', 'SimulacroICFES'],
-  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Psychology', 'Communication', 'Rectory', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES', 'TutorMode'],
-  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Psychology', 'Communication', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES', 'TutorMode'],
+  [Role.ADMIN]: ['Dashboard', 'Classroom', 'Incidents', 'Psychology', 'Secretaria', 'TutorMode', 'Communication', 'Assessments', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'Rectory', 'InstitutionProfile', 'ParentPortal', 'StudentPortal', 'SimulacroICFES'],
+  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Psychology', 'Secretaria', 'Communication', 'Rectory', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES', 'TutorMode'],
+  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Psychology', 'Secretaria', 'Communication', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES', 'TutorMode'],
   [Role.TEACHER]: ['Dashboard', 'Classroom', 'Communication', 'Assessments', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'TutorMode'],
   [Role.STUDENT]: ['Dashboard', 'StudentPortal', 'Resources', 'Eventos', 'Profile', 'TutorMode'],
   [Role.PSYCHOLOGY]: ['Dashboard', 'Psychology', 'Communication', 'Resources', 'Profile', 'Settings'],
@@ -70,8 +70,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentU
         </a>
       </div>
       <div className="p-4 text-center text-xs text-gray-400 dark:text-gray-500 hidden lg:block">
-        <p>Copyright - EduFuturo</p>
-        <p>{"Transformando la educación, un aula a la vez."}</p>
+        <p>Derechos de autor - EduFuturo</p>
+        <p>Educadores que trascienden</p>
       </div>
     </div>
   );
