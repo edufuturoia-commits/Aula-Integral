@@ -99,7 +99,7 @@ export const InstitutionProfileIcon: React.FC<{className?: string}> = ({ classNa
 
 export const ParentPortalIcon: React.FC<{className?: string}> = ({ className }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L4 5v6c0 5.55 3.58 10.7 8 12 4.42-1.3 8-6.45 8-12V5l-8-3z" />
   </svg>
 );
 
@@ -117,9 +117,7 @@ export const EventosIcon: React.FC<{className?: string}> = ({ className }) => (
 
 export const IcfesIcon: React.FC<{className?: string}> = ({ className }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-        <path d="M12 14l9-5-9-5-9 5 9 5z" />
-        <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-9.998 12.078 12.078 0 01.665-6.479L12 14z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-9.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222 4 2.222V20M12 12.5L4 8l8-4.444 8 4.444L12 12.5z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0l15.482 0m-15.482 0a50.697 50.697 0 01-2.658-.813m2.658.814a50.697 50.697 0 002.658-.813m10.166 0a50.697 50.697 0 002.658-.813m-2.658.813a50.697 50.697 0 01-2.658-.813" />
     </svg>
 );
 
