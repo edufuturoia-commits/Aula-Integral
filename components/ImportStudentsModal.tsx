@@ -84,7 +84,7 @@ const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({ onClose, onSa
         setError(null);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = `Extrae el número de identificación (cédula o tarjeta de identidad) y los nombres completos de los estudiantes de la siguiente lista. Devuelve el resultado como un array JSON de objetos. Cada objeto debe tener las propiedades "id" (el número de documento como string) y "name" (el nombre completo como string). Si un documento no tiene número de identificación, genera un ID único basado en la fecha y hora. Asegúrate de que el JSON esté bien formado.`;
             
             const responseSchema = {

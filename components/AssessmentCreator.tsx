@@ -42,7 +42,7 @@ const AssessmentCreator: React.FC<AssessmentCreatorProps> = ({ onSave, onCancel 
         setGenerationError(null);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
             const prompt = `Genera ${numQuestions} preguntas de evaluación tipo ICFES para estudiantes de '${grade}'. El tema es '${topic}', enfocado en la competencia de '${competency}' del área de '${area}'. Cada pregunta debe tener un enunciado claro, seguido de 4 opciones de respuesta (A, B, C, D), y debes indicar cuál es la respuesta correcta. La dificultad debe ser apropiada para el grado escolar. Devuelve el resultado como un array JSON de objetos.`;
             

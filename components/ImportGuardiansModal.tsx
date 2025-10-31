@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
-import type { Student, Guardian } from '../types';
 import { GRADES, GRADE_GROUP_MAP } from '../constants';
+import type { Student, Guardian } from '../types';
+import { Role } from '../types';
 
 interface ImportGuardiansModalProps {
   onClose: () => void;
@@ -167,7 +168,7 @@ const ImportGuardiansModal: React.FC<ImportGuardiansModalProps> = ({ onClose, on
         setError(null);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = `Extrae la información de los acudientes del documento. La información a extraer es: Cédula, Nombres y Apellidos, Email y Móvil.
 - Si la Cédula/ID no está presente, GENERA un ID temporal único. La Cédula NUNCA debe estar vacía.
 - Si otros campos como email o móvil faltan, déjalos como strings vacíos.
@@ -228,6 +229,10 @@ Devuelve un array JSON de objetos con las propiedades: "id", "name", "email", "p
             email: g.email,
             phone: g.phone,
             studentIds: g.studentIds,
+            avatarUrl: `https://picsum.photos/seed/${g.id}/100/100`,
+            role: Role.GUARDIAN,
+            password: g.id,
+            passwordChanged: false,
         }));
         onSave(guardiansToSave);
     };

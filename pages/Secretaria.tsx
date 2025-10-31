@@ -80,6 +80,8 @@ const Secretaria: React.FC<SecretariaProps> = ({ students, setStudents, guardian
         const newGuardian: Guardian = {
             id: guardianForm.id,
             name: guardianForm.name,
+            avatarUrl: `https://picsum.photos/seed/${guardianForm.id}/100/100`,
+            role: Role.GUARDIAN,
             email: guardianForm.email,
             phone: guardianForm.phone,
             studentIds: [newStudentId],

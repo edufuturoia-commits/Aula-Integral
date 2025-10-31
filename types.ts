@@ -1,6 +1,9 @@
 
 
 
+
+
+
 export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones' | 'Communication' | 'TutorMode' | 'Eventos' | 'SimulacroICFES' | 'Consolidado' | 'Psychology' | 'Secretaria';
 
 export enum DocumentType {
@@ -15,6 +18,7 @@ export enum Role {
   RECTOR = 'RECTOR',
   ADMIN = 'ADMIN',
   PSYCHOLOGY = 'PSYCHOLOGY',
+  GUARDIAN = 'GUARDIAN',
 }
 
 export interface Student {
@@ -31,6 +35,7 @@ export interface Student {
   documentNumber?: string;
   password?: string;
   passwordChanged?: boolean;
+  notifications?: NotificationSettings;
 }
 
 export enum IncidentType {
@@ -335,11 +340,14 @@ export interface UserRegistrationData {
 export interface Guardian {
   id: string; // Cédula or unique ID
   name: string;
+  avatarUrl: string;
+  role: Role;
   email?: string;
   phone?: string;
   studentIds: number[]; // Array of IDs of the students they are a guardian for
   password?: string;
   passwordChanged?: boolean;
+  notifications?: NotificationSettings;
 }
 
 // New types for centralized conversation store to enable real-time chat

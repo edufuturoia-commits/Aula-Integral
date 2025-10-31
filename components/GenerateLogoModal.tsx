@@ -26,7 +26,7 @@ const GenerateLogoModal: React.FC<GenerateLogoModalProps> = ({ onClose, onLogoGe
         setError(null);
         setGeneratedLogo(null);
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const response = await ai.models.generateImages({
                 model: 'imagen-4.0-generate-001',
                 prompt: prompt,

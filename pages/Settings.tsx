@@ -1,7 +1,8 @@
 
 
+
 import React, { useState, useEffect } from 'react';
-import type { Teacher, NotificationSettings } from '../types';
+import type { Teacher, NotificationSettings, Student, Guardian } from '../types';
 import { useTranslation } from '../App';
 
 const ProfileSection: React.FC<{ title: string; children: React.ReactNode; action?: React.ReactNode }> = ({ title, children, action }) => (
@@ -32,8 +33,8 @@ const ToggleSwitch: React.FC<{ label: string; enabled: boolean; onChange: (enabl
 );
 
 interface SettingsProps {
-    currentUser: Teacher;
-    onUpdateUser: (user: Teacher) => Promise<void>;
+    currentUser: Teacher | Student | Guardian;
+    onUpdateUser: (user: Teacher | Student | Guardian) => Promise<void>;
     theme: string;
     setTheme: (theme: string) => void;
 }

@@ -43,7 +43,7 @@ const ResourceCreator: React.FC<ResourceCreatorProps> = ({ onSave, onCancel }) =
         setGenerationError(null);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = `Genera un recurso educativo para estudiantes de '${grade}'. El tipo de recurso es un(a) '${resourceType}' sobre el tema '${topic}' en el área de '${area}'. El recurso debe ser apropiado para la edad, claro y fácil de entender. Devuelve el resultado como un único objeto JSON con las siguientes propiedades: "title" (un título breve y descriptivo), "description" (una descripción de 1-2 frases para la biblioteca de recursos), y "content" (el contenido principal y completo del recurso en formato de texto plano).`;
 
             const responseSchema = {

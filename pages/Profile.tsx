@@ -74,6 +74,7 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
       }
   };
 
+  // FIX: Replaced function with a type-safe implementation to avoid using computed property names (`[name]: value`) when updating an object within a discriminated union. This dynamic update was causing TypeScript to lose type information and infer 'never' for the state, leading to downstream errors.
   const handleArrayChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     index: number,
@@ -81,39 +82,103 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
   ) => {
     const { name, value } = e.target;
     setUser(prevUser => {
-      if (!('subject' in prevUser)) return prevUser; 
+      if (!('subject' in prevUser)) return prevUser; // Type guard for Teacher
+
+      const updatedUser = { ...prevUser };
+
+      if (field === 'certifications') {
+        const list = [...(updatedUser.certifications || [])];
+        const item = list[index];
+        if (item) {
+          const updatedItem = { ...item };
+          if (name === 'name') updatedItem.name = value;
+          else if (name === 'issuer') updatedItem.issuer = value;
+          else if (name === 'year') updatedItem.year = value;
+          list[index] = updatedItem;
+          updatedUser.certifications = list;
+        }
+      } else if (field === 'experience') {
+        const list = [...(updatedUser.experience || [])];
+        const item = list[index];
+        if (item) {
+          const updatedItem = { ...item };
+          if (name === 'position') updatedItem.position = value;
+          else if (name === 'institution') updatedItem.institution = value;
+          else if (name === 'years') updatedItem.years = value;
+          list[index] = updatedItem;
+          updatedUser.experience = list;
+        }
+      } else if (field === 'professionalDevelopment') {
+        const list = [...(updatedUser.professionalDevelopment || [])];
+        const item = list[index];
+        if (item) {
+          const updatedItem = { ...item };
+          if (name === 'hours') {
+            updatedItem.hours = parseFloat(value) || 0;
+          } else if (name === 'activity') {
+            updatedItem.activity = value;
+          } else if (name === 'date') {
+            updatedItem.date = value;
+          }
+          list[index] = updatedItem;
+          updatedUser.professionalDevelopment = list;
+        }
+      }
       
-      const list = [...((prevUser as Teacher)[field] || [])];
-      const itemToUpdate = { ...list[index] };
-      (itemToUpdate as any)[name] = (e.target.type === 'number') ? parseFloat(value) || 0 : value;
-      list[index] = itemToUpdate;
-      
-      return { ...prevUser, [field]: list };
+      return updatedUser;
     });
   };
 
+  // FIX: Replaced function with a type-safe implementation to handle adding items to arrays on a union type correctly.
   const handleAddItem = (field: 'certifications' | 'experience' | 'professionalDevelopment') => {
     setUser(prevUser => {
-        if (!('subject' in prevUser)) return prevUser;
+        if (!('subject' in prevUser)) return prevUser; // Type guard for Teacher
 
-        let newItem;
         switch (field) {
-            case 'certifications': newItem = { id: `cert_${Date.now()}`, name: '', issuer: '', year: '' }; break;
-            case 'experience': newItem = { id: `exp_${Date.now()}`, position: '', institution: '', years: '' }; break;
-            case 'professionalDevelopment': newItem = { id: `pd_${Date.now()}`, activity: '', hours: 0, date: '' }; break;
+            case 'certifications': {
+                const newItem: Certification = { id: `cert_${Date.now()}`, name: '', issuer: '', year: '' };
+                const list = [...(prevUser.certifications || [])];
+                return { ...prevUser, certifications: [...list, newItem] };
+            }
+            case 'experience': {
+                const newItem: Experience = { id: `exp_${Date.now()}`, position: '', institution: '', years: '' };
+                const list = [...(prevUser.experience || [])];
+                return { ...prevUser, experience: [...list, newItem] };
+            }
+            case 'professionalDevelopment': {
+                const newItem: ProfessionalDevelopment = { id: `pd_${Date.now()}`, activity: '', hours: 0, date: '' };
+                const list = [...(prevUser.professionalDevelopment || [])];
+                return { ...prevUser, professionalDevelopment: [...list, newItem] };
+            }
+            default:
+                return prevUser;
         }
-
-        const list = (prevUser as any)[field] || [];
-        return { ...prevUser, [field]: [...list, newItem] };
     });
   };
 
+  // FIX: The `handleDeleteItem` function was using a computed property name `[field]` on a spread union type, which can corrupt the state's type information in TypeScript, leading to a 'never' type inference. The function has been rewritten to use a type-safe switch statement, ensuring that each array property is updated with the correct type, resolving the error downstream.
   const handleDeleteItem = (index: number, field: 'certifications' | 'experience' | 'professionalDevelopment') => {
      setUser(prevUser => {
         if (!('subject' in prevUser)) return prevUser;
-        const list = [...((prevUser as Teacher)[field] || [])];
-        list.splice(index, 1);
-        return { ...prevUser, [field]: list };
+        switch (field) {
+            case 'certifications': {
+                const list = [...(prevUser.certifications || [])];
+                list.splice(index, 1);
+                return { ...prevUser, certifications: list };
+            }
+            case 'experience': {
+                const list = [...(prevUser.experience || [])];
+                list.splice(index, 1);
+                return { ...prevUser, experience: list };
+            }
+            case 'professionalDevelopment': {
+                const list = [...(prevUser.professionalDevelopment || [])];
+                list.splice(index, 1);
+                return { ...prevUser, professionalDevelopment: list };
+            }
+            default:
+                return prevUser;
+        }
     });
   };
 

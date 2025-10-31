@@ -8,7 +8,6 @@ import CitationModal from '../components/CitationModal';
 import GroupMessageModal from '../components/GroupMessageModal';
 import CancelCitationModal from '../components/CancelCitationModal';
 import AddStudentModal from '../components/AddStudentModal'; // Import new modal
-// FIX: Move IncidentType from 'import type' to a value import
 import type { Student, Incident, ParentMessage, Citation, CoordinationMessage, Teacher, SubjectGrades, AttendanceRecord, Announcement, AttentionReport } from '../types';
 import { CitationStatus, Role, IncidentStatus, IncidentType } from '../types';
 import { addOrUpdateStudents } from '../db';

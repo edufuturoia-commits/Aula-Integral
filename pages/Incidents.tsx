@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades, Guardian, AttentionReport } from '../types';
 import { IncidentType, AttendanceStatus, CitationStatus, Role, DocumentType, TeacherStatus, IncidentStatus } from '../types';
@@ -412,7 +413,11 @@ const Incidents: React.FC<IncidentsProps> = ({
     const handleSaveNewGuardian = async (guardianData: { id: string; name: string; email: string; phone: string }) => {
         const newGuardian: Guardian = {
             ...guardianData,
+            avatarUrl: `https://picsum.photos/seed/${guardianData.id}/100/100`,
+            role: Role.GUARDIAN,
             studentIds: [],
+            password: guardianData.id,
+            passwordChanged: false,
         };
         const updatedGuardians = [...guardians, newGuardian];
         await onUpdateGuardians(updatedGuardians);

@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
-import type { Page, Teacher, Student } from '../types';
+import type { Page, Teacher, Student, Guardian } from '../types';
 import { Role } from '../types';
 import { SIDEBAR_ITEMS, LogoutIcon } from '../constants';
 
 interface SidebarProps {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
-  currentUser: Teacher | Student;
+  currentUser: Teacher | Student | Guardian;
   onLogout: () => void;
   icfesDrillSettings?: { isActive: boolean, grades: string[] };
   isMobileOpen: boolean;
@@ -20,6 +20,7 @@ const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
   [Role.TEACHER]: ['Dashboard', 'Classroom', 'Communication', 'Assessments', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'TutorMode'],
   [Role.STUDENT]: ['Dashboard', 'StudentPortal', 'Resources', 'Eventos', 'Profile', 'TutorMode'],
   [Role.PSYCHOLOGY]: ['Dashboard', 'Psychology', 'Communication', 'Resources', 'Profile', 'Settings'],
+  [Role.GUARDIAN]: ['ParentPortal', 'Communication', 'Profile', 'Settings', 'Eventos'],
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, currentUser, onLogout, icfesDrillSettings, isMobileOpen, setIsMobileOpen }) => {

@@ -258,7 +258,7 @@ const TutorMode: React.FC<TutorModeProps> = ({ lessons, onAddLesson, onUpdateLes
         setSelectedAnswers({});
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
             const prompt = `Actúa como un tutor experto y amigable para un estudiante de '${grade}'. El tema a explicar es '${topic}' en la materia de '${subject}'.
 

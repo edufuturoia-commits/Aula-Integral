@@ -82,7 +82,7 @@ const ImportTeachersModal: React.FC<ImportTeachersModalProps> = ({ onClose, onSa
         setError(null);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const subjectList = SUBJECT_AREAS.join(', ');
 
             const responseSchema = {

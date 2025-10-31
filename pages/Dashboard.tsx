@@ -63,7 +63,7 @@ const Dashboard: React.FC<DashboardProps> = ({ students, teachers, citations, on
             if (birthdays.length > 0) {
                 setIsLoadingMessages(true);
                 try {
-                    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+                    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
                     const messages: Record<string, string> = {};
 
                     const messagePromises = birthdays.map(async (person) => {

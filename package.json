@@ -5,8 +5,25 @@
   "type": "module",
   "dependencies": {
     "@google/genai": "^1.15.0",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "recharts": "^3.1.2"
+  },
+  "devDependencies": {
+    "react-scripts": "^5.0.1"
+  },
+  "scripts": {
+    "build": "react-scripts build"
+  },
+  "overrides": {
+    "nth-check": "2.1.1",
+    "postcss": "8.4.38",
+    "@babel/traverse": "7.24.7",
+    "json5": "2.2.3",
+    "semver": "7.6.2",
+    "ws": "8.18.0",
+    "braces": "3.0.3"
   }
 }
