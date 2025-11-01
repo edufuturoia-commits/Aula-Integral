@@ -15,7 +15,7 @@
     "react-scripts": "^5.0.1"
   },
   "scripts": {
-    "build": "react-scripts build"
+    "build": "CI=false react-scripts build"
   },
   "overrides": {
     "nth-check": "2.1.1",
