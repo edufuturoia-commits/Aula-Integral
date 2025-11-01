@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Page } from '../types';
-import { LogoutIcon } from '../constants';
+import { LogoutIcon, SIDEBAR_ITEMS } from '../constants';
 
 interface HeaderProps {
   currentPage: string;
@@ -73,6 +73,4 @@ const Header: React.FC<HeaderProps> = ({ currentPage, isOnline, currentUser, onL
   );
 };
 
-// Add SIDEBAR_ITEMS here to avoid circular dependency if moved to another file
-import { SIDEBAR_ITEMS } from '../constants';
 export default Header;

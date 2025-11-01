@@ -31,7 +31,34 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setUser(prev => ({ ...prev, [name]: value }));
+    setUser(prevUser => {
+      const updatedUser = { ...prevUser };
+      
+      // Use a switch to safely handle properties that might not exist on all user types
+      switch (name) {
+        case 'email':
+          if ('email' in updatedUser) {
+            updatedUser.email = value;
+          }
+          break;
+        case 'phone':
+          if ('phone' in updatedUser) {
+            updatedUser.phone = value;
+          }
+          break;
+        case 'dateOfBirth':
+          if ('dateOfBirth' in updatedUser) {
+            updatedUser.dateOfBirth = value;
+          }
+          break;
+        default:
+          // For safety, only update if the property is known.
+          // Or handle other properties if they exist.
+          break;
+      }
+
+      return updatedUser;
+    });
   };
   
   const handleEdit = () => {
