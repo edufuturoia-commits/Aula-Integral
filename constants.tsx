@@ -153,9 +153,9 @@ export const SIDEBAR_ITEMS: { name: Page; label: string; icon: React.FC<{classNa
 // --- MOCK DATA (to be replaced with DB calls) ---
 
 export const MOCK_STUDENTS: Student[] = [
-  { id: 1001, name: 'Ana Sofía Rodríguez', avatarUrl: `https://picsum.photos/seed/Ana/100/100`, grade: '10º', group: 'A', role: Role.STUDENT, lastIncident: 'Uso de celular', email: 'ana.s.r@email.com', dateOfBirth: '2008-05-15', documentType: DocumentType.IDENTITY_CARD, documentNumber: '1001234567', password: 'password123', passwordChanged: true },
-  { id: 1002, name: 'Carlos Andrés Pérez', avatarUrl: `https://picsum.photos/seed/CarlosA/100/100`, grade: '10º', group: 'A', role: Role.STUDENT, lastIncident: 'Tardanza', email: 'carlos.a.p@email.com', dateOfBirth: '2008-03-20', documentType: DocumentType.IDENTITY_CARD, documentNumber: '1002345678', password: 'password123', passwordChanged: true },
-  { id: 1101, name: 'Beatriz Elena Cano', avatarUrl: `https://picsum.photos/seed/Beatriz/100/100`, grade: '11º', group: 'B', role: Role.STUDENT, lastIncident: 'Falta académica', email: 'beatriz.e.c@email.com', dateOfBirth: '2007-11-10', documentType: DocumentType.IDENTITY_CARD, documentNumber: '1003456789', password: 'password123', passwordChanged: true },
+  { id: 1001, name: 'Ana Sofía Rodríguez', avatarUrl: `https://picsum.photos/seed/Ana/100/100`, grade: '7º', group: 'A', role: Role.STUDENT, lastIncident: 'Uso de celular', email: 'ana.s.r@email.com', dateOfBirth: '2008-05-15', documentType: DocumentType.IDENTITY_CARD, documentNumber: '1001234567', password: 'password123', passwordChanged: true },
+  { id: 1002, name: 'Carlos Andrés Pérez', avatarUrl: `https://picsum.photos/seed/CarlosA/100/100`, grade: '7º', group: 'A', role: Role.STUDENT, lastIncident: 'Tardanza', email: 'carlos.a.p@email.com', dateOfBirth: '2008-03-20', documentType: DocumentType.IDENTITY_CARD, documentNumber: '1002345678', password: 'password123', passwordChanged: true },
+  { id: 1101, name: 'Beatriz Elena Cano', avatarUrl: `https://picsum.photos/seed/Beatriz/100/100`, grade: '7º', group: 'B', role: Role.STUDENT, lastIncident: 'Falta académica', email: 'beatriz.e.c@email.com', dateOfBirth: '2007-11-10', documentType: DocumentType.IDENTITY_CARD, documentNumber: '1003456789', password: 'password123', passwordChanged: true },
 ];
 
 export const MOCK_GUARDIANS: Guardian[] = [
@@ -194,7 +194,7 @@ export const MOCK_GUARDIANS: Guardian[] = [
 ];
 
 export const MOCK_TEACHERS: Teacher[] = [
-  { id: '1037612345', name: 'Juan Carlos Restrepo', avatarUrl: 'https://picsum.photos/seed/Juan/100/100', role: Role.TEACHER, subject: 'Matemáticas', email: 'juan.restrepo@institucion.edu.co', phone: '3001112233', status: TeacherStatus.ACTIVE, isHomeroomTeacher: true, assignedGroup: {grade: '10º', group: 'A'}, password: '1037612345', passwordChanged: false },
+  { id: '1037612345', name: 'Juan Carlos Restrepo', avatarUrl: 'https://picsum.photos/seed/Juan/100/100', role: Role.TEACHER, subject: 'Matemáticas', email: 'juan.restrepo@institucion.edu.co', phone: '3001112233', status: TeacherStatus.ACTIVE, isHomeroomTeacher: true, assignedGroup: {grade: '7º', group: 'A'}, password: '1037612345', passwordChanged: false },
   { id: '987654321', name: 'María Eugenia Arango', avatarUrl: 'https://picsum.photos/seed/Maria/100/100', role: Role.COORDINATOR, subject: 'Coordinadores', email: 'maria.arango@institucion.edu.co', phone: '3019998877', status: TeacherStatus.ACTIVE, password: '987654321', passwordChanged: false },
   { id: '123456789', name: 'Luis Fernando Montoya', avatarUrl: 'https://picsum.photos/seed/Luis/100/100', role: Role.RECTOR, subject: 'Administrativos', email: 'rectoria@institucion.edu.co', phone: '3205556677', status: TeacherStatus.ACTIVE, password: '123456789', passwordChanged: true },
   { id: '1122334455', name: 'Sandra Milena Rojas', avatarUrl: 'https://picsum.photos/seed/Sandra/100/100', role: Role.PSYCHOLOGY, subject: 'Psicología', email: 'psicologia@institucion.edu.co', phone: '3157778899', status: TeacherStatus.ACTIVE, password: '1122334455', passwordChanged: false },
@@ -251,13 +251,16 @@ export const MOCK_INSTITUTION_PROFILE: InstitutionProfileData = {
 };
 
 // --- REALISTIC CONSTANTS ---
-export const GRADES = ["PREJARDÍN", "JARDÍN", "TRANSICIÓN", "1º", "2º", "3º", "4º", "5º", "6º", "7º", "8º", "9º", "10º", "11º"];
-export const GROUPS = ["A", "B", "C", "D"];
+export const GRADES = ["1º", "2º", "3º", "4º", "5º", "6º", "7º"];
+export const GROUPS = ["A", "B", "C", "D", "E", "F"];
 export const GRADE_GROUP_MAP: Record<string, string[]> = {
-    "PREJARDÍN": ["A"], "JARDÍN": ["A"], "TRANSICIÓN": ["A"],
-    "1º": ["A", "B"], "2º": ["A", "B"], "3º": ["A", "B"], "4º": ["A", "B"], "5º": ["A", "B"],
-    "6º": ["A", "B", "C"], "7º": ["A", "B", "C"], "8º": ["A", "B", "C"],
-    "9º": ["A", "B"], "10º": ["A", "B"], "11º": ["A", "B"],
+    "1º": ["A", "B", "C", "D", "E", "F"],
+    "2º": ["A", "B", "C", "D", "E", "F"],
+    "3º": ["A", "B", "C", "D", "E", "F"],
+    "4º": ["A", "B", "C", "D", "E", "F"],
+    "5º": ["A", "B", "C", "D", "E", "F"],
+    "6º": ["A", "B", "C", "D", "E", "F"],
+    "7º": ["A", "B", "C", "D", "E", "F"],
 };
 export const SUBJECT_AREAS: SubjectArea[] = ['Matemáticas', 'Lengua Castellana', 'Inglés', 'Biología', 'Química', 'Física', 'Historia', 'Geografía', 'Constitución Política y Democracia', 'Educación Artística', 'Música', 'Educación Ética y en Valores Humanos', 'Filosofía', 'Educación Física', 'Educación Religiosa', 'Tecnología e Informática', 'Convivencia', 'Todas', 'Coordinadores', 'Administrativos', 'Psicología'];
 export const COMPETENCIES: Competency[] = ['Comprensión Lectora', 'Resolución de Problemas', 'Pensamiento Crítico', 'Competencias Ciudadanas', 'Comunicación Escrita', 'Análisis Científico', 'Expresión Artística', 'Competencia Digital', 'Pensamiento Histórico', 'Bilingüismo', 'Competencia Motriz'];
@@ -268,9 +271,9 @@ export const SCHOOL_LOCATIONS = ["Salón de Clase", "Patio de Recreo", "Baños",
 // --- MOCK GRADE DATA (simplified) ---
 export const MOCK_SUBJECT_GRADES: SubjectGrades[] = [
     {
-        id: 'Matemáticas-10-A-PRIMERO',
+        id: 'Matemáticas-7-A-PRIMERO',
         subject: 'Matemáticas',
-        grade: '10º',
+        grade: '7º',
         group: 'A',
         period: AcademicPeriod.FIRST,
         teacherId: '1037612345',
@@ -295,14 +298,6 @@ export const MOCK_SUBJECT_GRADES: SubjectGrades[] = [
     }
 ];
 
-export const MOCK_DESEMPENOS_BANK: DesempenoDescriptor[] = [
-    {id: 'mat-1', area: 'Matemáticas', description: 'Aplica conceptos de funciones para modelar situaciones reales.'},
-    {id: 'mat-2', area: 'Matemáticas', description: 'Resuelve ecuaciones trigonométricas de manera efectiva.'},
-    {id: 'len-1', area: 'Lengua Castellana', description: 'Identifica las ideas principales y secundarias en un texto argumentativo.'},
-    {id: 'tod-1', area: 'Todas', description: 'Participa activamente en clase y aporta al aprendizaje grupal.'},
-    {id: 'tod-2', area: 'Todas', description: 'Presenta sus trabajos de forma ordenada y puntual.'},
-];
-
 export const MOCK_CONVERSATIONS_DATA: Conversation[] = [
     {
         id: '71717171-1037612345',
@@ -313,3 +308,20 @@ export const MOCK_CONVERSATIONS_DATA: Conversation[] = [
         ]
     }
 ];
+
+export const DESEMPENOS_BANK: DesempenoDescriptor[] = [
+    // Matemáticas (25)
+    {id: 'mat-1', area: 'Matemáticas', description: 'Usa números reales para resolver problemas en contextos variados.'},
+    {id: 'mat-2', area: 'Matemáticas', description: 'Interpreta y utiliza conceptos de proporcionalidad para resolver problemas.'},
+    {id: 'mat-3', area: 'Matemáticas', description: 'Aplica algoritmos de las operaciones básicas entre números enteros y racionales.'},
+    {id: 'mat-4', area: 'Matemáticas', description: 'Reconoce y aplica propiedades de figuras geométricas para solucionar problemas.'},
+    {id: 'mat-5', area: 'Matemáticas', description: 'Calcula áreas y volúmenes de cuerpos geométricos y los aplica en situaciones reales.'},
+    {id: 'mat-6', area: 'Matemáticas', description: 'Utiliza el Teorema de Pitágoras y relaciones trigonométricas para resolver triángulos.'},
+    {id: 'mat-7', area: 'Matemáticas', description: 'Interpreta y representa datos usando tablas de frecuencia y gráficos estadísticos.'},
+    {id: 'mat-8', area: 'Matemáticas', description: 'Calcula e interpreta medidas de tendencia central (media, mediana, moda).'},
+    {id: 'mat-9', area: 'Matemáticas', description: 'Usa el principio de conteo y conceptos de probabilidad para analizar eventos aleatorios.'},
+    {id: 'mat-10', area: 'Matemáticas', description: 'Describe y modela fenómenos de cambio y variación a través de funciones.'},
+    {id: 'mat-11', area: 'Matemáticas', description: 'Traduce expresiones del lenguaje natural al lenguaje algebraico y viceversa.'},
+    {id: 'mat-12', area: 'Matemáticas', description: 'Resuelve ecuaciones e inecuaciones lineales y cuadráticas.'},
+    {id: 'mat-13', area: 'Matemáticas', description: 'Identifica y grafica funciones (lineal, cuadrática, exponencial) en el plano cartesiano.'},
+    {id: 'mat-14', area: 'Matemáticas', description: 'Aplica transformaciones geométricas (

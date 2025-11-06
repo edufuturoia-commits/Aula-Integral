@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Student, Assessment, Resource, StudentAssessmentResult, Teacher, SubjectGrades, Citation } from '../types';
 import { Role, CitationStatus } from '../types';
@@ -120,8 +115,9 @@ const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents
         };
 
         await onAddResult(newResult);
-        alert(`¡Evaluación completada! Tu nota es: ${score.toFixed(1)}`);
-        setSelectedAssessment(null);
+        // The OnlineAssessmentTaker component will now handle showing the result screen.
+        // We no longer show an alert or navigate away from here. The student will click
+        // a "Back" button on the result screen to navigate back.
     };
 
     if (selectedAssessment) {

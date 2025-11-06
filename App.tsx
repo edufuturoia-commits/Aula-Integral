@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useCallback, useEffect, Suspense, lazy, useMemo, createContext, useContext } from 'react';
 
 // New Pages for Auth Flow
@@ -719,7 +721,7 @@ const AppContent: React.FC = () => {
           <main className="flex-1 p-4 md:p-6 bg-neutral dark:bg-gray-900 overflow-y-auto">
              <Suspense fallback={<div className="text-center p-8">{t('loadingApp')}...</div>}>
                 {currentPage === 'Dashboard' && <Dashboard students={students} teachers={teachers} citations={citations} onNavigate={setCurrentPage} />}
-                {currentPage === 'Classroom' && currentUser.role === Role.TEACHER && <Classroom isOnline={isOnline} students={students} setStudents={handleSetStudents} teachers={teachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendanceRecords} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onShowSystemMessage={showSystemMessage} onReportAttention={handleNewAttentionReport} />}
+                {currentPage === 'Classroom' && (currentUser.role === Role.TEACHER || currentUser.role === Role.ADMIN) && <Classroom isOnline={isOnline} students={students} setStudents={handleSetStudents} teachers={teachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} attendanceRecords={attendanceRecords} onUpdateAttendance={handleUpdateAttendanceRecord} onBulkUpdateAttendance={handleBulkUpdateAttendanceRecords} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onShowSystemMessage={showSystemMessage} onReportAttention={handleNewAttentionReport} />}
                 {currentPage === 'Assessments' && <Assessments students={students} assessments={assessments} setAssessments={handleSetAssessments} studentResults={studentResults} />}
                 {currentPage === 'Resources' && <Resources resources={resources} downloadedIds={downloadedResourceIds} onUpdate={loadResources}/>}
                 {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateCurrentUser} />}

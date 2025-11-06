@@ -1,8 +1,9 @@
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { Student, SubjectGrades, GradeItem, AcademicPeriod, SubjectArea, Teacher, DesempenoDescriptor } from '../types';
 import { Role, Desempeno } from '../types';
-import { ACADEMIC_PERIODS, SUBJECT_AREAS, GRADES, GROUPS, GRADE_GROUP_MAP, MOCK_DESEMPENOS_BANK } from '../constants';
+import { ACADEMIC_PERIODS, SUBJECT_AREAS, GRADES, GROUPS, GRADE_GROUP_MAP, DESEMPENOS_BANK } from '../constants';
 
 // --- Helper Components (Modals & Selectors) ---
 
@@ -309,7 +310,7 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
     const [isObservationModalOpen, setIsObservationModalOpen] = useState(false);
     
     const [isGeneralDesempenosModalOpen, setIsGeneralDesempenosModalOpen] = useState(false);
-    const [desempenosBank, setDesempenosBank] = useState<DesempenoDescriptor[]>(MOCK_DESEMPENOS_BANK);
+    const [desempenosBank, setDesempenosBank] = useState<DesempenoDescriptor[]>(DESEMPENOS_BANK);
     
     const [editingCell, setEditingCell] = useState<{ studentId: number; itemId: string; value: string } | null>(null);
     
