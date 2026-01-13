@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Incident, Student, AttendanceRecord, Citation, Announcement, Teacher, SubjectGrades, Guardian, AttentionReport } from '../types';
 import { IncidentType, AttendanceStatus, CitationStatus, Role, DocumentType, TeacherStatus, IncidentStatus } from '../types';
@@ -334,7 +335,7 @@ const Incidents: React.FC<IncidentsProps> = ({
                 updatedTeachers.push({
                     ...t,
                     role: Role.TEACHER,
-                    password: t.id,
+                    password: String(t.id),
                     passwordChanged: false
                 });
             }
@@ -400,7 +401,8 @@ const Incidents: React.FC<IncidentsProps> = ({
             ...teacherData,
             avatarUrl: `https://picsum.photos/seed/${teacherData.id}/100/100`,
             role: Role.TEACHER,
-            password: teacherData.id,
+            // FIX: Ensure password is a string, as id can be string | number.
+            password: String(teacherData.id),
             passwordChanged: false
         };
         const updatedTeachers = [...teachers, newTeacher];
@@ -416,7 +418,8 @@ const Incidents: React.FC<IncidentsProps> = ({
             avatarUrl: `https://picsum.photos/seed/${guardianData.id}/100/100`,
             role: Role.GUARDIAN,
             studentIds: [],
-            password: guardianData.id,
+            // FIX: Ensure password is a string.
+            password: String(guardianData.id),
             passwordChanged: false,
         };
         const updatedGuardians = [...guardians, newGuardian];

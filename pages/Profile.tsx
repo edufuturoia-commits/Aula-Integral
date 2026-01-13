@@ -6,9 +6,12 @@ interface ProfileProps {
     onUpdateUser: (user: Teacher | Student | Guardian) => Promise<void>;
 }
 
-const ProfileSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+const ProfileSection: React.FC<{ title: string; children: React.ReactNode; action?: React.ReactNode }> = ({ title, children, action }) => (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 border-b dark:border-gray-700 pb-3 mb-4">{title}</h2>
+        <div className="flex justify-between items-center border-b dark:border-gray-700 pb-3 mb-4">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">{title}</h2>
+            {action && <div className="flex-shrink-0">{action}</div>}
+        </div>
         {children}
     </div>
 );
@@ -18,6 +21,7 @@ const CameraIcon: React.FC<{className?: string}> = ({className}) => (
         <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
     </svg>
 );
+
 
 const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
   const [user, setUser] = useState(currentUser);
@@ -31,34 +35,10 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setUser(prevUser => {
-      const updatedUser = { ...prevUser };
-      
-      // Use a switch to safely handle properties that might not exist on all user types
-      switch (name) {
-        case 'email':
-          if ('email' in updatedUser) {
-            updatedUser.email = value;
-          }
-          break;
-        case 'phone':
-          if ('phone' in updatedUser) {
-            updatedUser.phone = value;
-          }
-          break;
-        case 'dateOfBirth':
-          if ('dateOfBirth' in updatedUser) {
-            updatedUser.dateOfBirth = value;
-          }
-          break;
-        default:
-          // For safety, only update if the property is known.
-          // Or handle other properties if they exist.
-          break;
-      }
-
-      return updatedUser;
-    });
+    setUser(prevUser => ({
+        ...prevUser,
+        [name]: value,
+    }));
   };
   
   const handleEdit = () => {
@@ -101,62 +81,66 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
       }
   };
 
-  // FIX: Replaced function with a type-safe implementation to avoid using computed property names (`[name]: value`) when updating an object within a discriminated union. This dynamic update was causing TypeScript to lose type information and infer 'never' for the state, leading to downstream errors.
   const handleArrayChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     index: number,
     field: 'certifications' | 'experience' | 'professionalDevelopment'
   ) => {
-    const { name, value } = e.target;
+    // FIX: Renamed the destructured `name` variable to `inputName` to prevent a potential variable shadowing conflict.
+    const { name: inputName, value } = e.target;
     setUser(prevUser => {
       if (!('subject' in prevUser)) return prevUser; // Type guard for Teacher
 
-      const updatedUser = { ...prevUser };
-
-      if (field === 'certifications') {
-        const list = [...(updatedUser.certifications || [])];
-        const item = list[index];
-        if (item) {
-          const updatedItem = { ...item };
-          if (name === 'name') updatedItem.name = value;
-          else if (name === 'issuer') updatedItem.issuer = value;
-          else if (name === 'year') updatedItem.year = value;
-          list[index] = updatedItem;
-          updatedUser.certifications = list;
-        }
-      } else if (field === 'experience') {
-        const list = [...(updatedUser.experience || [])];
-        const item = list[index];
-        if (item) {
-          const updatedItem = { ...item };
-          if (name === 'position') updatedItem.position = value;
-          else if (name === 'institution') updatedItem.institution = value;
-          else if (name === 'years') updatedItem.years = value;
-          list[index] = updatedItem;
-          updatedUser.experience = list;
-        }
-      } else if (field === 'professionalDevelopment') {
-        const list = [...(updatedUser.professionalDevelopment || [])];
-        const item = list[index];
-        if (item) {
-          const updatedItem = { ...item };
-          if (name === 'hours') {
-            updatedItem.hours = parseFloat(value) || 0;
-          } else if (name === 'activity') {
-            updatedItem.activity = value;
-          } else if (name === 'date') {
-            updatedItem.date = value;
+      switch (field) {
+        case 'certifications': {
+          const list = [...(prevUser.certifications || [])];
+          const item = list[index];
+          if (item) {
+            const updatedItem: Certification = { ...item };
+            if (inputName === 'name') updatedItem.name = value;
+            else if (inputName === 'issuer') updatedItem.issuer = value;
+            else if (inputName === 'year') updatedItem.year = value;
+            list[index] = updatedItem;
           }
-          list[index] = updatedItem;
-          updatedUser.professionalDevelopment = list;
+          return { ...prevUser, certifications: list };
+        }
+        case 'experience': {
+          const list = [...(prevUser.experience || [])];
+          const item = list[index];
+          if (item) {
+            const updatedItem: Experience = { ...item };
+            if (inputName === 'position') updatedItem.position = value;
+            else if (inputName === 'institution') updatedItem.institution = value;
+            else if (inputName === 'years') updatedItem.years = value;
+            list[index] = updatedItem;
+          }
+          return { ...prevUser, experience: list };
+        }
+        case 'professionalDevelopment': {
+          const list = [...(prevUser.professionalDevelopment || [])];
+          const item = list[index];
+            if (item) {
+                const updatedItem: ProfessionalDevelopment = { ...item };
+                if (inputName === 'hours') {
+                    updatedItem.hours = parseFloat(value) || 0;
+                } else if (inputName === 'activity') {
+                    updatedItem.activity = value;
+                } else if (inputName === 'date') {
+                    updatedItem.date = value;
+                }
+                list[index] = updatedItem;
+            }
+          return { ...prevUser, professionalDevelopment: list };
+        }
+        // FIX: The exhaustive check was removed, which can lead to cryptic type errors. Restoring it to ensure type safety.
+        default: {
+          const _exhaustiveCheck: never = field;
+          return prevUser;
         }
       }
-      
-      return updatedUser;
     });
   };
 
-  // FIX: Replaced function with a type-safe implementation to handle adding items to arrays on a union type correctly.
   const handleAddItem = (field: 'certifications' | 'experience' | 'professionalDevelopment') => {
     setUser(prevUser => {
         if (!('subject' in prevUser)) return prevUser; // Type guard for Teacher
@@ -164,26 +148,25 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
         switch (field) {
             case 'certifications': {
                 const newItem: Certification = { id: `cert_${Date.now()}`, name: '', issuer: '', year: '' };
-                const list = [...(prevUser.certifications || [])];
-                return { ...prevUser, certifications: [...list, newItem] };
+                return { ...prevUser, certifications: [...(prevUser.certifications || []), newItem] };
             }
             case 'experience': {
                 const newItem: Experience = { id: `exp_${Date.now()}`, position: '', institution: '', years: '' };
-                const list = [...(prevUser.experience || [])];
-                return { ...prevUser, experience: [...list, newItem] };
+                return { ...prevUser, experience: [...(prevUser.experience || []), newItem] };
             }
             case 'professionalDevelopment': {
                 const newItem: ProfessionalDevelopment = { id: `pd_${Date.now()}`, activity: '', hours: 0, date: '' };
-                const list = [...(prevUser.professionalDevelopment || [])];
-                return { ...prevUser, professionalDevelopment: [...list, newItem] };
+                return { ...prevUser, professionalDevelopment: [...(prevUser.professionalDevelopment || []), newItem] };
             }
-            default:
+            // FIX: Added exhaustive check to prevent type errors.
+            default: {
+                const _exhaustiveCheck: never = field;
                 return prevUser;
+            }
         }
     });
   };
 
-  // FIX: The `handleDeleteItem` function was using a computed property name `[field]` on a spread union type, which can corrupt the state's type information in TypeScript, leading to a 'never' type inference. The function has been rewritten to use a type-safe switch statement, ensuring that each array property is updated with the correct type, resolving the error downstream.
   const handleDeleteItem = (index: number, field: 'certifications' | 'experience' | 'professionalDevelopment') => {
      setUser(prevUser => {
         if (!('subject' in prevUser)) return prevUser;
@@ -214,190 +197,136 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
-        <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleAvatarChange} 
-            className="hidden" 
-            accept="image/*"
-        />
-      <div className="flex items-center space-x-6 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-         <div className="relative">
-            <img src={avatarUrl} alt={user.name} className="w-24 h-24 rounded-full object-cover border-4 border-primary" />
-            {isEditing && 'avatarUrl' in user && (
-                <button
-                    onClick={handleAvatarClick}
-                    className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-2 hover:bg-primary-focus focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-opacity"
-                    aria-label="Cambiar foto de perfil"
-                >
-                    <CameraIcon className="h-5 w-5" />
-                </button>
+      <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
+      <div className="flex items-start justify-between bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+        <div className="flex items-center space-x-6">
+            <div className="relative">
+                <img src={avatarUrl} alt={user.name} className="w-24 h-24 rounded-full object-cover border-4 border-primary" />
+                {isEditing && 'avatarUrl' in user && (
+                    <button onClick={handleAvatarClick} className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-2 hover:bg-primary-focus focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-opacity" aria-label="Cambiar foto de perfil">
+                        <CameraIcon className="h-5 w-5" />
+                    </button>
+                )}
+            </div>
+            <div>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="name"
+                  value={user.name}
+                  onChange={handleInputChange}
+                  className="text-3xl font-bold text-gray-800 dark:text-gray-100 bg-transparent border-b-2 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-0 focus:border-primary dark:focus:border-secondary"
+                  aria-label="Nombre de usuario"
+                />
+              ) : (
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">{user.name}</h1>
+              )}
+              <p className="text-gray-500 dark:text-gray-400">{userRole}</p>
+            </div>
+        </div>
+        <div>
+            {isEditing ? (
+                <div className="flex items-center space-x-3">
+                    <button onClick={handleCancel} className="px-4 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 text-sm font-semibold">Cancelar</button>
+                    <button onClick={handleSave} className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus text-sm font-semibold">Guardar Cambios</button>
+                </div>
+            ) : (
+                <button onClick={handleEdit} className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus text-sm font-semibold">Editar Perfil</button>
             )}
-         </div>
-         <div>
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">{user.name}</h1>
-            <p className="text-gray-500 dark:text-gray-400">{userRole}</p>
-         </div>
+        </div>
       </div>
-
-      <ProfileSection title="Información Personal">
-        {isEditing ? (
-            <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Correo Electrónico</label>
-                        <input type="email" name="email" value={user.email || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-100"/>
-                    </div>
-                    {'phone' in user && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono</label>
-                            <input type="tel" name="phone" value={user.phone || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-100"/>
-                        </div>
-                    )}
-                    {'dateOfBirth' in user && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Nacimiento</label>
-                            <input type="date" name="dateOfBirth" value={user.dateOfBirth || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-100"/>
-                        </div>
-                    )}
-                </div>
-                <div className="flex justify-end space-x-3 pt-4">
-                    <button onClick={handleCancel} className="px-4 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">Cancelar</button>
-                    <button onClick={handleSave} className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Guardar Cambios</button>
-                </div>
-            </div>
-        ) : (
-            <div className="space-y-4 text-gray-800 dark:text-gray-200">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <p><strong className="font-medium text-gray-600 dark:text-gray-400">Correo Electrónico:</strong> {user.email || 'No especificado'}</p>
-                    {'phone' in user && <p><strong className="font-medium text-gray-600 dark:text-gray-400">Teléfono:</strong> {user.phone || 'No especificado'}</p>}
-                    {'dateOfBirth' in user && <p><strong className="font-medium text-gray-600 dark:text-gray-400">Fecha de Nacimiento:</strong> {user.dateOfBirth ? new Date(user.dateOfBirth + 'T00:00:00').toLocaleDateString('es-CO') : 'No especificado'}</p>}
-                 </div>
-                 <div className="text-right pt-4">
-                    <button onClick={handleEdit} className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Editar Perfil</button>
-                </div>
-            </div>
-        )}
-      </ProfileSection>
       
+      <ProfileSection title="Información Personal">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Correo Electrónico</label>
+                {isEditing ? <input type="email" name="email" value={user.email || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm text-gray-900 dark:text-gray-100"/> : <p className="text-gray-800 dark:text-gray-100">{user.email || 'No especificado'}</p>}
+            </div>
+            {'phone' in user && <div><label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Teléfono</label>{isEditing ? <input type="tel" name="phone" value={user.phone || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm text-gray-900 dark:text-gray-100"/> : <p className="text-gray-800 dark:text-gray-100">{user.phone || 'No especificado'}</p>}</div>}
+            {'dateOfBirth' in user && <div><label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Fecha de Nacimiento</label>{isEditing ? <input type="date" name="dateOfBirth" value={user.dateOfBirth || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm text-gray-900 dark:text-gray-100"/> : <p className="text-gray-800 dark:text-gray-100">{user.dateOfBirth ? new Date(user.dateOfBirth + 'T00:00:00').toLocaleDateString() : 'No especificada'}</p>}</div>}
+            {'address' in user && <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Dirección</label>{isEditing ? <input type="text" name="address" value={user.address || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm text-gray-900 dark:text-gray-100"/> : <p className="text-gray-800 dark:text-gray-100">{user.address || 'No especificada'}</p>}</div>}
+        </div>
+      </ProfileSection>
+
       {'subject' in user && (
         <>
-          <ProfileSection title="Certificaciones Profesionales">
-            {isEditing ? (
-              <div className="space-y-4">
+        <ProfileSection title="Certificaciones y Formación" action={isEditing && <button onClick={() => handleAddItem('certifications')} className="text-sm font-semibold text-primary dark:text-secondary hover:underline">+ Añadir</button>}>
+            <div className="space-y-4">
                 {(user as Teacher).certifications?.map((cert, index) => (
-                  <div key={cert.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center p-3 border dark:border-gray-700 rounded-lg">
-                    <input type="text" placeholder="Nombre de la Certificación" name="name" value={cert.name} onChange={e => handleArrayChange(e, index, 'certifications')} className="md:col-span-2 mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
-                    <input type="text" placeholder="Emisor" name="issuer" value={cert.issuer} onChange={e => handleArrayChange(e, index, 'certifications')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
-                    <div className="flex items-center gap-2">
-                      <input type="text" placeholder="Año" name="year" value={cert.year} onChange={e => handleArrayChange(e, index, 'certifications')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
-                      <button type="button" onClick={() => handleDeleteItem(index, 'certifications')} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">&times;</button>
+                isEditing ? (
+                    <div key={cert.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+                        <input name="name" value={cert.name} onChange={(e) => handleArrayChange(e, index, 'certifications')} placeholder="Nombre Certificación" className="md:col-span-2 mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm"/>
+                        <input name="issuer" value={cert.issuer} onChange={(e) => handleArrayChange(e, index, 'certifications')} placeholder="Emisor" className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm"/>
+                        <div className="flex items-center gap-2">
+                           <input name="year" value={cert.year} onChange={(e) => handleArrayChange(e, index, 'certifications')} placeholder="Año" className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm"/>
+                           <button onClick={() => handleDeleteItem(index, 'certifications')} className="text-red-500 hover:text-red-700">&times;</button>
+                        </div>
                     </div>
-                  </div>
-                ))}
-                <button type="button" onClick={() => handleAddItem('certifications')} className="text-sm font-medium text-primary hover:underline">+ Añadir Certificación</button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {(user as Teacher).certifications?.length > 0 ? (
-                  (user as Teacher).certifications.map(cert => (
-                    <div key={cert.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
-                      <p className="font-semibold text-gray-800 dark:text-gray-100">{cert.name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{cert.issuer} - {cert.year}</p>
-                    </div>
-                  ))
                 ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">No hay certificaciones registradas.</p>
-                )}
-              </div>
-            )}
-          </ProfileSection>
+                    <div key={cert.id}><p><strong>{cert.name}</strong> - {cert.issuer} ({cert.year})</p></div>
+                )
+                ))}
+                 {(!(user as Teacher).certifications || (user as Teacher).certifications?.length === 0) && !isEditing && <p className="text-gray-500 dark:text-gray-400">No hay certificaciones registradas.</p>}
+            </div>
+        </ProfileSection>
 
-          <ProfileSection title="Experiencia Laboral">
-            {isEditing ? (
-              <div className="space-y-4">
-                {(user as Teacher).experience?.map((exp, index) => (
-                  <div key={exp.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center p-3 border dark:border-gray-700 rounded-lg">
-                    <input type="text" placeholder="Cargo" name="position" value={exp.position} onChange={e => handleArrayChange(e, index, 'experience')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
-                    <input type="text" placeholder="Institución" name="institution" value={exp.institution} onChange={e => handleArrayChange(e, index, 'experience')} className="md:col-span-2 mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
-                    <div className="flex items-center gap-2">
-                      <input type="text" placeholder="Años (ej. 2020-2023)" name="years" value={exp.years} onChange={e => handleArrayChange(e, index, 'experience')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
-                      <button type="button" onClick={() => handleDeleteItem(index, 'experience')} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">&times;</button>
+        <ProfileSection title="Experiencia Laboral" action={isEditing && <button onClick={() => handleAddItem('experience')} className="text-sm font-semibold text-primary dark:text-secondary hover:underline">+ Añadir</button>}>
+            <div className="space-y-4">
+            {(user as Teacher).experience?.map((exp, index) => (
+                isEditing ? (
+                    <div key={exp.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+                        <input name="position" value={exp.position} onChange={(e) => handleArrayChange(e, index, 'experience')} placeholder="Cargo" className="md:col-span-2 mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm"/>
+                        <input name="institution" value={exp.institution} onChange={(e) => handleArrayChange(e, index, 'experience')} placeholder="Institución" className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm"/>
+                         <div className="flex items-center gap-2">
+                            <input name="years" value={exp.years} onChange={(e) => handleArrayChange(e, index, 'experience')} placeholder="Años" className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm"/>
+                            <button onClick={() => handleDeleteItem(index, 'experience')} className="text-red-500 hover:text-red-700">&times;</button>
+                        </div>
                     </div>
-                  </div>
-                ))}
-                <button type="button" onClick={() => handleAddItem('experience')} className="text-sm font-medium text-primary hover:underline">+ Añadir Experiencia</button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {(user as Teacher).experience?.length > 0 ? (
-                  (user as Teacher).experience.map(exp => (
-                    <div key={exp.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
-                      <p className="font-semibold text-gray-800 dark:text-gray-100">{exp.position}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{exp.institution} ({exp.years})</p>
-                    </div>
-                  ))
                 ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">No hay experiencia laboral registrada.</p>
-                )}
-              </div>
-            )}
-          </ProfileSection>
+                    <div key={exp.id}><p><strong>{exp.position}</strong> en {exp.institution} ({exp.years} años)</p></div>
+                )
+            ))}
+             {(!(user as Teacher).experience || (user as Teacher).experience?.length === 0) && !isEditing && <p className="text-gray-500 dark:text-gray-400">No hay experiencia laboral registrada.</p>}
+            </div>
+        </ProfileSection>
 
-          <ProfileSection title="Desarrollo Profesional">
-             {isEditing ? (
-              <div className="space-y-4">
-                {(user as Teacher).professionalDevelopment?.map((dev, index) => (
-                  <div key={dev.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center p-3 border dark:border-gray-700 rounded-lg">
-                    <input type="text" placeholder="Actividad/Curso" name="activity" value={dev.activity} onChange={e => handleArrayChange(e, index, 'professionalDevelopment')} className="md:col-span-2 mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
-                    <input type="date" name="date" value={dev.date} onChange={e => handleArrayChange(e, index, 'professionalDevelopment')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
-                    <div className="flex items-center gap-2">
-                      <input type="number" placeholder="Horas" name="hours" value={dev.hours} onChange={e => handleArrayChange(e, index, 'professionalDevelopment')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm" />
-                      <button type="button" onClick={() => handleDeleteItem(index, 'professionalDevelopment')} className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">&times;</button>
+        <ProfileSection title="Desarrollo Profesional" action={isEditing && <button onClick={() => handleAddItem('professionalDevelopment')} className="text-sm font-semibold text-primary dark:text-secondary hover:underline">+ Añadir</button>}>
+            <div className="space-y-4">
+            {(user as Teacher).professionalDevelopment?.map((pd, index) => (
+                isEditing ? (
+                    <div key={pd.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+                        <input name="activity" value={pd.activity} onChange={(e) => handleArrayChange(e, index, 'professionalDevelopment')} placeholder="Actividad/Curso" className="md:col-span-2 mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm"/>
+                        <input name="date" type="date" value={pd.date} onChange={(e) => handleArrayChange(e, index, 'professionalDevelopment')} className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm"/>
+                         <div className="flex items-center gap-2">
+                           <input name="hours" type="number" value={pd.hours} onChange={(e) => handleArrayChange(e, index, 'professionalDevelopment')} placeholder="Horas" className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm"/>
+                           <button onClick={() => handleDeleteItem(index, 'professionalDevelopment')} className="text-red-500 hover:text-red-700">&times;</button>
+                        </div>
                     </div>
-                  </div>
-                ))}
-                <button type="button" onClick={() => handleAddItem('professionalDevelopment')} className="text-sm font-medium text-primary hover:underline">+ Añadir Actividad</button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                 {(user as Teacher).professionalDevelopment?.length > 0 ? (
-                  (user as Teacher).professionalDevelopment.map(dev => (
-                    <div key={dev.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
-                      <p className="font-semibold text-gray-800 dark:text-gray-100">{dev.activity}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(dev.date + 'T00:00:00').toLocaleDateString('es-CO')} - {dev.hours} horas</p>
-                    </div>
-                  ))
                 ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">No hay actividades de desarrollo profesional registradas.</p>
-                )}
-              </div>
-            )}
-          </ProfileSection>
+                    <div key={pd.id}><p><strong>{pd.activity}</strong> ({pd.hours} horas) - {new Date(pd.date + 'T00:00:00').toLocaleDateString()}</p></div>
+                )
+            ))}
+            {(!(user as Teacher).professionalDevelopment || (user as Teacher).professionalDevelopment?.length === 0) && !isEditing && <p className="text-gray-500 dark:text-gray-400">No hay registros de desarrollo profesional.</p>}
+            </div>
+        </ProfileSection>
         </>
       )}
 
-      {'password' in user && (
-        <ProfileSection title="Seguridad">
-            <form className="space-y-4" onSubmit={handleChangePassword}>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña Actual</label>
-                    <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-100"/>
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nueva Contraseña</label>
-                    <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-100"/>
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirmar Nueva Contraseña</label>
-                    <input type="password" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm text-gray-900 dark:text-gray-100"/>
-                </div>
-                <div className="text-right pt-2">
-                    <button type="submit" className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus">Cambiar Contraseña</button>
-                </div>
-            </form>
-        </ProfileSection>
-      )}
+      <ProfileSection title="Seguridad">
+        <form onSubmit={handleChangePassword} className="space-y-4 max-w-sm">
+             <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nueva Contraseña</label>
+                <input type="password" name="newPassword" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm"/>
+            </div>
+             <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirmar Contraseña</label>
+                <input type="password" name="confirmPassword" required className="mt-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm"/>
+            </div>
+            <div className="text-right">
+                <button type="submit" className="px-4 py-2 rounded-md text-white bg-primary hover:bg-primary-focus text-sm font-semibold">Cambiar Contraseña</button>
+            </div>
+        </form>
+      </ProfileSection>
     </div>
   );
 };

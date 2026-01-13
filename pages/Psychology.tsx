@@ -2,8 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { AttentionReport, Student, Teacher, Conversation, Message, Guardian, Diagnosis, SessionLog, SessionProgress, InstitutionProfileData } from '../types';
 import { Role, AttentionReportStatus, DiagnosisArea } from '../types';
 import jsPDF from 'jspdf';
-// Switched to function-based usage of jspdf-autotable to resolve module augmentation issues.
-import autoTable, { type UserOptions } from 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 interface PsychologyProps {
     reports: AttentionReport[];
@@ -43,7 +42,7 @@ const getStatusClass = (status: AttentionReportStatus) => {
     switch (status) {
         case AttentionReportStatus.OPEN: return { bg: 'bg-red-100 dark:bg-red-900/50', text: 'text-red-800 dark:text-red-200', border: 'border-red-500' };
         case AttentionReportStatus.IN_PROGRESS: return { bg: 'bg-yellow-100 dark:bg-yellow-900/50', text: 'text-yellow-800 dark:text-yellow-200', border: 'border-yellow-500' };
-        case AttentionReportStatus.CLOSED: return { bg: 'bg-green-100 dark:bg-green-900/50', text: 'text-green-800 dark:text-green-200', border: 'border-green-500' };
+        case AttentionReportStatus.CLOSED: return { bg: 'bg-green-100 dark:bg-green-900/50', text: 'text-green-800 dark:text-red-200', border: 'border-green-500' };
         default: return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-200', border: 'border-gray-500' };
     }
 };
@@ -75,11 +74,11 @@ const DiagnosisForm: React.FC<{
     };
 
     return (
-        <form onSubmit={handleSubmit} className="p-4 mt-2 bg-gray-100 dark:bg-gray-700 rounded-lg space-y-3">
+        <form onSubmit={handleSubmit} className="p-4 mt-2 bg-gray-50 dark:bg-gray-900/80 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3 shadow-inner">
             <select
                 value={area}
                 onChange={e => setArea(e.target.value as DiagnosisArea)}
-                className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
+                className="w-full p-2 border rounded-md"
             >
                 {Object.values(DiagnosisArea).map(areaValue => (
                     <option key={areaValue} value={areaValue}>{areaValue}</option>
@@ -89,7 +88,7 @@ const DiagnosisForm: React.FC<{
                 value={text}
                 onChange={e => setText(e.target.value)}
                 rows={4}
-                className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
+                className="w-full p-2 border rounded-md"
                 placeholder="Descripción del diagnóstico o hipótesis..."
                 required
             />
@@ -97,12 +96,12 @@ const DiagnosisForm: React.FC<{
                 type="text"
                 value={source}
                 onChange={e => setSource(e.target.value)}
-                className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600"
+                className="w-full p-2 border rounded-md"
                 placeholder="Fuente (Ej: Entrevista, Test WISC-V, Observación)"
             />
             <div className="flex justify-end gap-2">
-                <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded-md text-sm">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-primary text-white rounded-md text-sm">Guardar</button>
+                <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm font-medium">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-primary text-white rounded-md text-sm font-bold shadow-sm">Guardar</button>
             </div>
         </form>
     );
@@ -144,26 +143,26 @@ const SessionForm: React.FC<{
     };
 
     return (
-        <form onSubmit={handleSubmit} className="p-4 mt-2 bg-gray-100 dark:bg-gray-700 rounded-lg space-y-3">
+        <form onSubmit={handleSubmit} className="p-4 mt-2 bg-gray-50 dark:bg-gray-900/80 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3 shadow-inner">
             <div className="grid grid-cols-3 gap-3">
-                <input type="date" name="date" value={formData.date} onChange={handleChange} className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600" />
-                <input type="time" name="startTime" value={formData.startTime} onChange={handleChange} className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600" />
-                <input type="time" name="endTime" value={formData.endTime} onChange={handleChange} className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600" />
+                <input type="date" name="date" value={formData.date} onChange={handleChange} className="p-2 border rounded-md" />
+                <input type="time" name="startTime" value={formData.startTime} onChange={handleChange} className="p-2 border rounded-md" />
+                <input type="time" name="endTime" value={formData.endTime} onChange={handleChange} className="p-2 border rounded-md" />
             </div>
             <div className="grid grid-cols-2 gap-3">
-                <select name="sessionType" value={formData.sessionType} onChange={handleChange} className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600">
+                <select name="sessionType" value={formData.sessionType} onChange={handleChange} className="p-2 border rounded-md">
                     <option>Individual</option>
                     <option>Grupal</option>
                     <option>Familiar</option>
                 </select>
-                <select name="progressIndicator" value={formData.progressIndicator} onChange={handleChange} className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600">
+                <select name="progressIndicator" value={formData.progressIndicator} onChange={handleChange} className="p-2 border rounded-md">
                     {SESSION_PROGRESS_OPTIONS.map(opt => <option key={opt}>{opt}</option>)}
                 </select>
             </div>
-            <textarea name="notes" value={formData.notes} onChange={handleChange} rows={6} className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600" placeholder="Notas detalladas de la sesión..." required />
+            <textarea name="notes" value={formData.notes} onChange={handleChange} rows={6} className="w-full p-2 border rounded-md" placeholder="Notas detalladas de la sesión..." required />
             <div className="flex justify-end gap-2">
-                <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-600 rounded-md text-sm">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-primary text-white rounded-md text-sm">Guardar Sesión</button>
+                <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm font-medium">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-primary text-white rounded-md text-sm font-bold shadow-sm">Guardar Sesión</button>
             </div>
         </form>
     );
@@ -188,16 +187,16 @@ const EditableField: React.FC<{
                     value={editingValue}
                     onChange={onChange}
                     rows={6}
-                    className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-primary"
+                    className="w-full p-2 border rounded-md focus:ring-2 focus:ring-primary shadow-inner"
                     autoFocus
                 />
                 <div className="flex justify-end gap-2 mt-2">
-                    <button onClick={onCancel} className="text-sm px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">Cancelar</button>
-                    <button onClick={onSave} className="text-sm px-3 py-1 rounded-md bg-primary text-white hover:bg-primary-focus">Guardar</button>
+                    <button onClick={onCancel} className="text-sm px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">Cancelar</button>
+                    <button onClick={onSave} className="text-sm px-3 py-1 rounded-md bg-primary text-white hover:bg-primary-focus transition-colors font-bold shadow-sm">Guardar</button>
                 </div>
             </div>
         ) : (
-            <div onClick={!disabled ? onStartEdit : undefined} className={`text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words p-2 rounded-md min-h-[4rem] ${!disabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer' : 'opacity-70'}`}>
+            <div onClick={!disabled ? onStartEdit : undefined} className={`text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words p-2 rounded-md min-h-[4rem] border border-transparent transition-all ${!disabled ? 'hover:bg-gray-50 dark:hover:bg-gray-900 hover:border-gray-200 dark:hover:border-gray-700 cursor-pointer' : 'opacity-70'}`}>
                 {value || <span className="text-gray-400 italic">No hay información. Haz clic para añadir.</span>}
             </div>
         )}
@@ -506,7 +505,7 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
                                         </select>
                                     );
                                 })()}
-                                <button onClick={handleGeneratePdf} className="text-sm bg-red-100 text-red-700 font-semibold py-2 px-3 rounded-lg hover:bg-red-200 dark:bg-red-900/50 dark:text-red-200">Exportar a PDF</button>
+                                <button onClick={handleGeneratePdf} className="text-sm bg-red-100 text-red-700 font-semibold py-2 px-3 rounded-lg hover:bg-red-200 dark:bg-red-900/50 dark:text-red-200 transition-colors shadow-sm">Exportar a PDF</button>
                             </div>
                         </div>
 
@@ -530,8 +529,8 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
                                             </div>
                                             {selectedReport.status !== 'CLOSED' && (
                                                 <div className="flex gap-2 flex-shrink-0 ml-2">
-                                                    <button onClick={() => setEditingDiagnosis(diag)} className="text-xs text-blue-600 hover:underline">Editar</button>
-                                                    <button onClick={() => handleDeleteDiagnosis(diag.id)} className="text-xs text-red-600 hover:underline">Eliminar</button>
+                                                    <button onClick={() => setEditingDiagnosis(diag)} className="text-xs text-blue-600 hover:underline font-medium">Editar</button>
+                                                    <button onClick={() => handleDeleteDiagnosis(diag.id)} className="text-xs text-red-600 hover:underline font-medium">Eliminar</button>
                                                 </div>
                                             )}
                                         </div>
@@ -558,8 +557,8 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
                                             </div>
                                             {selectedReport.status !== 'CLOSED' && (
                                                 <div className="flex gap-2 flex-shrink-0 ml-2">
-                                                    <button onClick={() => setEditingSession(sess)} className="text-xs text-blue-600 hover:underline">Editar</button>
-                                                    <button onClick={() => handleDeleteSession(sess.id)} className="text-xs text-red-600 hover:underline">Eliminar</button>
+                                                    <button onClick={() => setEditingSession(sess)} className="text-xs text-blue-600 hover:underline font-medium">Editar</button>
+                                                    <button onClick={() => handleDeleteSession(sess.id)} className="text-xs text-red-600 hover:underline font-medium">Eliminar</button>
                                                 </div>
                                             )}
                                          </div>
@@ -578,25 +577,25 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
                              <Accordion title="Canal de Comunicación Confidencial" isOpen={openAccordion === 'comunicacion'} onToggle={() => setOpenAccordion(openAccordion === 'comunicacion' ? null : 'comunicacion')}>
                                 {selectedConversation ? (
                                     <div className="flex flex-col h-96">
-                                        <div ref={chatContainerRef} className="flex-1 p-4 space-y-4 overflow-y-auto bg-gray-50 dark:bg-gray-800 rounded-t-lg">
+                                        <div ref={chatContainerRef} className="flex-1 p-4 space-y-4 overflow-y-auto bg-gray-50 dark:bg-gray-800 rounded-t-lg shadow-inner">
                                             {selectedConversation.messages.map((msg, index) => {
                                                 const sender = allUsersMap.get(msg.senderId);
                                                 const isSelf = msg.senderId === currentUser.id;
                                                 return (
                                                     <div key={index} className={`flex items-start gap-2 ${isSelf ? 'justify-end' : ''}`}>
-                                                        {!isSelf && <img src={sender && 'avatarUrl' in sender ? sender.avatarUrl : ''} className="w-8 h-8 rounded-full" alt="sender" />}
-                                                        <div className={`max-w-md p-3 rounded-lg ${isSelf ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>
+                                                        {!isSelf && sender && 'avatarUrl' in sender && <img src={sender.avatarUrl} className="w-8 h-8 rounded-full shadow-sm" alt="sender" />}
+                                                        <div className={`max-w-md p-3 rounded-lg shadow-sm ${isSelf ? 'bg-primary text-white' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>
                                                             <p className="text-sm break-words">{msg.text}</p>
                                                             <p className="text-xs opacity-70 mt-1 text-right">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                                         </div>
-                                                        {isSelf && <img src={currentUser.avatarUrl} className="w-8 h-8 rounded-full" alt="self" />}
+                                                        {isSelf && <img src={currentUser.avatarUrl} className="w-8 h-8 rounded-full shadow-sm" alt="self" />}
                                                     </div>
                                                 );
                                             })}
                                         </div>
-                                        <form onSubmit={handleSendMessage} className="p-4 border-t dark:border-gray-600 bg-gray-50 dark:bg-gray-800 rounded-b-lg flex items-center gap-2">
-                                            <input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Escribe un mensaje..." className="flex-1 p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600" />
-                                            <button type="submit" className="bg-primary text-white rounded-full p-2 hover:bg-primary-focus"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg></button>
+                                        <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-lg flex items-center gap-2">
+                                            <input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Escribe un mensaje confidencial..." className="flex-1 p-2 border rounded-lg shadow-sm" />
+                                            <button type="submit" className="bg-primary text-white rounded-full p-2 hover:bg-primary-focus transition-colors shadow-sm disabled:bg-gray-400" disabled={!newMessage.trim()}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg></button>
                                         </form>
                                     </div>
                                 ) : (
@@ -608,7 +607,7 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547a2 2 0 00-.547 1.806l.477 2.387a6 6 0 00.517 3.86l.158.318a6 6 0 00.517 3.86l2.387.477a2 2 0 001.806.547a2 2 0 00.547-1.806l-.477-2.387a6 6 0 00-.517-3.86l-.158-.318a6 6 0 01-.517-3.86l-2.387-.477a2 2 0 01-.547-1.806zM15 9.5a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                         <h3 className="mt-4 text-lg font-semibold">Selecciona un caso</h3>
                         <p className="max-w-sm">Elige un caso de la lista de la izquierda para ver los detalles, registrar sesiones y comunicarte con los involucrados.</p>
                     </div>

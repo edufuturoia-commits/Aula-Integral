@@ -1,8 +1,6 @@
-
-
-
 import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades, Guardian, Lesson, AttentionReport } from './types';
 import { MOCK_STUDENTS, MOCK_TEACHERS, MOCK_RESOURCES, MOCK_STUDENT_ASSESSMENT_RESULTS, MOCK_SUBJECT_GRADES, MOCK_ANNOUNCEMENTS, MOCK_GUARDIANS } from './constants';
+import { Role } from './types';
 
 // --- In-memory store to simulate database ---
 let students: Student[] = MOCK_STUDENTS;
@@ -18,6 +16,23 @@ let guardians: Guardian[] = MOCK_GUARDIANS;
 let lessons: Lesson[] = []; // For Tutor Mode history
 let attentionReports: AttentionReport[] = [];
 
+
+// --- Password Patch for Demo Security ---
+// In a real app, this would be a database migration. Here, we patch the in-memory data.
+const patchPasswords = () => {
+    const rector = teachers.find(t => t.role === Role.RECTOR);
+    if (rector) rector.password = 'rector123';
+
+    const coordinator = teachers.find(t => t.id === '987654321');
+    if (coordinator) coordinator.password = 'coordinador123';
+
+    const teacher = teachers.find(t => t.id === '1037612345');
+    if (teacher) teacher.password = 'docente123';
+};
+patchPasswords();
+// --- End Password Patch ---
+
+
 const simulateApiCall = <T>(data: T): Promise<T> => 
     new Promise(resolve => setTimeout(() => {
         // This check prevents a JSON.parse(undefined) error for functions that have a void return.
@@ -28,6 +43,41 @@ const simulateApiCall = <T>(data: T): Promise<T> =>
     }, 150));
 
 export const initDB = (): Promise<boolean> => Promise.resolve(true);
+
+// --- Student Functions ---
+export const getStudents = (): Promise<Student[]> => simulateApiCall(students);
+export const addOrUpdateStudents = (newStudents: Student[]): Promise<void> => {
+    const studentMap = new Map(students.map(s => [s.id, s]));
+    newStudents.forEach(s => studentMap.set(s.id, s));
+    students = Array.from(studentMap.values()).sort((a,b) => a.name.localeCompare(b.name));
+    return simulateApiCall(undefined);
+};
+export const getStudentByDocumentId = (documentId: string): Promise<Student | undefined> =>
+    simulateApiCall(students.find(s => s.documentNumber === documentId));
+export const updateStudent = (student: Student): Promise<void> => {
+    const index = students.findIndex(s => s.id === student.id);
+    if (index > -1) students[index] = student;
+    return simulateApiCall(undefined);
+};
+
+// --- Teacher Functions ---
+export const getTeachers = (): Promise<Teacher[]> => simulateApiCall(teachers);
+export const addOrUpdateTeachers = (newTeachers: Teacher[]): Promise<void> => {
+    const teacherMap = new Map(teachers.map(t => [t.id, t]));
+    newTeachers.forEach(t => teacherMap.set(t.id, t));
+    teachers = Array.from(teacherMap.values()).sort((a,b) => a.name.localeCompare(b.name));
+    return simulateApiCall(undefined);
+};
+export const getTeacherByEmail = (email: string): Promise<Teacher | undefined> =>
+    simulateApiCall(teachers.find(t => t.email === email));
+export const getTeacherById = (id: string): Promise<Teacher | undefined> =>
+    simulateApiCall(teachers.find(t => t.id === id));
+export const updateTeacher = (teacher: Teacher): Promise<void> => {
+    const index = teachers.findIndex(t => t.id === teacher.id);
+    if (index > -1) teachers[index] = teacher;
+    return simulateApiCall(undefined);
+};
+
 
 // --- Guardian Functions ---
 export const getGuardians = (): Promise<Guardian[]> => simulateApiCall(guardians);
@@ -80,23 +130,54 @@ export const updateAttentionReport = (report: AttentionReport): Promise<void> =>
 export const addResource = (resource: Resource): Promise<void> => {
     const index = resources.findIndex(r => r.id === resource.id);
     if (index === -1) {
-        resources.push(resource);
+        resources.unshift(resource);
     } else {
         resources[index] = resource;
     }
     return simulateApiCall(undefined);
 };
-export const removeResource = (id: string): Promise<void> => {
-    resources = resources.filter(r => r.id !== id);
+export const getDownloadedResources = (): Promise<Resource[]> => simulateApiCall(resources);
+export const removeResource = (resourceId: string): Promise<void> => {
+    resources = resources.filter(r => r.id !== resourceId);
     return simulateApiCall(undefined);
 };
-export const getDownloadedResources = (): Promise<Resource[]> => simulateApiCall(resources);
+
+
+// --- Assessment Functions ---
+export const getAssessments = (): Promise<Assessment[]> => simulateApiCall(assessments);
+export const addOrUpdateAssessments = (newAssessments: Assessment[]): Promise<void> => {
+    assessments = newAssessments;
+    return simulateApiCall(undefined);
+};
+export const getStudentResults = (): Promise<StudentAssessmentResult[]> => simulateApiCall(studentResults);
+export const addOrUpdateStudentResult = (result: StudentAssessmentResult): Promise<void> => {
+    const index = studentResults.findIndex(r => r.id === result.id);
+    if (index > -1) {
+        studentResults[index] = result;
+    } else {
+        studentResults.push(result);
+    }
+    return simulateApiCall(undefined);
+};
+
+// --- Subject Grades Functions ---
+export const getSubjectGrades = (): Promise<SubjectGrades[]> => simulateApiCall(subjectGrades);
+export const addOrUpdateSubjectGrades = (newGrades: SubjectGrades[]): Promise<void> => {
+    const gradeMap = new Map(subjectGrades.map(sg => [sg.id, sg]));
+    newGrades.forEach(sg => gradeMap.set(sg.id, sg));
+    subjectGrades = Array.from(gradeMap.values());
+    return simulateApiCall(undefined);
+};
 
 // --- Attendance Functions ---
+export const getAllAttendanceRecords = (): Promise<AttendanceRecord[]> => simulateApiCall(attendanceRecords);
 export const addOrUpdateAttendanceRecord = (record: AttendanceRecord): Promise<void> => {
     const index = attendanceRecords.findIndex(r => r.id === record.id);
-    if (index > -1) attendanceRecords[index] = record;
-    else attendanceRecords.push(record);
+    if (index > -1) {
+        attendanceRecords[index] = record;
+    } else {
+        attendanceRecords.push(record);
+    }
     return simulateApiCall(undefined);
 };
 export const addOrUpdateAttendanceRecords = (records: AttendanceRecord[]): Promise<void> => {
@@ -105,90 +186,24 @@ export const addOrUpdateAttendanceRecords = (records: AttendanceRecord[]): Promi
     attendanceRecords = Array.from(recordMap.values());
     return simulateApiCall(undefined);
 };
-export const getAllAttendanceRecords = (): Promise<AttendanceRecord[]> => simulateApiCall(attendanceRecords);
-
-// --- Teacher & Student Functions ---
-export const getTeacherByEmail = (email: string): Promise<Teacher | undefined> => 
-    simulateApiCall(teachers.find(t => t.email === email));
-
-export const getTeacherById = (id: string): Promise<Teacher | undefined> =>
-    simulateApiCall(teachers.find(t => t.id === id));
-
-export const updateTeacher = (teacher: Teacher): Promise<void> => {
-    const index = teachers.findIndex(t => t.id === teacher.id);
-    if (index > -1) teachers[index] = teacher;
-    return simulateApiCall(undefined);
-};
-export const getStudentByEmail = (email: string): Promise<Student | undefined> => 
-    simulateApiCall(students.find(s => s.email === email));
-
-export const getStudentByDocumentId = (documentId: string): Promise<Student | undefined> =>
-    simulateApiCall(students.find(s => s.documentNumber === documentId));
-
-export const updateStudent = (student: Student): Promise<void> => {
-    const index = students.findIndex(s => s.id === student.id);
-    if (index > -1) students[index] = student;
-    return simulateApiCall(undefined);
-};
 
 // --- Announcement Functions ---
+export const getAnnouncements = (): Promise<Announcement[]> => simulateApiCall(announcements);
 export const addAnnouncement = (announcement: Announcement): Promise<void> => {
     announcements.unshift(announcement);
     return simulateApiCall(undefined);
 };
-export const getAnnouncements = (): Promise<Announcement[]> => simulateApiCall(announcements);
 
-// --- Bulk Getters/Setters ---
-export const getStudents = (): Promise<Student[]> => simulateApiCall(students);
-export const addOrUpdateStudents = (newStudents: Student[]): Promise<void> => {
-    const studentMap = new Map(students.map(s => [s.id, s]));
-    newStudents.forEach(s => studentMap.set(s.id, s));
-    students = Array.from(studentMap.values()).sort((a,b) => a.name.localeCompare(b.name));
-    return simulateApiCall(undefined);
-};
-export const getTeachers = (): Promise<Teacher[]> => simulateApiCall(teachers);
-export const addOrUpdateTeachers = (newTeachers: Teacher[]): Promise<void> => {
-    const teacherMap = new Map(teachers.map(t => [t.id, t]));
-    newTeachers.forEach(t => teacherMap.set(t.id, t));
-    teachers = Array.from(teacherMap.values()).sort((a,b) => a.name.localeCompare(b.name));
-    return simulateApiCall(undefined);
-};
-
-// --- Assessment and Result Functions ---
-export const getAssessments = (): Promise<Assessment[]> => simulateApiCall(assessments);
-export const addOrUpdateAssessments = (newAssessments: Assessment[]): Promise<void> => {
-    const assessmentMap = new Map(assessments.map(a => [a.id, a]));
-    newAssessments.forEach(a => assessmentMap.set(a.id, a));
-    assessments = Array.from(assessmentMap.values());
-    return simulateApiCall(undefined);
-};
-export const getStudentResults = (): Promise<StudentAssessmentResult[]> => simulateApiCall(studentResults);
-export const addOrUpdateStudentResult = (result: StudentAssessmentResult): Promise<void> => {
-    const index = studentResults.findIndex(r => r.id === result.id);
-    if (index > -1) studentResults[index] = result;
-    else studentResults.push(result);
-    return simulateApiCall(undefined);
-};
-
-// --- Subject Grades Functions ---
-export const getSubjectGrades = (): Promise<SubjectGrades[]> => simulateApiCall(subjectGrades);
-export const addOrUpdateSubjectGrades = (grades: SubjectGrades[]): Promise<void> => {
-    const gradeMap = new Map(subjectGrades.map(g => [g.id, g]));
-    grades.forEach(g => gradeMap.set(g.id, g));
-    subjectGrades = Array.from(gradeMap.values());
-    return simulateApiCall(undefined);
-};
-
-// --- Tutor Mode Lesson Functions ---
+// --- Lesson Functions ---
 export const getLessons = (): Promise<Lesson[]> => simulateApiCall(lessons);
 export const addLesson = (lesson: Lesson): Promise<void> => {
-    lessons.unshift(lesson); // Add to the top of the list
+    lessons.unshift(lesson);
     return simulateApiCall(undefined);
 };
-export const updateLesson = (updatedLesson: Lesson): Promise<void> => {
-    const index = lessons.findIndex(l => l.id === updatedLesson.id);
+export const updateLesson = (lesson: Lesson): Promise<void> => {
+    const index = lessons.findIndex(l => l.id === lesson.id);
     if (index > -1) {
-        lessons[index] = updatedLesson;
+        lessons[index] = lesson;
     }
     return simulateApiCall(undefined);
 };

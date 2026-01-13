@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import StudentList from '../components/StudentList';
 import IncidentModal from '../components/IncidentModal';
@@ -8,7 +10,8 @@ import CitationModal from '../components/CitationModal';
 import GroupMessageModal from '../components/GroupMessageModal';
 import CancelCitationModal from '../components/CancelCitationModal';
 import AddStudentModal from '../components/AddStudentModal'; // Import new modal
-import type { Student, Incident, ParentMessage, Citation, CoordinationMessage, Teacher, SubjectGrades, AttendanceRecord, Announcement, AttentionReport } from '../types';
+// FIX: Removed unused types ParentMessage and CoordinationMessage which are not exported from ../types
+import type { Student, Incident, Citation, Teacher, SubjectGrades, AttendanceRecord, Announcement, AttentionReport } from '../types';
 import { CitationStatus, Role, IncidentStatus, IncidentType } from '../types';
 import { addOrUpdateStudents } from '../db';
 import { GRADES, GROUPS, MOCK_CITATIONS, MOCK_COORDINATOR_USER, GRADE_GROUP_MAP } from '../constants';
@@ -158,7 +161,8 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   }, [students, gradeFilter, groupFilter, currentUser]);
 
   const incidentsByStudentId = useMemo(() => {
-    const map = new Map<number, Incident[]>();
+    // FIX: Changed map key type from number to string | number to align with the Incident type.
+    const map = new Map<string | number, Incident[]>();
     incidents.forEach(incident => {
         if (!map.has(incident.studentId)) {
             map.set(incident.studentId, []);

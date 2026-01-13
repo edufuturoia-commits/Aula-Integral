@@ -5,7 +5,8 @@ import { ACADEMIC_PERIODS, GRADES, GRADE_GROUP_MAP } from '../constants';
 import { Desempeno } from '../types';
 
 // --- Calculation Helpers ---
-const calculateFinalScoreForSubject = (studentId: number, gradebook: SubjectGrades | undefined): { finalScore: number | null } => {
+// FIX: Changed studentId to accept string or number to align with the User type.
+const calculateFinalScoreForSubject = (studentId: string | number, gradebook: SubjectGrades | undefined): { finalScore: number | null } => {
     if (!gradebook) return { finalScore: null };
     
     const { scores, gradeItems } = gradebook;

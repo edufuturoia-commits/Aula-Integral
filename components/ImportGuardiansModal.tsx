@@ -15,7 +15,7 @@ interface ExtractedGuardian {
     name: string;
     email: string;
     phone: string;
-    studentIds: number[];
+    studentIds: (string | number)[];
 }
 
 const Spinner: React.FC = () => (
@@ -49,8 +49,8 @@ const fileToGenerativePart = async (file: File) => {
 
 const StudentSelector: React.FC<{
     students: Student[];
-    selectedIds: number[];
-    onConfirm: (ids: number[]) => void;
+    selectedIds: (string | number)[];
+    onConfirm: (ids: (string | number)[]) => void;
     onCancel: () => void;
 }> = ({ students, selectedIds, onConfirm, onCancel }) => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -61,7 +61,8 @@ const StudentSelector: React.FC<{
     const availableGroups = useMemo(() => {
         if (gradeFilter === 'all' || !GRADE_GROUP_MAP[gradeFilter]) {
             const allGroups = new Set<string>();
-            Object.values(GRADE_GROUP_MAP).forEach(groups => groups.forEach(g => allGroups.add(g)));
+            // FIX: Added type assertion to resolve TypeScript inference issue.
+            (Object.values(GRADE_GROUP_MAP) as string[][]).forEach(groups => groups.forEach(g => allGroups.add(g)));
             return ['all', ...Array.from(allGroups).sort()];
         }
         return ['all', ...GRADE_GROUP_MAP[gradeFilter]];
@@ -80,7 +81,7 @@ const StudentSelector: React.FC<{
         )
     , [students, searchTerm, gradeFilter, groupFilter]);
 
-    const handleToggle = (id: number) => {
+    const handleToggle = (id: string | number) => {
         const newSelection = new Set(currentSelection);
         if (newSelection.has(id)) {
             newSelection.delete(id);
@@ -215,7 +216,7 @@ Devuelve un array JSON de objetos con las propiedades: "id", "name", "email", "p
         );
     };
 
-    const handleUpdateStudentLinks = (guardianIndex: number, studentIds: number[]) => {
+    const handleUpdateStudentLinks = (guardianIndex: number, studentIds: (string | number)[]) => {
         setExtractedGuardians(prev => 
             prev.map((g, i) => i === guardianIndex ? { ...g, studentIds } : g)
         );

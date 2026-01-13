@@ -46,7 +46,8 @@ const AssessmentManager: React.FC<{
 
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set(assessment.assignedStudentIds || []));
+    // FIX: Changed state type from Set<number> to Set<string | number> to align with User ID types.
+    const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string | number>>(new Set(assessment.assignedStudentIds || []));
 
     const studentMap = useMemo(() => new Map(students.map(s => [s.id, s])), [students]);
     
@@ -75,7 +76,8 @@ const AssessmentManager: React.FC<{
         onUpdate(updatedAssessment);
     };
 
-    const toggleStudentSelection = (studentId: number) => {
+    // FIX: Changed studentId type from number to string | number to handle mixed ID types.
+    const toggleStudentSelection = (studentId: string | number) => {
         const newSet = new Set(selectedStudentIds);
         if (newSet.has(studentId)) {
             newSet.delete(studentId);

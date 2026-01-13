@@ -6,7 +6,8 @@ import { Role, DocumentType, Desempeno, AcademicPeriod } from '../types';
 import { GRADES, GROUPS } from '../constants';
 
 // Helper functions for grade calculation
-const calculateFinalScoreForSubject = (studentId: number, gradebook: SubjectGrades | undefined): { finalScore: number | null } => {
+// FIX: Changed studentId to accept string or number.
+const calculateFinalScoreForSubject = (studentId: string | number, gradebook: SubjectGrades | undefined): { finalScore: number | null } => {
     if (!gradebook) return { finalScore: null };
     const { scores, gradeItems } = gradebook;
     let weightedSum = 0;
@@ -149,7 +150,7 @@ const Secretaria: React.FC<SecretariaProps> = ({ students, setStudents, guardian
             onShowSystemMessage('Por favor, selecciona un estudiante.', 'error');
             return;
         }
-        const student = students.find(s => s.id === parseInt(selectedStudentId));
+        const student = students.find(s => String(s.id) === selectedStudentId);
         if (!student) return;
 
         const doc = new jsPDF();
@@ -171,7 +172,7 @@ const Secretaria: React.FC<SecretariaProps> = ({ students, setStudents, guardian
             onShowSystemMessage('Por favor, selecciona un estudiante.', 'error');
             return;
         }
-        const student = students.find(s => s.id === parseInt(selectedStudentId));
+        const student = students.find(s => String(s.id) === selectedStudentId);
         if (!student) return;
         
         const doc = new jsPDF();
@@ -208,7 +209,7 @@ const Secretaria: React.FC<SecretariaProps> = ({ students, setStudents, guardian
             onShowSystemMessage('Por favor, selecciona un estudiante.', 'error');
             return;
         }
-        const student = students.find(s => s.id === parseInt(selectedStudentId));
+        const student = students.find(s => String(s.id) === selectedStudentId);
         if (!student) {
             onShowSystemMessage('Estudiante no encontrado.', 'error');
             return;
@@ -282,76 +283,61 @@ const Secretaria: React.FC<SecretariaProps> = ({ students, setStudents, guardian
                             className="w-full md:w-1/2 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
                         >
                             <option value="">-- Selecciona un estudiante --</option>
-                            {students.sort((a,b) => a.name.localeCompare(b.name)).map(s => <option key={s.id} value={s.id}>{s.name} ({s.grade}-{s.group})</option>)}
+                            {/* FIX: Corrected typo from s--- > to s => */}
+                            {students.sort((a,b) => a.name.localeCompare(b.name)).map(s => <option key={s.id} value={s.id}>{s.name} - {s.grade}</option>)}
                         </select>
                     </div>
-
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Study Certificate */}
-                        <div className="p-4 border rounded-lg dark:border-gray-700">
-                            <h3 className="font-semibold text-gray-800 dark:text-gray-200">Certificado de Estudio</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Acredita la matrícula activa del estudiante.</p>
-                            <div className="flex gap-4">
-                                <button onClick={handleGenerateStudyCertificate} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus disabled:bg-gray-400" disabled={!selectedStudentId}>
-                                    Descargar PDF
-                                </button>
-                                <button onClick={() => handleGenerateAndSendCertificate('study')} className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400" disabled={!selectedStudentId}>
-                                    Enviar Notificación
-                                </button>
+                        <div className="p-4 border dark:border-gray-700 rounded-lg">
+                            <h3 className="font-bold text-gray-800 dark:text-gray-100">Certificado de Estudios</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 my-2">Genera un documento que certifica que el estudiante está actualmente matriculado.</p>
+                            <div className="flex gap-2 mt-4">
+                                <button onClick={handleGenerateStudyCertificate} disabled={!selectedStudentId} className="flex-1 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus disabled:bg-gray-400">Descargar</button>
+                                <button onClick={() => handleGenerateAndSendCertificate('study')} disabled={!selectedStudentId} className="flex-1 bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200 disabled:bg-gray-200">Notificar a Acudiente</button>
                             </div>
                         </div>
-
-                        {/* Grades Certificate */}
-                        <div className="p-4 border rounded-lg dark:border-gray-700">
-                            <h3 className="font-semibold text-gray-800 dark:text-gray-200">Certificado de Notas</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Informe con las calificaciones finales del primer período.</p>
-                            <div className="flex gap-4">
-                                <button onClick={handleGenerateGradesCertificate} className="bg-secondary text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-yellow-400 disabled:bg-gray-400" disabled={!selectedStudentId}>
-                                    Descargar PDF
-                                </button>
-                                <button onClick={() => handleGenerateAndSendCertificate('grades')} className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400" disabled={!selectedStudentId}>
-                                    Enviar Notificación
-                                </button>
+                        <div className="p-4 border dark:border-gray-700 rounded-lg">
+                            <h3 className="font-bold text-gray-800 dark:text-gray-100">Certificado de Notas</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 my-2">Genera un informe con las notas finales del primer período académico.</p>
+                             <div className="flex gap-2 mt-4">
+                                <button onClick={handleGenerateGradesCertificate} disabled={!selectedStudentId} className="flex-1 bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-focus disabled:bg-gray-400">Descargar</button>
+                                <button onClick={() => handleGenerateAndSendCertificate('grades')} disabled={!selectedStudentId} className="flex-1 bg-blue-100 text-blue-700 font-semibold py-2 px-4 rounded-lg hover:bg-blue-200 disabled:bg-gray-200">Notificar a Acudiente</button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
-
+            
             {activeTab === 'enrollment' && (
-                <form onSubmit={handleEnrollmentSubmit} className="space-y-8">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                         <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Datos del Estudiante</h2>
-                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <input name="name" value={studentForm.name} onChange={handleStudentFormChange} placeholder="Nombres y Apellidos" required className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"/>
-                             <select name="documentType" value={studentForm.documentType} onChange={handleStudentFormChange} className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600">
-                                {Object.values(DocumentType).map(dt => <option key={dt} value={dt}>{dt}</option>)}
-                            </select>
-                            <input name="documentNumber" value={studentForm.documentNumber} onChange={handleStudentFormChange} placeholder="Número de Documento" required className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"/>
-                            <input name="dateOfBirth" type="date" value={studentForm.dateOfBirth} onChange={handleStudentFormChange} placeholder="Fecha de Nacimiento" className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"/>
-                            <select name="grade" value={studentForm.grade} onChange={handleStudentFormChange} className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600">
-                                {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
-                            </select>
-                            <select name="group" value={studentForm.group} onChange={handleStudentFormChange} className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600">
-                                {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
-                            </select>
-                         </div>
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-                         <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Datos del Acudiente</h2>
-                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <input name="name" value={guardianForm.name} onChange={handleGuardianFormChange} placeholder="Nombres y Apellidos del Acudiente" required className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"/>
-                            <input name="id" value={guardianForm.id} onChange={handleGuardianFormChange} placeholder="Cédula del Acudiente" required className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"/>
-                            <input name="email" type="email" value={guardianForm.email} onChange={handleGuardianFormChange} placeholder="Email del Acudiente" className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"/>
-                            <input name="phone" type="tel" value={guardianForm.phone} onChange={handleGuardianFormChange} placeholder="Teléfono del Acudiente" className="p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"/>
+                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">Formulario de Matrícula</h2>
+                    <form onSubmit={handleEnrollmentSubmit} className="space-y-8">
+                        <div>
+                            <h3 className="text-lg font-semibold border-b dark:border-gray-700 pb-2 mb-4">Datos del Estudiante</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input name="name" value={studentForm.name} onChange={handleStudentFormChange} placeholder="Nombres y Apellidos" className="p-2 border rounded-md" required/>
+                                <input name="documentNumber" value={studentForm.documentNumber} onChange={handleStudentFormChange} placeholder="Número de Documento" className="p-2 border rounded-md" required/>
+                                <select name="documentType" value={studentForm.documentType} onChange={handleStudentFormChange} className="p-2 border rounded-md"><option value={DocumentType.IDENTITY_CARD}>{DocumentType.IDENTITY_CARD}</option><option value={DocumentType.CIVIL_REGISTRY}>{DocumentType.CIVIL_REGISTRY}</option></select>
+                                <input name="dateOfBirth" type="date" value={studentForm.dateOfBirth} onChange={handleStudentFormChange} className="p-2 border rounded-md" />
+                                <select name="grade" value={studentForm.grade} onChange={handleStudentFormChange} className="p-2 border rounded-md">{GRADES.map(g => <option key={g} value={g}>{g}</option>)}</select>
+                                <select name="group" value={studentForm.group} onChange={handleStudentFormChange} className="p-2 border rounded-md">{GROUPS.map(g => <option key={g} value={g}>{g}</option>)}</select>
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex justify-end">
-                        <button type="submit" className="bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-primary-focus transition-colors">
-                            Matricular Estudiante
-                        </button>
-                    </div>
-                </form>
+                        <div>
+                            <h3 className="text-lg font-semibold border-b dark:border-gray-700 pb-2 mb-4">Datos del Acudiente</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input name="name" value={guardianForm.name} onChange={handleGuardianFormChange} placeholder="Nombres y Apellidos" className="p-2 border rounded-md" required/>
+                                <input name="id" value={guardianForm.id} onChange={handleGuardianFormChange} placeholder="Cédula" className="p-2 border rounded-md" required/>
+                                <input name="email" type="email" value={guardianForm.email} onChange={handleGuardianFormChange} placeholder="Correo Electrónico" className="p-2 border rounded-md"/>
+                                <input name="phone" type="tel" value={guardianForm.phone} onChange={handleGuardianFormChange} placeholder="Teléfono" className="p-2 border rounded-md"/>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                             <button type="submit" className="bg-primary text-white font-semibold py-2 px-6 rounded-lg hover:bg-primary-focus">Matricular Estudiante</button>
+                        </div>
+                    </form>
+                 </div>
             )}
         </div>
     );

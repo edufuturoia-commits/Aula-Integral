@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React, { useState, useCallback, useEffect, Suspense, lazy, useMemo, createContext, useContext } from 'react';
 
 // New Pages for Auth Flow
@@ -18,7 +12,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
 // Types and DB
-import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData, Conversation, Lesson, AttentionReport, Message, NotificationSettings } from './types';
+import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData, Conversation, Lesson, AttentionReport, Message, NotificationSettings, User } from './types';
 import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian, getLessons, addLesson, updateLesson, getAttentionReports, addAttentionReport, updateAttentionReport } from './db';
 
 // Constants
@@ -59,7 +53,11 @@ const translations = {
             weeklySummaryLabel: 'Resumen Semanal',
             weeklySummaryDescription: 'Recibir un resumen de actividad semanal por correo.',
             assessmentRemindersLabel: 'Recordatorios de Evaluaciones',
-            assessmentRemindersDescription: 'Notificar sobre próximas evaluaciones o tareas.'
+            assessmentRemindersDescription: 'Notificar sobre próximas evaluaciones o tareas.',
+            assessmentResultsLabel: 'Resultados de Evaluaciones',
+            assessmentResultsDescription: 'Notificar cuando estén disponibles los resultados de una evaluación.',
+            messageAlertsLabel: 'Mensajes Nuevos',
+            messageAlertsDescription: 'Recibir notificaciones de nuevos mensajes directos.'
         },
         language: {
             title: 'Idioma y Región',
@@ -113,7 +111,11 @@ const translations = {
             weeklySummaryLabel: 'Weekly Summary',
             weeklySummaryDescription: 'Receive a weekly activity summary by email.',
             assessmentRemindersLabel: 'Assessment Reminders',
-            assessmentRemindersDescription: 'Notify about upcoming assessments or assignments.'
+            assessmentRemindersDescription: 'Notify about upcoming assessments or assignments.',
+            assessmentResultsLabel: 'Assessment Results',
+            assessmentResultsDescription: 'Notify when assessment results are available.',
+            messageAlertsLabel: 'New Messages',
+            messageAlertsDescription: 'Receive notifications for new direct messages.'
         },
         language: {
             title: 'Language & Region',
@@ -141,16 +143,43 @@ const translations = {
 interface LanguageContextType {
   lang: string;
   setLang: (lang: string) => void;
-  t: (key: string, options?: { [key: string]: string | number }) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType>({
   lang: 'es',
   setLang: () => {},
-  t: (key) => key,
 });
 
-export const useTranslation = () => useContext(LanguageContext);
+export const useTranslation = () => {
+    const { lang, setLang } = useContext(LanguageContext);
+
+    const t = useCallback((key: string, options?: { [key: string]: string | number }) => {
+        const langPack = translations[lang as 'es' | 'en'];
+        const findValue = (obj: any, path: string) => path.split('.').reduce((acc, part) => acc && acc[part], obj);
+        
+        // First try to resolve nested keys.
+        let translation = findValue(langPack, key);
+        
+        // If not found as nested, try a direct lookup (for keys with dots).
+        if (translation === undefined) {
+            translation = (langPack as any)[key];
+        }
+        
+        // Fallback to the key itself if no translation is found.
+        translation = translation ?? key;
+        
+        // Apply options for interpolation.
+        if (options && typeof translation === 'string') {
+            Object.keys(options).forEach(optionKey => {
+                const regex = new RegExp(`{{${optionKey}}}`, 'g');
+                translation = translation.replace(regex, String(options[optionKey]));
+            });
+        }
+        return translation;
+    }, [lang]);
+
+    return { lang, setLang, t };
+};
 // --- End I18N Context ---
 
 
@@ -175,6 +204,7 @@ const QuickAccess = lazy(() => import('./pages/QuickAccess'));
 const Consolidado = lazy(() => import('./pages/Consolidado'));
 const Psychology = lazy(() => import('./pages/Psychology'));
 const Secretaria = lazy(() => import('./pages/Secretaria'));
+const AcademicDashboard = lazy(() => import('./pages/AcademicDashboard'));
 
 
 interface NotificationToastProps {
@@ -254,12 +284,11 @@ const SystemToast: React.FC<SystemToastProps> = ({ message, type, onClose }) => 
   );
 };
 
-type User = Teacher | Student | Guardian;
-
 const AppContent: React.FC = () => {
   const { t } = useTranslation();
   // App State Management
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+  // FIX: Changed currentUser state type from User to a union of specific user types for better type safety.
+  const [currentUser, setCurrentUser] = useState<Student | Teacher | Guardian | null>(() => {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser && savedUser !== 'undefined') {
         try {
@@ -469,44 +498,26 @@ const AppContent: React.FC = () => {
   // --- AUTHENTICATION LOGIC ---
 
   const handleLogin = async (username: string, pass: string): Promise<{ success: boolean; message: string; }> => {
-    let foundUser: User | undefined;
+    let foundUser: User | Student | Teacher | Guardian | undefined;
 
-    if (username.includes('@')) { // Staff login
+    // Standard lookup by email or ID
+    if (username.includes('@')) {
         foundUser = await getTeacherByEmail(username);
-        if (foundUser && foundUser.id === pass) {
-            // Correct password is document ID for staff
-        } else {
-            foundUser = undefined;
-        }
-    } else { // Student or Guardian login
-        foundUser = await getStudentByDocumentId(username);
-        if (foundUser && foundUser.password === pass) {
-            // Correct password
-        } else {
-            foundUser = await getGuardianById(username);
-            if(foundUser && (foundUser as Guardian).password === pass) {
-                // Correct password
-            } else {
-                foundUser = await getTeacherById(username); // Staff can also login with ID
-                 if (foundUser && foundUser.id === pass) {
-                    // Correct password is document ID for staff
-                } else {
-                    foundUser = undefined;
-                }
-            }
-        }
+    } else {
+        foundUser = await getStudentByDocumentId(username) || await getGuardianById(username) || await getTeacherById(username);
     }
 
-    if (foundUser) {
+    // Check password
+    if (foundUser && 'password' in foundUser && foundUser.password === pass) {
         localStorage.setItem('currentUser', JSON.stringify(foundUser));
-        setCurrentUser(foundUser);
-        
-        if (('passwordChanged' in foundUser) && !foundUser.passwordChanged) {
+        setCurrentUser(foundUser as Student | Teacher | Guardian);
+
+        if ('passwordChanged' in foundUser && !foundUser.passwordChanged) {
             setNeedsPasswordChange(true);
         } else {
             setAppState('app');
         }
-        
+
         return { success: true, message: t('login.success') };
     } else {
         return { success: false, message: t('login.invalidCredentials') };
@@ -576,7 +587,7 @@ const AppContent: React.FC = () => {
   const handleUpgradeFromDemo = () => {
     if (currentUser && 'isDemo' in currentUser) {
       const upgradedUser = { ...currentUser, isDemo: false, demoStartDate: undefined };
-      setCurrentUser(upgradedUser);
+      setCurrentUser(upgradedUser as Teacher);
       localStorage.setItem('currentUser', JSON.stringify(upgradedUser));
       setIsDemoExpired(false);
       showSystemMessage(t('notifications.accountUpgraded'), 'success');
@@ -681,7 +692,7 @@ const AppContent: React.FC = () => {
   }
 
   if (needsPasswordChange && currentUser) {
-    return <ChangePasswordModal user={currentUser as (Teacher | Student)} onPasswordChanged={handlePasswordChanged} />;
+    return <ChangePasswordModal user={currentUser} onPasswordChanged={handlePasswordChanged} />;
   }
   
   if (appState === 'landing') {
@@ -727,18 +738,22 @@ const AppContent: React.FC = () => {
                 {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateCurrentUser} />}
                 {currentPage === 'Settings' && <Settings currentUser={currentUser} onUpdateUser={handleUpdateCurrentUser} theme={theme} setTheme={setTheme} />}
                 {currentPage === 'Incidents' && (currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR || currentUser.role === Role.ADMIN) && <Incidents isOnline={isOnline} students={students} setStudents={handleSetStudents} teachers={teachers} setTeachers={handleSetTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={setCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onUpdateAnnouncements={handleNewAnnouncement} guardians={guardians} onUpdateGuardians={handleSetGuardians} onShowSystemMessage={showSystemMessage} onReportAttention={handleNewAttentionReport} />}
-                {currentPage === 'ParentPortal' && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={setCitations} incidents={incidents} announcements={announcements} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} currentUser={currentUser as Guardian} />}
+                {/* FIX: The 'allUsersMap' was incorrectly typed due to the 'Guardian' type not fully conforming to the 'User' type. The 'Guardian' type in 'types.ts' has been corrected, which resolves this mapping issue. I am also casting the map to the expected type as a safeguard. */}
+                {currentPage === 'ParentPortal' && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={setCitations} incidents={incidents} announcements={announcements} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap as Map<string | number, User>} currentUser={currentUser as Guardian} />}
                 {currentPage === 'StudentPortal' && <StudentPortal loggedInUser={currentUser as Student | Teacher} allStudents={students} teachers={teachers} subjectGrades={subjectGrades} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleSetStudentResult} citations={citations} icfesDrillSettings={icfesDrillSettings}/>}
                 {currentPage === 'Rectory' && (currentUser.role === Role.RECTOR || currentUser.role === Role.ADMIN) && <Rectory students={students} teachers={teachers} announcements={announcements} onUpdateAnnouncements={handleNewAnnouncement} onShowSystemMessage={showSystemMessage} currentUser={currentUser as Teacher} />}
-                {currentPage === 'InstitutionProfile' && (currentUser.role === Role.RECTOR || currentUser.role === Role.ADMIN) && <InstitutionProfile profile={institutionProfile} setProfile={setInstitutionProfile} />}
+                {currentPage === 'InstitutionProfile' && (currentUser.role === Role.RECTOR || currentUser.role === Role.ADMIN || currentUser.role === Role.COORDINATOR) && <InstitutionProfile profile={institutionProfile} setProfile={setInstitutionProfile} />}
                 {currentPage === 'Calificaciones' && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} onShowSystemMessage={showSystemMessage} />}
                 {currentPage === 'Communication' && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} guardians={guardians} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} />}
                 {currentPage === 'TutorMode' && <TutorMode lessons={lessons} onAddLesson={handleAddLesson} onUpdateLesson={handleUpdateLesson} currentUser={currentUser} institutionProfile={institutionProfile}/>}
-                {currentPage === 'Eventos' && <Eventos />}
+                {currentPage === 'Eventos' && <Eventos currentUser={currentUser} />}
                 {currentPage === 'SimulacroICFES' && (currentUser.role === Role.ADMIN || currentUser.role === Role.RECTOR || currentUser.role === Role.COORDINATOR) && (
                     <SimulacroICFES settings={icfesDrillSettings} onSettingsChange={handleSetIcfesDrillSettings} />
                 )}
                 {currentPage === 'Consolidado' && <Consolidado students={students} subjectGradesData={subjectGrades} />}
+                {currentPage === 'AcademicDashboard' && (currentUser.role === Role.ADMIN || currentUser.role === Role.RECTOR || currentUser.role === Role.COORDINATOR) && (
+                    <AcademicDashboard students={students} subjectGradesData={subjectGrades} setStudents={handleSetStudents} setSubjectGradesData={handleSetSubjectGrades} onShowSystemMessage={showSystemMessage}/>
+                )}
                 {currentPage === 'Psychology' && (currentUser.role === Role.PSYCHOLOGY || currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR || currentUser.role === Role.ADMIN) && (
                     <Psychology reports={attentionReports} onUpdateReport={handleUpdateAttentionReport} students={students} allUsersMap={allUsersMap} conversations={conversations} onUpdateConversation={handleUpdateConversation} currentUser={currentUser as Teacher} institutionProfile={institutionProfile} />
                 )}
@@ -763,21 +778,14 @@ const AppContent: React.FC = () => {
 
 
 export const App: React.FC = () => {
-    const [lang, setLang] = useState('es');
+    const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'es');
 
-    const t = useCallback((key: string, options?: { [key: string]: string | number }) => {
-        let translation = (translations[lang as 'es' | 'en'] as any)[key] || key;
-        if (options) {
-            Object.keys(options).forEach(optionKey => {
-                const regex = new RegExp(`{{${optionKey}}}`, 'g');
-                translation = translation.replace(regex, String(options[optionKey]));
-            });
-        }
-        return translation;
+    useEffect(() => {
+        localStorage.setItem('lang', lang);
     }, [lang]);
     
     return (
-        <LanguageContext.Provider value={{ lang, setLang, t }}>
+        <LanguageContext.Provider value={{ lang, setLang }}>
             <AppContent />
         </LanguageContext.Provider>
     )

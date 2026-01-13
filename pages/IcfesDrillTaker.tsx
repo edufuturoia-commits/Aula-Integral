@@ -187,7 +187,7 @@ const IcfesDrillTaker: React.FC = () => {
                     results[q.area].correct++;
                 }
             } else { // Handle cases where AI might return a slightly different area name
-                const similarArea = AREAS.find(a => q.area.includes(a));
+                const similarArea = AREAS.find(a => q.area && q.area.includes(a));
                 if (similarArea && results[similarArea]) {
                     results[similarArea].total++;
                     if (answers[index] === q.correctAnswerIndex) {

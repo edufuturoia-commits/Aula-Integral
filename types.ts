@@ -1,41 +1,34 @@
+// types.ts
 
-
-
-
-
-
-export type Page = 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings' | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile' | 'Calificaciones' | 'Communication' | 'TutorMode' | 'Eventos' | 'SimulacroICFES' | 'Consolidado' | 'Psychology' | 'Secretaria';
+// Enums
+export enum Role {
+  ADMIN = 'Administrador',
+  RECTOR = 'Rector',
+  COORDINATOR = 'Coordinador',
+  TEACHER = 'Docente',
+  STUDENT = 'Estudiante',
+  PSYCHOLOGY = 'Psicología',
+  GUARDIAN = 'Acudiente',
+}
 
 export enum DocumentType {
-  CIVIL_REGISTRY = 'Registro Civil',
   IDENTITY_CARD = 'Tarjeta de Identidad',
+  CIVIL_REGISTRY = 'Registro Civil',
 }
 
-export enum Role {
-  STUDENT = 'STUDENT',
-  TEACHER = 'TEACHER',
-  COORDINATOR = 'COORDINATOR',
-  RECTOR = 'RECTOR',
-  ADMIN = 'ADMIN',
-  PSYCHOLOGY = 'PSYCHOLOGY',
-  GUARDIAN = 'GUARDIAN',
+export enum ResourceType {
+  PDF = 'PDF',
+  Video = 'Video',
+  Image = 'Imagen',
+  Document = 'Documento',
 }
 
-export interface Student {
-  id: number;
-  name: string;
-  avatarUrl: string;
-  grade: string;
-  group: string;
-  role: Role;
-  lastIncident?: string;
-  email?: string;
-  dateOfBirth?: string; // YYYY-MM-DD
-  documentType?: DocumentType;
-  documentNumber?: string;
-  password?: string;
-  passwordChanged?: boolean;
-  notifications?: NotificationSettings;
+export enum CitationStatus {
+  PENDING = 'Pendiente',
+  CONFIRMED = 'Confirmada',
+  COMPLETED = 'Realizada',
+  CANCELLED = 'Cancelada',
+  RESCHEDULE_REQUESTED = 'Reprogramación Solicitada',
 }
 
 export enum IncidentType {
@@ -49,60 +42,163 @@ export enum IncidentType {
 }
 
 export enum IncidentStatus {
-  ACTIVE = 'Activa',
-  DECLINED = 'Declinada',
-  ATTENDED = 'Atendida',
-  ARCHIVED = 'Archivada',
+    ACTIVE = 'Activa',
+    ATTENDED = 'Atendida',
+    ARCHIVED = 'Archivada',
+    DECLINED = 'Declinada',
 }
 
+export enum AttendanceStatus {
+  PRESENT = 'Presente',
+  ABSENT = 'Ausente',
+  TARDY = 'Tarde',
+  EXCUSED = 'Excusado',
+  SPECIAL_PERMIT = 'Permiso Especial',
+}
 
-export interface Incident {
-  id: string;
-  studentId: number;
-  studentName: string;
-  type: IncidentType;
-  otherTypeDescription?: string;
-  isVictim: boolean;
-  notes: string;
-  timestamp: string;
-  teacherName: string;
-  location: string;
-  status: IncidentStatus;
-  synced?: boolean;
+export enum AcademicPeriod {
+  FIRST = 'PRIMERO',
+  SECOND = 'SEGUNDO',
+  THIRD = 'TERCERO',
+  FOURTH = 'CUARTO',
+}
+
+export enum TeacherStatus {
+    ACTIVE = 'Activo',
+    INACTIVE = 'Inactivo',
+}
+
+export enum Desempeno {
+    SUPERIOR = 'SUPERIOR',
+    HIGH = 'ALTO',
+    BASIC = 'BASICO',
+    LOW = 'BAJO',
+}
+
+export enum DiagnosisArea {
+    FAMILY_DEVELOPMENT = 'Familiar y Desarrollo',
+    EMOTIONAL = 'Emocional',
+    BEHAVIORAL = 'Comportamental',
+    ACADEMIC = 'Académico',
+    SOCIAL = 'Social',
+    OTHER = 'Otro',
+}
+
+export enum AttentionReportStatus {
+    OPEN = 'Abierto',
+    IN_PROGRESS = 'En Progreso',
+    CLOSED = 'Cerrado',
+}
+
+export type SessionProgress = 'Sin Evaluar' | 'Estancamiento' | 'Leve Mejora' | 'Progreso Notable' | 'Logro de Objetivo';
+
+
+// General Types
+export type Page = 
+    | 'Dashboard' | 'Classroom' | 'Assessments' | 'Resources' | 'Profile' | 'Settings'
+    | 'Incidents' | 'ParentPortal' | 'StudentPortal' | 'Rectory' | 'InstitutionProfile'
+    | 'Calificaciones' | 'Communication' | 'TutorMode' | 'Eventos' | 'SimulacroICFES'
+    | 'QuickAccess' | 'Consolidado' | 'Psychology' | 'Secretaria' | 'AcademicDashboard';
+
+export type SubjectArea = 'Matemáticas' | 'Lengua Castellana' | 'Inglés' | 'Biología' | 'Química' | 'Física' | 'Historia' | 'Geografía' | 'Constitución Política y Democracia' | 'Educación Artística' | 'Música' | 'Educación Ética y en Valores Humanos' | 'Filosofía' | 'Educación Física' | 'Educación Religiosa' | 'Tecnología e Informática' | 'Convivencia' | 'Todas' | 'Coordinadores' | 'Administrativos' | 'Psicología';
+
+export type Competency = 'Comprensión Lectora' | 'Resolución de Problemas' | 'Pensamiento Crítico' | 'Competencias Ciudadanas' | 'Comunicación Escrita' | 'Análisis Científico' | 'Expresión Artística' | 'Competencia Digital' | 'Pensamiento Histórico' | 'Bilingüismo' | 'Competencia Motriz';
+
+
+// User Types
+export interface User {
+  id: string | number;
+  name: string;
+  avatarUrl: string;
+  role: Role;
+  email?: string;
+  phone?: string;
+  password?: string;
+  passwordChanged?: boolean;
+  notifications?: NotificationSettings;
+}
+
+export interface Student extends User {
+  role: Role.STUDENT;
+  grade: string;
+  group: string;
+  lastIncident?: string;
+  dateOfBirth?: string;
+  documentType?: DocumentType;
+  documentNumber?: string;
+  address?: string;
+  jornada?: 'Mañana' | 'Tarde';
+}
+
+export interface Certification {
+    id: string;
+    name: string;
+    issuer: string;
+    year: string;
+}
+
+export interface Experience {
+    id: string;
+    position: string;
+    institution: string;
+    years: string;
+}
+
+export interface ProfessionalDevelopment {
+    id: string;
+    activity: string;
+    hours: number;
+    date: string;
+}
+
+export interface Teacher extends User {
+  role: Role.TEACHER | Role.ADMIN | Role.RECTOR | Role.COORDINATOR | Role.PSYCHOLOGY;
+  subject: SubjectArea;
+  isHomeroomTeacher?: boolean;
+  assignedGroup?: { grade: string; group: string; };
+  isDemo?: boolean;
+  demoStartDate?: string;
+  certifications?: Certification[];
+  experience?: Experience[];
+  professionalDevelopment?: ProfessionalDevelopment[];
+  // FIX: Added optional dateOfBirth and address to Teacher type for consistency
+  dateOfBirth?: string;
+  address?: string;
+}
+
+// FIX: Corrected Guardian interface to properly conform to the User type by making the 'role' property mandatory and of the correct enum type.
+export interface Guardian extends Omit<User, 'role'> {
+  role: Role.GUARDIAN;
+  studentIds: (string | number)[];
 }
 
 export interface NotificationSettings {
   newIncident: boolean;
   weeklySummary: boolean;
   assessmentReminders: boolean;
+  assessmentResults: boolean;
+  messageAlerts: boolean;
 }
 
-export interface User {
-    name: string;
-    avatarUrl: string;
-    role: string;
-    email?: string;
-    phone?: string;
-    notifications?: NotificationSettings;
+// Data structures
+export interface Resource {
+  id: string;
+  title: string;
+  description: string;
+  type: ResourceType;
+  subjectArea: SubjectArea;
+  url: string;
+  content?: string;
 }
-
-export interface AssessmentData {
-    competency: string;
-    classAverage: number;
-    studentAverage: number;
-}
-
-export type SubjectArea = 'Matemáticas' | 'Lengua Castellana' | 'Inglés' | 'Biología' | 'Química' | 'Física' | 'Historia' | 'Geografía' | 'Constitución Política y Democracia' | 'Educación Artística' | 'Música' | 'Educación Ética y en Valores Humanos' | 'Filosofía' | 'Educación Física' | 'Educación Religiosa' | 'Tecnología e Informática' | 'Convivencia' | 'Todas' | 'Coordinadores' | 'Administrativos' | 'Psicología';
-export type Competency = 'Comprensión Lectora' | 'Resolución de Problemas' | 'Pensamiento Crítico' | 'Competencias Ciudadanas' | 'Comunicación Escrita' | 'Análisis Científico' | 'Expresión Artística' | 'Competencia Digital' | 'Pensamiento Histórico' | 'Bilingüismo' | 'Competencia Motriz';
 
 export interface Question {
     id: string;
     text: string;
+    options: string[];
+    correctAnswer: number;
     area: SubjectArea;
     grade: string;
     competency: Competency;
-    options?: string[];
-    correctAnswer?: number;
 }
 
 export interface Assessment {
@@ -111,150 +207,88 @@ export interface Assessment {
     createdAt: string;
     questions: Question[];
     assignedGroups?: { grade: string; group: string }[];
-    assignedStudentIds?: number[];
-}
-
-export enum ResourceType {
-    PDF = 'PDF',
-    Video = 'Video',
-    Image = 'Imagen',
-    Document = 'Documento',
-}
-
-export interface Resource {
-    id: string;
-    title: string;
-    description: string;
-    type: ResourceType;
-    subjectArea: SubjectArea;
-    url: string;
-    content?: string; // For AI-generated content
-}
-
-export enum AttendanceStatus {
-    PRESENT = 'Presente',
-    ABSENT = 'Ausente',
-    TARDY = 'Tarde',
-    EXCUSED = 'Con Excusa',
-    SPECIAL_PERMIT = 'Permiso Especial',
-}
-
-export interface AttendanceRecord {
-    id: string; // e.g., `${studentId}-${date}`
-    studentId: number;
-    date: string; // YYYY-MM-DD
-    status: AttendanceStatus;
-    synced?: boolean;
+    assignedStudentIds?: (string | number)[];
 }
 
 export interface StudentAssessmentResult {
-    id: string; // Composite key: `${assessmentId}_${studentId}`
-    studentId: number;
-    assessmentId: string;
-    assessmentTitle: string;
-    score: number;
-    completedAt: string;
+  id: string;
+  studentId: string | number;
+  assessmentId: string;
+  assessmentTitle: string;
+  score: number;
+  completedAt: string;
 }
 
-export interface ParentMessage {
-    studentId: number;
-    studentName: string;
-    studentAvatar: string;
-    lastMessage: string;
-    timestamp: string;
-    unread: boolean;
-    conversation: { sender: 'teacher' | 'parent'; text: string; timestamp: string }[];
-}
-
-export interface CoordinationMessage {
+export interface GradeItem {
     id: string;
-    sender: 'teacher' | 'coordination';
-    text: string;
-    timestamp: string;
-    readByTeacher: boolean;
+    name: string;
+    weight: number;
+    desempenoIds?: string[];
 }
 
-export enum CitationStatus {
-    PENDING = 'Pendiente',
-    CONFIRMED = 'Confirmada',
-    COMPLETED = 'Completada',
-    CANCELLED = 'Cancelada',
-    RESCHEDULE_REQUESTED = 'Reprogramación Solicitada',
+export interface Score {
+    studentId: string | number;
+    gradeItemId: string;
+    score: number | null;
+}
+
+export interface SubjectGrades {
+    id: string;
+    subject: SubjectArea;
+    grade: string;
+    group: string;
+    period: AcademicPeriod;
+    teacherId: string;
+    gradeItems: GradeItem[];
+    scores: Score[];
+    observations: Record<string | number, string>;
+    isLocked: boolean;
+    generalDesempenoIds?: string[];
+}
+
+export interface AttendanceRecord {
+  id: string;
+  studentId: string | number;
+  date: string;
+  status: AttendanceStatus;
+  synced: boolean;
+}
+
+export interface Incident {
+  id: string;
+  studentId: string | number;
+  studentName: string;
+  type: IncidentType;
+  otherTypeDescription?: string;
+  isVictim: boolean;
+  notes: string;
+  timestamp: string;
+  teacherName: string;
+  location: string;
+  synced: boolean;
+  status: IncidentStatus;
 }
 
 export interface Citation {
-    id: string;
-    studentId: number;
-    studentName: string;
-    studentAvatar: string;
-    date: string;
-    time: string;
-    location: string;
-    reason: string;
-    status: CitationStatus;
-    cancellationReason?: string;
+  id: string;
+  studentId: string | number;
+  studentName: string;
+  studentAvatar: string;
+  date: string;
+  time: string;
+  location: string;
+  reason: string;
+  status: CitationStatus;
+  cancellationReason?: string;
 }
 
 export interface Announcement {
   id: string;
   title: string;
   content: string;
-  recipients: 'all' | 'all_teachers' | 'all_parents' | 'all_students' | { grade: string; group: string } | { teacherId: string };
+  recipients: 'all' | 'all_teachers' | 'all_parents' | string; // string for specific groups
   timestamp: string;
   sentBy: string;
-}
-
-export enum TeacherStatus {
-  ACTIVE = 'Activo',
-  RETIRED = 'Retirado',
-  ON_COMMISSION = 'En Comisión',
-}
-
-export interface Certification {
-  id: string;
-  name: string;
-  issuer: string;
-  year: string;
-}
-
-export interface Experience {
-  id: string;
-  position: string;
-  institution: string;
-  years: string;
-}
-
-export interface ProfessionalDevelopment {
-  id: string;
-  activity: string;
-  hours: number;
-  date: string;
-}
-
-export interface Teacher {
-  id: string; // Cédula
-  name: string;
-  avatarUrl: string;
-  role: Role;
-  subject: SubjectArea;
-  dateOfBirth?: string;
-  address?: string;
-  email?: string;
-  phone?: string;
-  status?: TeacherStatus;
-  isHomeroomTeacher?: boolean;
-  assignedGroup?: {
-    grade: string;
-    group: string;
-  };
-  password?: string;
-  passwordChanged?: boolean;
-  notifications?: NotificationSettings;
-  isDemo?: boolean;
-  demoStartDate?: string;
-  certifications?: Certification[];
-  experience?: Experience[];
-  professionalDevelopment?: ProfessionalDevelopment[];
 }
 
 export interface InstitutionProfileData {
@@ -265,67 +299,21 @@ export interface InstitutionProfileData {
   address: string;
   phone: string;
   email: string;
-  logoUrl: string; // base64 data URL
+  logoUrl: string;
   primaryColor: string;
   secondaryColor: string;
 }
 
-export interface EventPoster {
-  id: string;
-  title: string;
-  imageUrl: string; // base64 data URL
-  eventDate: string; // YYYY-MM-DD
-  createdAt: string; // ISO string
+export interface Message {
+    senderId: string | number;
+    text: string;
+    timestamp: string;
 }
 
-// --- Grade Management System Types ---
-
-export enum AcademicPeriod {
-  FIRST = 'PRIMERO',
-  SECOND = 'SEGUNDO',
-  THIRD = 'TERCERO',
-  FOURTH = 'CUARTO',
-}
-
-export enum Desempeno {
-    SUPERIOR = 'SUPERIOR',
-    HIGH = 'ALTO',
-    BASIC = 'BASICO',
-    LOW = 'BAJO',
-}
-
-export interface DesempenoDescriptor {
-  id: string;
-  description: string;
-  area: SubjectArea;
-}
-
-export interface GradeItem {
-  id: string; // e.g., 'quiz1-math-p1'
-  name: string; // e.g., 'Quiz de Fracciones'
-  weight: number; // e.g., 0.20 for 20%
-  desempenoIds?: string[];
-}
-
-export interface StudentScore {
-  studentId: number;
-  gradeItemId: string;
-  score: number | null; // null if not graded yet. Score is out of 5.0
-}
-
-// This represents the entire grade setup for a subject in a period for a specific class group
-export interface SubjectGrades {
-  id: string; // composite key e.g., 'Matemáticas-11-A-PRIMERO'
-  subject: SubjectArea;
-  grade: string;
-  group: string;
-  period: AcademicPeriod;
-  gradeItems: GradeItem[];
-  scores: StudentScore[];
-  teacherId: string; // The teacher who manages this gradebook
-  observations: Record<number, string>; // studentId -> observation text
-  isLocked: boolean;
-  generalDesempenoIds?: string[];
+export interface Conversation {
+    id: string;
+    participantIds: (string | number)[];
+    messages: Message[];
 }
 
 export interface UserRegistrationData {
@@ -333,38 +321,26 @@ export interface UserRegistrationData {
     rectorName: string;
     email: string;
     phone: string;
-    password?: string;
-    isDemo?: boolean;
+    password: string;
+    isDemo: boolean;
 }
 
-export interface Guardian {
-  id: string; // Cédula or unique ID
-  name: string;
-  avatarUrl: string;
-  role: Role;
-  email?: string;
-  phone?: string;
-  studentIds: number[]; // Array of IDs of the students they are a guardian for
-  password?: string;
-  passwordChanged?: boolean;
-  notifications?: NotificationSettings;
+export interface AssessmentData {
+  competency: string;
+  classAverage: number;
+  studentAverage: number;
 }
 
-// New types for centralized conversation store to enable real-time chat
-export interface Message {
-  senderId: string | number;
-  text: string;
-  timestamp: string; // ISO string
-}
-
-export interface Conversation {
-  id: string; // Unique ID for the conversation, e.g., '1037612345-123456789'
-  participantIds: (string | number)[];
-  messages: Message[];
+export interface EventPoster {
+  id: string;
+  title: string;
+  imageUrl: string;
+  eventDate: string;
+  createdAt: string;
 }
 
 export interface InboxConversation {
-  id: string; // e.g., 'teacher-1037612345' or 'parent-1'
+  id: string;
   participantId: string | number;
   participantName: string;
   participantAvatar: string;
@@ -379,21 +355,19 @@ export interface InboxConversation {
   }[];
 }
 
-// --- Tutor Mode Types ---
-
-export interface GeneratedQuestion {
-    question: string;
-    options: string[];
-    correctAnswerIndex: number;
-    explanation: string;
-    area: string;
+export interface DesempenoDescriptor {
+  id: string;
+  area: SubjectArea;
+  description: string;
 }
 
+
+// --- Tutor Mode Types ---
 export interface PracticalTask {
-  id: string;
-  statement: string;
-  options: string[];
-  correctAnswerIndex: number;
+    id: string;
+    statement: string;
+    options: string[];
+    correctAnswerIndex: number;
 }
 
 export interface LessonContent {
@@ -402,71 +376,59 @@ export interface LessonContent {
     development: string;
     deepening: string;
     conclusion: string;
-    practiceQuestions: GeneratedQuestion[];
+    practiceQuestions: {
+        question: string;
+        options: string[];
+        correctAnswerIndex: number;
+        explanation: string;
+    }[];
     practicalTasks?: PracticalTask[];
 }
 
 export interface Lesson {
-  id: string;
-  userId: string | number;
-  createdAt: string; // ISO string
-  topic: string;
-  grade: string;
-  subject: SubjectArea;
-  content: LessonContent;
+    id: string;
+    userId: string | number;
+    createdAt: string;
+    topic: string;
+    grade: string;
+    subject: SubjectArea;
+    content: LessonContent;
 }
 
-// --- Psychology Module Types ---
-export enum AttentionReportStatus {
-  OPEN = 'OPEN',
-  IN_PROGRESS = 'IN_PROGRESS',
-  CLOSED = 'CLOSED',
-}
-
-export enum DiagnosisArea {
-    FAMILY_DEVELOPMENT = "Area familiar y desarrollo",
-    ACADEMIC = "Area Academica",
-    SOCIAL_EMOTIONAL = "Area social y emocional",
-}
-
+// --- Psychology Types ---
 export interface Diagnosis {
-  id: string;
-  authorId: string;
-  text: string;
-  timestamp: string;
-  source?: string;
-  area?: DiagnosisArea;
+    id: string;
+    authorId: string | number;
+    text: string;
+    source?: string;
+    area: DiagnosisArea;
+    timestamp: string;
 }
-
-export type SessionProgress = 'Estancamiento' | 'Leve Mejora' | 'Progreso Notable' | 'Logro de Objetivo' | 'Sin Evaluar';
 
 export interface SessionLog {
-  id: string;
-  authorId: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  sessionType: 'Individual' | 'Grupal' | 'Familiar';
-  notes: string;
-  progressIndicator: SessionProgress;
+    id: string;
+    authorId: string | number;
+    date: string;
+    startTime: string;
+    endTime: string;
+    sessionType: 'Individual' | 'Grupal' | 'Familiar';
+    progressIndicator: SessionProgress;
+    notes: string;
 }
 
 export interface AttentionReport {
-  id: string;
-  studentId: number;
-  reporterId: string;
-  reason: string; // Motivo de Consulta
-  timestamp: string;
-  status: AttentionReportStatus;
-  
-  // Historial Psicológico
-  familyBackground?: string;
-  schoolBackground?: string;
-  medicalBackground?: string;
-  interventionPlan?: string;
-  closingSummary?: string;
-
-  diagnoses: Diagnosis[];
-  sessions: SessionLog[]; // Replaces followUps
-  conversationId: string;
+    id: string;
+    studentId: string | number;
+    reporterId: string | number;
+    reason: string;
+    timestamp: string;
+    status: AttentionReportStatus;
+    familyBackground?: string;
+    schoolBackground?: string;
+    medicalBackground?: string;
+    diagnoses: Diagnosis[];
+    interventionPlan?: string;
+    sessions: SessionLog[];
+    closingSummary?: string;
+    conversationId: string;
 }

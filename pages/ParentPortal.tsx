@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { Student, Teacher, Resource, SubjectGrades, InstitutionProfileData, Citation, Incident, Announcement, Conversation, Guardian, Message, AcademicPeriod, User } from '../types';
 import { CitationStatus, Role, Desempeno } from '../types';
@@ -30,7 +32,8 @@ interface ParentPortalProps {
 type ParentPortalTab = 'inicio' | 'calificaciones' | 'convivencia' | 'comunicados';
 
 // --- Helper Functions ---
-const calculateFinalScore = (studentId: number, gradebook: SubjectGrades | undefined): { finalScore: number | null } => {
+// FIX: Updated studentId to accept string or number.
+const calculateFinalScore = (studentId: string | number, gradebook: SubjectGrades | undefined): { finalScore: number | null } => {
     if (!gradebook) return { finalScore: null };
     const { scores, gradeItems } = gradebook;
     let weightedSum = 0;
@@ -79,7 +82,8 @@ const getCitationStatusClass = (status: CitationStatus) => {
 const ParentPortal: React.FC<ParentPortalProps> = (props) => {
     const { students, teachers, subjectGrades, institutionProfile, citations, onUpdateCitations, incidents, announcements, conversations, onUpdateConversation, onCreateConversation, allUsersMap, currentUser } = props;
 
-    const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+    // FIX: Changed state type from number to string | number to handle mixed ID types.
+    const [selectedStudentId, setSelectedStudentId] = useState<string | number | null>(null);
     const [activeTab, setActiveTab] = useState<ParentPortalTab>('inicio');
 
     const guardianStudents = useMemo(() => {
@@ -188,8 +192,14 @@ const ParentPortal: React.FC<ParentPortalProps> = (props) => {
                         <label htmlFor="student-selector" className="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Viendo a:</label>
                         <select
                             id="student-selector"
-                            value={selectedStudentId || ''}
-                            onChange={e => setSelectedStudentId(Number(e.target.value))}
+                            value={String(selectedStudentId || '')}
+                            // FIX: Correctly handle string | number ID by finding the student from the value string.
+                            onChange={e => {
+                                const student = guardianStudents.find(s => String(s.id) === e.target.value);
+                                if (student) {
+                                    setSelectedStudentId(student.id);
+                                }
+                            }}
                             className="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         >
                             {guardianStudents.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -317,8 +327,8 @@ const ComunicadosView: React.FC<{ announcements: Announcement[], teachers: Teach
     
     const studentTeachers = useMemo(() => {
         const teacherIds = new Set<string>();
-        subjectGrades.filter(sg => sg.grade === student.grade && sg.group === student.group).forEach(sg => teacherIds.add(sg.teacherId));
-        return teachers.filter(t => teacherIds.has(t.id));
+        subjectGrades.filter(sg => sg.grade === student.grade && sg.group === student.group).forEach(sg => teacherIds.add(String(sg.teacherId)));
+        return teachers.filter(t => teacherIds.has(String(t.id)));
     }, [teachers, student, subjectGrades]);
     
     const myConversations = useMemo(() => {

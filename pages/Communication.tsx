@@ -174,28 +174,28 @@ const Communication: React.FC<CommunicationProps> = ({ currentUser, students, te
                                 <p className="text-sm text-gray-500 dark:text-gray-400">{selectedConversation.participantRole}</p>
                             </div>
                         </div>
-                        <div ref={chatContainerRef} className="flex-1 p-6 space-y-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+                        <div ref={chatContainerRef} className="flex-1 p-6 space-y-4 overflow-y-auto bg-gray-50 dark:bg-gray-800 shadow-inner">
                             {selectedConversation.conversation.map((msg, index) => (
                                 <div key={index} className={`flex items-end gap-2 ${msg.sender === 'self' ? 'justify-end' : ''}`}>
-                                    {msg.sender === 'participant' && <img src={selectedConversation.participantAvatar} className="w-8 h-8 rounded-full" alt="participant" />}
-                                    <div className={`max-w-lg p-3 rounded-xl ${msg.sender === 'self' ? 'bg-primary text-white rounded-br-none' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none'}`}>
+                                    {msg.sender === 'participant' && <img src={selectedConversation.participantAvatar} className="w-8 h-8 rounded-full shadow-sm" alt="participant" />}
+                                    <div className={`max-w-lg p-3 rounded-xl shadow-sm ${msg.sender === 'self' ? 'bg-primary text-white rounded-br-none' : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none'}`}>
                                         <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                                         <p className="text-xs opacity-70 mt-1 text-right">{msg.timestamp}</p>
                                     </div>
-                                    {msg.sender === 'self' && <img src={currentUser.avatarUrl} className="w-8 h-8 rounded-full" alt="self" />}
+                                    {msg.sender === 'self' && <img src={currentUser.avatarUrl} className="w-8 h-8 rounded-full shadow-sm" alt="self" />}
                                 </div>
                             ))}
                         </div>
-                        <form onSubmit={handleSendMessage} className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center gap-4">
+                        <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center gap-4">
                             <textarea
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
                                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); }}}
-                                placeholder="Escribe una respuesta..."
-                                className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary resize-none bg-gray-50 dark:bg-gray-700/50 dark:text-gray-200"
+                                placeholder="Escribe tu mensaje aquí..."
+                                className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary resize-none bg-white dark:bg-gray-800 dark:text-gray-100 shadow-sm"
                                 rows={1}
                             />
-                            <button type="submit" className="bg-primary text-white rounded-full p-3 hover:bg-primary-focus disabled:bg-gray-300" disabled={!newMessage.trim()}>
+                            <button type="submit" className="bg-primary text-white rounded-full p-3 hover:bg-primary-focus disabled:bg-gray-400 transition-colors shadow-md" disabled={!newMessage.trim()}>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                             </button>
                         </form>

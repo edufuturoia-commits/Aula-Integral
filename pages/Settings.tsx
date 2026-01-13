@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useEffect } from 'react';
 import type { Teacher, NotificationSettings, Student, Guardian } from '../types';
 import { useTranslation } from '../App';
@@ -18,13 +16,13 @@ const ProfileSection: React.FC<{ title: string; children: React.ReactNode; actio
 const ToggleSwitch: React.FC<{ label: string; enabled: boolean; onChange: (enabled: boolean) => void; description: string; disabled?: boolean; }> = ({ label, enabled, onChange, description, disabled = false }) => (
     <div className="flex items-center justify-between py-3">
         <div>
-            <span className={`font-medium ${disabled ? 'text-gray-400' : 'text-gray-700 dark:text-gray-200'}`}>{label}</span>
-            <p className={`text-sm ${disabled ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>{description}</p>
+            <span className={`font-medium ${disabled ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'}`}>{label}</span>
+            <p className={`text-sm ${disabled ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400'}`}>{description}</p>
         </div>
         <button
             onClick={() => onChange(!enabled)}
             disabled={disabled}
-            className={`${enabled ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-600'} relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-300`}
+            className={`${enabled ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-600'} relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:cursor-not-allowed disabled:bg-gray-300 dark:disabled:bg-gray-500`}
             aria-label={label}
         >
             <span className={`${enabled ? 'translate-x-6' : 'translate-x-1'} inline-block w-4 h-4 transform bg-white rounded-full transition-transform`} />
@@ -46,6 +44,8 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, theme, s
         newIncident: true,
         weeklySummary: false,
         assessmentReminders: true,
+        assessmentResults: true,
+        messageAlerts: true,
     };
     
     const [isEditing, setIsEditing] = useState(false);
@@ -120,6 +120,20 @@ const Settings: React.FC<SettingsProps> = ({ currentUser, onUpdateUser, theme, s
                         description={t('settings.notifications.assessmentRemindersDescription')}
                         enabled={settings.assessmentReminders} 
                         onChange={() => handleToggleChange('assessmentReminders')}
+                        disabled={!isEditing}
+                    />
+                    <ToggleSwitch 
+                        label={t('settings.notifications.assessmentResultsLabel')} 
+                        description={t('settings.notifications.assessmentResultsDescription')}
+                        enabled={settings.assessmentResults ?? false} 
+                        onChange={() => handleToggleChange('assessmentResults')}
+                        disabled={!isEditing}
+                    />
+                    <ToggleSwitch 
+                        label={t('settings.notifications.messageAlertsLabel')} 
+                        description={t('settings.notifications.messageAlertsDescription')}
+                        enabled={settings.messageAlerts ?? true} 
+                        onChange={() => handleToggleChange('messageAlerts')}
                         disabled={!isEditing}
                     />
                 </div>

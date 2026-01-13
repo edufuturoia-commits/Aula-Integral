@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useMemo } from 'react';
 import type { Student, Incident, Teacher } from '../types';
 import { IncidentType, Role, IncidentStatus } from '../types';

@@ -70,7 +70,7 @@ const Dashboard: React.FC<DashboardProps> = ({ students, teachers, citations, on
                          const prompt = `Genera un mensaje de cumpleaños corto, cálido y festivo para ${person.name}, que es un(a) ${person.role} en nuestra institución. El mensaje se mostrará en el panel principal. Mantenlo amigable y profesional. Menciona su nombre. No incluyas saludos como "Hola" o "Estimados", solo el mensaje principal del saludo.`;
                         
                         const response = await ai.models.generateContent({
-                            model: 'gemini-2.5-flash',
+                            model: 'gemini-2.5-flash-lite',
                             contents: prompt,
                         });
                         return { name: person.name, message: response.text };

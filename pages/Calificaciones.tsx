@@ -247,7 +247,7 @@ const LockClosedIcon = ({ className = '' }) => <svg xmlns="http://www.w3.org/200
 const LockOpenIcon = ({ className = '' }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zm0 2a3 3 0 013 3v2H7V7a3 3 0 013-3z" /></svg>;
 
 // --- Helper Functions ---
-const calculateFinalScore = (studentId: number, gradebook: SubjectGrades | null): { finalScore: number | null; totalWeight: number } => {
+const calculateFinalScore = (studentId: number | string, gradebook: SubjectGrades | null): { finalScore: number | null; totalWeight: number } => {
     if (!gradebook) return { finalScore: null, totalWeight: 0 };
 
     const { scores, gradeItems } = gradebook;
@@ -306,13 +306,13 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
     const [editingItem, setEditingItem] = useState<GradeItem | null>(null);
     const [isItemModalOpen, setIsItemModalOpen] = useState(false);
     
-    const [editingObservation, setEditingObservation] = useState<{ studentId: number; studentName: string; text: string } | null>(null);
+    const [editingObservation, setEditingObservation] = useState<{ studentId: string | number; studentName: string; text: string } | null>(null);
     const [isObservationModalOpen, setIsObservationModalOpen] = useState(false);
     
     const [isGeneralDesempenosModalOpen, setIsGeneralDesempenosModalOpen] = useState(false);
     const [desempenosBank, setDesempenosBank] = useState<DesempenoDescriptor[]>(DESEMPENOS_BANK);
     
-    const [editingCell, setEditingCell] = useState<{ studentId: number; itemId: string; value: string } | null>(null);
+    const [editingCell, setEditingCell] = useState<{ studentId: number | string; itemId: string; value: string } | null>(null);
     
     const tableContainerRef = useRef<HTMLDivElement>(null);
     const [showSnackbar, setShowSnackbar] = useState('');
@@ -423,7 +423,7 @@ const Calificaciones: React.FC<CalificacionesProps> = ({ students, teachers, sub
         return newId;
     };
     
-    const saveScoreChange = (studentId: number, gradeItemId: string, scoreValue: number | null) => {
+    const saveScoreChange = (studentId: string | number, gradeItemId: string, scoreValue: number | null) => {
         if (!selectedGradebook) return;
         const updatedScores = [...selectedGradebook.scores];
         const scoreIndex = updatedScores.findIndex(s => s.studentId === studentId && s.gradeItemId === gradeItemId);

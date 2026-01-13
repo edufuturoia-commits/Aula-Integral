@@ -33,14 +33,16 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, isOnline, a
     
     const attendance = useMemo(() => {
         const recordsForDate = allAttendanceRecords.filter(rec => rec.date === selectedDate);
-        const attendanceMap = new Map<number, AttendanceStatus>();
+        // FIX: Changed map key type to handle both string and number IDs.
+        const attendanceMap = new Map<string | number, AttendanceStatus>();
         recordsForDate.forEach(rec => {
             attendanceMap.set(rec.studentId, rec.status);
         });
         return attendanceMap;
     }, [allAttendanceRecords, selectedDate]);
 
-    const handleStatusChange = async (studentId: number, status: AttendanceStatus) => {
+    // FIX: Changed studentId type to string | number to match the Student type.
+    const handleStatusChange = async (studentId: string | number, status: AttendanceStatus) => {
         const newRecord: AttendanceRecord = {
             id: `${studentId}-${selectedDate}`,
             studentId,

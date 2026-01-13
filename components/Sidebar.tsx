@@ -14,9 +14,9 @@ interface SidebarProps {
 }
 
 const PAGE_ACCESS: Partial<Record<Role, Page[]>> = {
-  [Role.ADMIN]: ['Dashboard', 'Classroom', 'Incidents', 'Psychology', 'Secretaria', 'TutorMode', 'Communication', 'Assessments', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'Rectory', 'InstitutionProfile', 'ParentPortal', 'StudentPortal', 'SimulacroICFES'],
-  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Psychology', 'Secretaria', 'Communication', 'Rectory', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES', 'TutorMode'],
-  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Psychology', 'Secretaria', 'Communication', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'ParentPortal', 'SimulacroICFES', 'TutorMode'],
+  [Role.ADMIN]: ['Dashboard', 'Classroom', 'Incidents', 'Psychology', 'Secretaria', 'TutorMode', 'Communication', 'Assessments', 'Calificaciones', 'Consolidado', 'AcademicDashboard', 'Resources', 'Eventos', 'Profile', 'Settings', 'Rectory', 'InstitutionProfile', 'StudentPortal', 'SimulacroICFES'],
+  [Role.RECTOR]: ['Dashboard', 'Incidents', 'Psychology', 'Secretaria', 'Communication', 'Rectory', 'Calificaciones', 'Consolidado', 'AcademicDashboard', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'SimulacroICFES', 'TutorMode'],
+  [Role.COORDINATOR]: ['Dashboard', 'Incidents', 'Psychology', 'Secretaria', 'Communication', 'Calificaciones', 'Consolidado', 'AcademicDashboard', 'Resources', 'Eventos', 'Profile', 'Settings', 'InstitutionProfile', 'SimulacroICFES', 'TutorMode'],
   [Role.TEACHER]: ['Dashboard', 'Classroom', 'Communication', 'Assessments', 'Calificaciones', 'Consolidado', 'Resources', 'Eventos', 'Profile', 'Settings', 'TutorMode'],
   [Role.STUDENT]: ['Dashboard', 'StudentPortal', 'Resources', 'Eventos', 'Profile', 'TutorMode'],
   [Role.PSYCHOLOGY]: ['Dashboard', 'Psychology', 'Communication', 'Resources', 'Profile', 'Settings'],

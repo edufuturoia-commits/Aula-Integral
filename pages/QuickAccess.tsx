@@ -7,31 +7,37 @@ interface QuickAccessProps {
   onBack: () => void;
 }
 
+const rector = MOCK_TEACHERS.find(t => t.role === Role.RECTOR)!;
+const coordinator = MOCK_TEACHERS.find(t => t.role === Role.COORDINATOR)!;
+const teacher = MOCK_TEACHERS.find(t => t.role === Role.TEACHER)!;
+const student = MOCK_STUDENTS[0];
+const guardian = MOCK_GUARDIANS[0];
+
 const TEST_PROFILES = [
     {
-        ...MOCK_TEACHERS.find(t => t.role === Role.RECTOR)!,
-        loginId: 'rector',
-        password: 'rector'
+        ...rector,
+        loginId: rector.id,
+        password: 'rector123'
     },
     {
-        ...MOCK_TEACHERS.find(t => t.role === Role.COORDINATOR)!,
-        loginId: '987654321',
-        password: '987654321'
+        ...coordinator,
+        loginId: coordinator.id,
+        password: 'coordinador123'
     },
     {
-        ...MOCK_TEACHERS.find(t => t.role === Role.TEACHER)!,
-        loginId: '1037612345',
-        password: '1037612345'
+        ...teacher,
+        loginId: teacher.id,
+        password: 'docente123'
     },
     {
-        ...MOCK_STUDENTS[0],
-        loginId: MOCK_STUDENTS[0].documentNumber!,
+        ...student,
+        loginId: student.documentNumber!,
         password: 'password123'
     },
     {
-        ...MOCK_GUARDIANS[0],
+        ...guardian,
         role: 'Acudiente',
-        loginId: MOCK_GUARDIANS[0].id,
+        loginId: guardian.id,
         password: 'password123'
     }
 ];
