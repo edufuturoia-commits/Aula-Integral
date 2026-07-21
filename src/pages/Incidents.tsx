@@ -130,7 +130,7 @@ interface IncidentsProps {
     setSubjectGradesData: (updater: React.SetStateAction<SubjectGrades[]>) => Promise<void>;
     allAttendanceRecords: AttendanceRecord[];
     citations: Citation[];
-    onUpdateCitations: React.Dispatch<React.SetStateAction<Citation[]>>;
+    onUpdateCitations: (action: 'add' | 'update' | 'delete', data: Citation | Citation[] | string) => Promise<void>;
     incidents: Incident[];
     onUpdateIncidents: (action: 'add' | 'update' | 'delete', data: Incident | string) => Promise<void>;
     announcements: Announcement[];
@@ -154,9 +154,9 @@ const getAttendanceStatusTextColor = (status: AttendanceStatus): string => {
 
 const getCitationStatusClass = (status: CitationStatus) => {
     switch (status) {
-        case CitationStatus.CONFIRMED: return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200';
+        case CitationStatus.CONFIRMED: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200';
         case CitationStatus.PENDING: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200';
-        case CitationStatus.COMPLETED: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200';
+        case CitationStatus.COMPLETED: return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200';
         case CitationStatus.CANCELLED: return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200';
         case CitationStatus.RESCHEDULE_REQUESTED: return 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200';
         default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
@@ -241,7 +241,7 @@ const Incidents: React.FC<IncidentsProps> = ({
     // Communication tab state
     const [commTitle, setCommTitle] = useState('');
     const [commContent, setCommContent] = useState('');
-    const [commRecipients, setCommRecipients] = useState<'all' | 'all_teachers' | 'all_parents'>('all');
+    const [commRecipients, setCommRecipients] = useState<'all' | 'teachers' | 'parents' | 'students' | 'directors' | 'teachers_directors'>('all');
 
     const communityAvailableGroups = useMemo(() => {
         if (communityGradeFilter === 'all') {
@@ -282,22 +282,18 @@ const Incidents: React.FC<IncidentsProps> = ({
     };
 
     const handleSaveCitations = (newCitations: Citation[]) => {
-        onUpdateCitations(prev => [...newCitations, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        onUpdateCitations('add', newCitations);
         onShowSystemMessage(`${newCitations.length} citacion(es) creada(s) exitosamente.`);
         setIsCitationModalOpen(false);
     };
     
     const handleSaveEditedCitation = (updatedCitation: Citation) => {
-        onUpdateCitations(prev => prev.map(c => {
-            if (c.id === updatedCitation.id) {
-                // If the citation was a reschedule request, reset its status to pending so the parent can confirm again.
-                if (citationToEdit?.status === CitationStatus.RESCHEDULE_REQUESTED) {
-                    return { ...updatedCitation, status: CitationStatus.PENDING };
-                }
-                return updatedCitation;
-            }
-            return c;
-        }));
+        let citationToSave = updatedCitation;
+        // If the citation was a reschedule request, reset its status to pending so the parent can confirm again.
+        if (citationToEdit?.status === CitationStatus.RESCHEDULE_REQUESTED) {
+            citationToSave = { ...updatedCitation, status: CitationStatus.PENDING };
+        }
+        onUpdateCitations('update', citationToSave);
         onShowSystemMessage('Citación actualizada.');
         setIsEditCitationModalOpen(false);
         setCitationToEdit(null);
@@ -305,10 +301,15 @@ const Incidents: React.FC<IncidentsProps> = ({
 
     const handleConfirmCancelCitation = (reason: string) => {
         if (!citationToCancel) return;
-        onUpdateCitations(prev => prev.map(c => c.id === citationToCancel.id ? { ...c, status: CitationStatus.CANCELLED, cancellationReason: reason } : c));
+        onUpdateCitations('update', { ...citationToCancel, status: CitationStatus.CANCELLED, cancellationReason: reason });
         onShowSystemMessage('Citación cancelada.');
         setIsCancelModalOpen(false);
         setCitationToCancel(null);
+    };
+
+    const handleMarkCitationCompleted = (citation: Citation) => {
+        onUpdateCitations('update', { ...citation, status: CitationStatus.COMPLETED });
+        onShowSystemMessage('Citación marcada como cumplida.');
     };
     
     const handleSendAnnouncement = async (e: React.FormEvent) => {
@@ -713,12 +714,19 @@ const Incidents: React.FC<IncidentsProps> = ({
                                 <div className="flex justify-between items-end mt-3">
                                     <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(cit.date+'T00:00:00').toLocaleDateString()} a las {cit.time}</p>
                                     <div className="space-x-2">
+                                        {cit.status !== CitationStatus.COMPLETED && cit.status !== CitationStatus.CANCELLED && (
+                                            <button onClick={() => handleMarkCitationCompleted(cit)} className="text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded-full">Cumplida</button>
+                                        )}
                                         {cit.status === CitationStatus.RESCHEDULE_REQUESTED ? (
                                             <button onClick={() => {setCitationToEdit(cit); setIsEditCitationModalOpen(true);}} className="text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded-full">Reasignar Fecha</button>
                                         ) : (
-                                            <button onClick={() => {setCitationToEdit(cit); setIsEditCitationModalOpen(true);}} className="text-xs font-semibold text-blue-600 hover:underline">Editar</button>
+                                            cit.status !== CitationStatus.COMPLETED && cit.status !== CitationStatus.CANCELLED && (
+                                                <button onClick={() => {setCitationToEdit(cit); setIsEditCitationModalOpen(true);}} className="text-xs font-semibold text-blue-600 hover:underline">Editar</button>
+                                            )
                                         )}
-                                        <button onClick={() => {setCitationToCancel(cit); setIsCancelModalOpen(true);}} className="text-xs font-semibold text-red-600 hover:underline">Cancelar</button>
+                                        {cit.status !== CitationStatus.COMPLETED && cit.status !== CitationStatus.CANCELLED && (
+                                            <button onClick={() => {setCitationToCancel(cit); setIsCancelModalOpen(true);}} className="text-xs font-semibold text-red-600 hover:underline">Cancelar</button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -737,8 +745,11 @@ const Incidents: React.FC<IncidentsProps> = ({
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Destinatarios</label>
                                 <select value={commRecipients} onChange={e => setCommRecipients(e.target.value as any)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
                                     <option value="all">Toda la Comunidad</option>
-                                    <option value="all_teachers">Todos los Docentes</option>
-                                    <option value="all_parents">Todos los Acudientes</option>
+                                    <option value="teachers">Todos los Docentes</option>
+                                    <option value="parents">Todos los Acudientes</option>
+                                    <option value="students">Todos los Estudiantes</option>
+                                    <option value="directors">Solo Directivos</option>
+                                    <option value="teachers_directors">Docentes y Directivos</option>
                                 </select>
                             </div>
                             <div>

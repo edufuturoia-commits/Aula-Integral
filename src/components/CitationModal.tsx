@@ -20,7 +20,7 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
   const [reason, setReason] = useState('');
 
   // Individual state
-  const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
+  const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string | number>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [individualGradeFilter, setIndividualGradeFilter] = useState('all');
   const [individualGroupFilter, setIndividualGroupFilter] = useState('all');
@@ -68,7 +68,7 @@ const CitationModal: React.FC<CitationModalProps> = ({ students, onClose, onSave
   }, [students, searchTerm, citationType, individualGradeFilter, individualGroupFilter, currentUser]);
 
 
-  const handleToggleStudent = (studentId: number) => {
+  const handleToggleStudent = (studentId: string | number) => {
     setSelectedStudentIds(prev => {
       const newSet = new Set(prev);
       if (newSet.has(studentId)) {

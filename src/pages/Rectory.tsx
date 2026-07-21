@@ -10,6 +10,7 @@ import { ClassroomIcon, IncidentsIcon, ProfileIcon } from '../constants';
 interface RectoryProps {
     students: Student[];
     teachers: Teacher[];
+    incidents: Incident[];
     announcements: Announcement[];
     onUpdateAnnouncements: (announcement: Announcement) => Promise<void>;
     onShowSystemMessage: (message: string, type?: 'success' | 'error') => void;
@@ -31,13 +32,11 @@ const MOCK_GRADE_PERFORMANCE = [
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#DA291C', '#8884d8'];
 
 
-const Rectory: React.FC<RectoryProps> = ({ students, teachers, announcements, onUpdateAnnouncements, onShowSystemMessage, currentUser }) => {
+const Rectory: React.FC<RectoryProps> = ({ students, teachers, incidents, announcements, onUpdateAnnouncements, onShowSystemMessage, currentUser }) => {
     const [activeTab, setActiveTab] = useState<RectoryTab>('dashboard');
-    const [incidents, setIncidents] = useState<Incident[]>([]);
-    const [loading, setLoading] = useState(true);
     
     // --- Communication State - simplified ---
-    const [recipientType, setRecipientType] = useState<'all' | 'all_teachers' | 'all_parents'>('all');
+    const [recipientType, setRecipientType] = useState<'all' | 'teachers' | 'parents' | 'students' | 'directors' | 'teachers_directors'>('all');
     const [commTitle, setCommTitle] = useState('');
     const [commContent, setCommContent] = useState('');
     
@@ -47,24 +46,18 @@ const Rectory: React.FC<RectoryProps> = ({ students, teachers, announcements, on
             .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     }, [announcements]);
 
-    useEffect(() => {
-        const loadData = async () => {
-            setLoading(true);
-            const allIncidents = await getIncidents();
-            setIncidents(allIncidents.filter(inc => inc.status !== IncidentStatus.ARCHIVED));
-            setLoading(false);
-        };
-        loadData();
-    }, []);
+    const activeIncidents = useMemo(() => {
+        return incidents.filter(inc => inc.status !== IncidentStatus.ARCHIVED);
+    }, [incidents]);
 
     const incidentTypeData = useMemo(() => {
-        const counts = incidents.reduce((acc, incident) => {
+        const counts = activeIncidents.reduce((acc, incident) => {
             acc[incident.type] = (acc[incident.type] || 0) + 1;
             return acc;
         }, {} as Record<IncidentType, number>);
 
         return Object.entries(counts).map(([name, value]) => ({ name, value }));
-    }, [incidents]);
+    }, [activeIncidents]);
     
     const handleSendCommunication = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,10 +80,6 @@ const Rectory: React.FC<RectoryProps> = ({ students, teachers, announcements, on
         onShowSystemMessage("Comunicado enviado exitosamente.");
     };
 
-    if (loading) {
-        return <div className="text-center p-8">Cargando datos de la institución...</div>;
-    }
-
     return (
         <div className="space-y-6">
             <div className="border-b border-gray-200 dark:border-gray-700">
@@ -105,7 +94,7 @@ const Rectory: React.FC<RectoryProps> = ({ students, teachers, announcements, on
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <DashboardCard title="Total Estudiantes" value={students.length.toString()} color="bg-blue-100 text-blue-600" icon={<ClassroomIcon className="h-6 w-6" />} />
                         <DashboardCard title="Total Docentes" value={teachers.length.toString()} color="bg-purple-100 text-purple-600" icon={<ProfileIcon className="h-6 w-6" />} />
-                        <DashboardCard title="Incidencias Activas" value={incidents.length.toString()} color="bg-red-100 text-red-600" icon={<IncidentsIcon className="h-6 w-6" />} />
+                        <DashboardCard title="Incidencias Activas" value={activeIncidents.length.toString()} color="bg-red-100 text-red-600" icon={<IncidentsIcon className="h-6 w-6" />} />
                         <DashboardCard title="Asistencia Hoy" value="94%" color="bg-green-100 text-green-600" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -155,8 +144,11 @@ const Rectory: React.FC<RectoryProps> = ({ students, teachers, announcements, on
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Destinatarios</label>
                                 <select value={recipientType} onChange={e => setRecipientType(e.target.value as any)} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                                     <option value="all">Toda la comunidad</option>
-                                    <option value="all_teachers">Todos los Docentes</option>
-                                    <option value="all_parents">Todos los Acudientes</option>
+                                    <option value="teachers">Todos los Docentes</option>
+                                    <option value="parents">Todos los Acudientes</option>
+                                    <option value="students">Todos los Estudiantes</option>
+                                    <option value="directors">Solo Directivos (Rector, Coordinadores, Admin)</option>
+                                    <option value="teachers_directors">Docentes y Directivos</option>
                                 </select>
                             </div>
                             <div>

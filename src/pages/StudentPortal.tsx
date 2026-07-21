@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Student, Assessment, Resource, StudentAssessmentResult, Teacher, SubjectGrades, Citation } from '../types';
+import type { Student, Assessment, Resource, StudentAssessmentResult, Teacher, SubjectGrades, Citation, Incident, Announcement } from '../types';
 import { Role, CitationStatus } from '../types';
 import OnlineAssessmentTaker from '../components/OnlineAssessmentTaker';
 import ManualViewer from '../components/ManualViewer';
@@ -18,6 +18,8 @@ interface StudentPortalProps {
     studentResults: StudentAssessmentResult[];
     onAddResult: (result: StudentAssessmentResult) => Promise<void>;
     citations: Citation[];
+    incidents: Incident[];
+    announcements: Announcement[];
     icfesDrillSettings: { isActive: boolean, grades: string[] };
 }
 
@@ -31,9 +33,9 @@ const getCitationStatusClass = (status: CitationStatus) => {
     }
 };
 
-type StudentPortalTab = 'Inicio' | 'Mis Asignaturas' | 'Mis Evaluaciones' | 'Recursos' | 'Citaciones' | 'Manual de Convivencia' | 'Simulacro ICFES';
+type StudentPortalTab = 'Inicio' | 'Mis Asignaturas' | 'Mis Evaluaciones' | 'Recursos' | 'Citaciones' | 'Manual de Convivencia' | 'Simulacro ICFES' | 'Comunicados';
 
-const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents, teachers, subjectGrades, resources, assessments, studentResults, onAddResult, citations, icfesDrillSettings }) => {
+const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents, teachers, subjectGrades, resources, assessments, studentResults, onAddResult, citations, incidents, announcements, icfesDrillSettings }) => {
     const [activeTab, setActiveTab] = useState<StudentPortalTab>('Inicio');
     const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
     const [viewedStudent, setViewedStudent] = useState<Student | null>(null);
@@ -59,6 +61,13 @@ const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents
             .filter(c => c.studentId === viewedStudent.id)
             .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [citations, viewedStudent]);
+
+    const studentIncidents = useMemo(() => {
+        if (!viewedStudent) return [];
+        return incidents
+            .filter(i => i.studentId === viewedStudent.id)
+            .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    }, [incidents, viewedStudent]);
 
     const pendingCitationsCount = useMemo(() => {
         return studentCitations.filter(c => c.status === CitationStatus.PENDING).length;
@@ -140,6 +149,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents
         { id: 'Mis Evaluaciones', label: 'Mis Evaluaciones' },
         { id: 'Citaciones', label: 'Citaciones', badge: pendingCitationsCount },
         { id: 'Recursos', label: 'Recursos' },
+        { id: 'Comunicados', label: 'Comunicados' },
         { id: 'Manual de Convivencia', label: 'Manual de Convivencia' },
     ];
 
@@ -222,32 +232,58 @@ const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents
                 return <IcfesDrillTaker />;
             case 'Citaciones':
                 return (
-                     <div className="bg-white p-6 rounded-xl shadow-md space-y-4">
-                        <h2 className="text-xl font-bold">Mis Citaciones</h2>
-                        {studentCitations.length > 0 ? (
-                            studentCitations.map(cit => (
-                                <div key={cit.id} className={`p-4 border rounded-lg ${cit.status === CitationStatus.CANCELLED ? 'bg-gray-100' : 'bg-gray-50'}`}>
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="font-bold text-primary">{cit.reason}</p>
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                {new Date(cit.date + 'T00:00:00').toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} a las {cit.time} en {cit.location}.
-                                            </p>
+                     <div className="space-y-6">
+                        <div className="bg-white p-6 rounded-xl shadow-md space-y-4">
+                            <h2 className="text-xl font-bold">Mis Citaciones</h2>
+                            {studentCitations.length > 0 ? (
+                                studentCitations.map(cit => (
+                                    <div key={cit.id} className={`p-4 border rounded-lg ${cit.status === CitationStatus.CANCELLED ? 'bg-gray-100' : 'bg-gray-50'}`}>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-bold text-primary">{cit.reason}</p>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    {new Date(cit.date + 'T00:00:00').toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} a las {cit.time} en {cit.location}.
+                                                </p>
+                                            </div>
+                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCitationStatusClass(cit.status)}`}>
+                                                {cit.status}
+                                            </span>
                                         </div>
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCitationStatusClass(cit.status)}`}>
-                                            {cit.status}
-                                        </span>
+                                        {cit.status === CitationStatus.CANCELLED && cit.cancellationReason && (
+                                            <div className="mt-2 p-2 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm">
+                                                <p><strong className="font-semibold">Motivo de cancelación:</strong> {cit.cancellationReason}</p>
+                                            </div>
+                                        )}
                                     </div>
-                                    {cit.status === CitationStatus.CANCELLED && cit.cancellationReason && (
-                                        <div className="mt-2 p-2 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm">
-                                            <p><strong className="font-semibold">Motivo de cancelación:</strong> {cit.cancellationReason}</p>
+                                ))
+                            ) : (
+                                <p className="text-gray-500 text-center py-8">No tienes citaciones registradas.</p>
+                            )}
+                        </div>
+
+                        <div className="bg-white p-6 rounded-xl shadow-md space-y-4">
+                            <h2 className="text-xl font-bold">Mis Reportes de Convivencia</h2>
+                            {studentIncidents.length > 0 ? (
+                                studentIncidents.map(inc => (
+                                    <div key={inc.id} className="p-4 border rounded-lg bg-gray-50">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-bold text-primary">{inc.type}</p>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    Reportado por: {inc.teacherName} el {new Date(inc.timestamp).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                {inc.status}
+                                            </span>
                                         </div>
-                                    )}
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-gray-500 text-center py-8">No tienes citaciones registradas.</p>
-                        )}
+                                        <p className="mt-2 text-sm text-gray-700 bg-white p-2 rounded border">{inc.notes}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-gray-500 text-center py-8">No tienes reportes de convivencia registrados.</p>
+                            )}
+                        </div>
                     </div>
                 );
             case 'Recursos':
@@ -255,6 +291,27 @@ const StudentPortal: React.FC<StudentPortalProps> = ({ loggedInUser, allStudents
                     <div className="bg-white p-6 rounded-xl shadow-md">
                         <h2 className="text-xl font-bold">Recursos de Estudio</h2>
                         <p className="mt-4 text-gray-500">Próximamente encontrarás aquí los recursos compartidos por tus docentes.</p>
+                    </div>
+                );
+            case 'Comunicados':
+                return (
+                    <div className="bg-white p-6 rounded-xl shadow-md space-y-4">
+                        <h2 className="text-xl font-bold">Comunicados de Rectoría</h2>
+                        <div className="space-y-4">
+                            {announcements.filter(ann => ann.recipients === 'all' || ann.recipients === 'students').length > 0 ? (
+                                announcements.filter(ann => ann.recipients === 'all' || ann.recipients === 'students').map(ann => (
+                                    <div key={ann.id} className="p-4 bg-gray-50 rounded-lg border">
+                                        <div className="flex justify-between items-start">
+                                            <h4 className="font-bold text-gray-800">{ann.title}</h4>
+                                            <span className="text-xs text-gray-500">{new Date(ann.timestamp).toLocaleDateString()}</span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{ann.content}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-center text-gray-500 py-8">No hay comunicados recientes.</p>
+                            )}
+                        </div>
                     </div>
                 );
             case 'Manual de Convivencia':

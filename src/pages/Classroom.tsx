@@ -115,7 +115,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
   const [citationToCancel, setCitationToCancel] = useState<Citation | null>(null);
   const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [groupFilter, setGroupFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'calificaciones' | 'manual'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'calificaciones' | 'manual' | 'announcements'>('students');
   const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
   const [isAttentionReportModalOpen, setIsAttentionReportModalOpen] = useState(false);
   const [studentForAttention, setStudentForAttention] = useState<Student | null>(null);
@@ -217,7 +217,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
     <div className="space-y-6">
       <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="-mb-px flex space-x-6 overflow-x-auto">
-            {(['students', 'attendance', 'calificaciones', 'manual'] as const).map(tab => (
+            {(['students', 'attendance', 'calificaciones', 'announcements', 'manual'] as const).map(tab => (
                  <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -227,6 +227,7 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
                          tab === 'students' ? 'Estudiantes' :
                          tab === 'attendance' ? 'Asistencia' :
                          tab === 'calificaciones' ? 'Calificaciones' :
+                         tab === 'announcements' ? 'Comunicados' :
                          'Manual y Eventos'
                      }
                  </button>
@@ -253,6 +254,27 @@ const Classroom: React.FC<ClassroomProps> = ({ isOnline, students, setStudents, 
       
       {activeTab === 'calificaciones' && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGradesData} setSubjectGradesData={setSubjectGradesData} currentUser={currentUser} viewMode='teacher' onShowSystemMessage={onShowSystemMessage} />}
 
+      {activeTab === 'announcements' && (
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md space-y-4">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Comunicados de Rectoría</h2>
+            <div className="space-y-4">
+                {announcements.filter(ann => ann.recipients === 'all' || ann.recipients === 'teachers' || ann.recipients === 'teachers_directors').length > 0 ? (
+                    announcements.filter(ann => ann.recipients === 'all' || ann.recipients === 'teachers' || ann.recipients === 'teachers_directors').map(ann => (
+                        <div key={ann.id} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border dark:border-gray-700">
+                            <div className="flex justify-between items-start">
+                                <h4 className="font-bold text-gray-800 dark:text-gray-100">{ann.title}</h4>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(ann.timestamp).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 whitespace-pre-wrap">{ann.content}</p>
+                        </div>
+                    ))
+                ) : (
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">No hay comunicados recientes.</p>
+                )}
+            </div>
+        </div>
+      )}
+      
       {activeTab === 'manual' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="lg:col-span-1"><ManualViewer /></div>

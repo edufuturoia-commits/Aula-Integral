@@ -176,7 +176,7 @@ const AcademicDashboard: React.FC<AcademicDashboardProps> = ({ students, subject
         if (filteredStudents.length === 0) return [];
 
         const periodGradebooks = subjectGradesData.filter(sg => sg.period === periodFilter && filteredStudents.some(s => s.grade === sg.grade && s.group === sg.group));
-        const uniqueSubjects = [...new Set(periodGradebooks.map(gb => gb.subject))];
+        const uniqueSubjects = Array.from(new Set(periodGradebooks.map(gb => gb.subject)));
 
         return uniqueSubjects.map(subject => {
             let totalScore = 0;
@@ -210,7 +210,7 @@ const AcademicDashboard: React.FC<AcademicDashboardProps> = ({ students, subject
 
     const gradeComparison = useMemo(() => {
         if (gradeFilter !== 'all') {
-            const groupsInGrade = [...new Set(filteredStudents.filter(s => s.grade === gradeFilter).map(s => s.group))].sort();
+            const groupsInGrade = Array.from(new Set(filteredStudents.filter(s => s.grade === gradeFilter).map(s => s.group))).sort();
             return groupsInGrade.map(group => {
                 const studentsInGroup = studentAverages.filter(s => {
                     const student = students.find(st => st.id === s.studentId);
@@ -220,7 +220,7 @@ const AcademicDashboard: React.FC<AcademicDashboardProps> = ({ students, subject
                 return { name: `Grupo ${group}`, promedio: studentsInGroup.length > 0 ? total / studentsInGroup.length : 0 };
             });
         } else {
-            const grades = [...new Set(students.map(s => s.grade))].sort();
+            const grades = Array.from(new Set(students.map(s => s.grade))).sort();
             return grades.map(grade => {
                 const studentsInGrade = studentAverages.filter(s => s.grade === grade && s.average > 0);
                 const total = studentsInGrade.reduce((sum, s) => sum + s.average, 0);

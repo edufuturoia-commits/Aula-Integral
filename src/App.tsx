@@ -13,7 +13,7 @@ import Header from './components/Header';
 
 // Types and DB
 import { Page, Student, Teacher, Resource, InstitutionProfileData, Assessment, StudentAssessmentResult, Role, SubjectGrades, AttendanceRecord, IncidentType, Citation, Incident, Announcement, Guardian, UserRegistrationData, Conversation, Lesson, AttentionReport, Message, NotificationSettings, User } from './types';
-import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian, getLessons, addLesson, updateLesson, getAttentionReports, addAttentionReport, updateAttentionReport } from './db';
+import { getStudents, getTeachers, getDownloadedResources, addOrUpdateTeachers, getAssessments, addOrUpdateAssessments, getStudentResults, addOrUpdateStudentResult, addOrUpdateStudents, getSubjectGrades, addOrUpdateSubjectGrades, getAllAttendanceRecords, addOrUpdateAttendanceRecord, addOrUpdateAttendanceRecords, getIncidents, addIncident, updateIncident, deleteIncident, getAnnouncements, addAnnouncement, getGuardians, addOrUpdateGuardians, getTeacherByEmail, getStudentByDocumentId, getTeacherById, getGuardianById, updateTeacher, updateStudent, updateGuardian, getLessons, addLesson, updateLesson, getAttentionReports, addAttentionReport, updateAttentionReport, getCitations, addCitation, updateCitation, deleteCitation } from './db';
 
 // Constants
 // FIX: Removed 'translations' from import as it is not exported from './constants'.
@@ -325,7 +325,7 @@ const AppContent: React.FC = () => {
   const [studentResults, setStudentResults] = useState<StudentAssessmentResult[]>([]);
   const [subjectGrades, setSubjectGrades] = useState<SubjectGrades[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
-  const [citations, setCitations] = useState<Citation[]>(MOCK_CITATIONS);
+  const [citations, setCitations] = useState<Citation[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
@@ -443,6 +443,15 @@ const AppContent: React.FC = () => {
     }
   }, []);
 
+  const loadCitations = useCallback(async () => {
+    try {
+        const data = await getCitations();
+        setCitations(data);
+    } catch (error) {
+        console.error("Failed to load citations:", error);
+    }
+  }, []);
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -469,7 +478,7 @@ const AppContent: React.FC = () => {
         setGuardians(guardiansData);
         setLessons(lessonsData);
         setAttentionReports(attentionReportsData);
-        setCitations(MOCK_CITATIONS);
+        await loadCitations();
         await loadIncidents();
         await loadResources();
       } catch (error) {
@@ -479,7 +488,7 @@ const AppContent: React.FC = () => {
       }
     };
     loadData();
-  }, [loadResources, loadIncidents]);
+  }, [loadResources, loadIncidents, loadCitations]);
 
   // Check for demo expiration
   useEffect(() => {
@@ -639,6 +648,19 @@ const AppContent: React.FC = () => {
     await loadIncidents();
   };
 
+  const handleUpdateCitations = async (action: 'add' | 'update' | 'delete', data: Citation | Citation[] | string) => {
+    if (action === 'add') {
+        if (Array.isArray(data)) {
+            for (const c of data) await addCitation(c);
+        } else {
+            await addCitation(data as Citation);
+        }
+    }
+    if (action === 'update') await updateCitation(data as Citation);
+    if (action === 'delete') await deleteCitation(data as string);
+    await loadCitations();
+  };
+
   const handleNewAnnouncement = (announcement: Announcement) => addAnnouncement(announcement).then(() => setAnnouncements(prev => [announcement, ...prev]));
 
   const handleUpdateCurrentUser = async (user: Teacher | Student | Guardian) => {
@@ -737,11 +759,11 @@ const AppContent: React.FC = () => {
                 {currentPage === 'Resources' && <Resources resources={resources} downloadedIds={downloadedResourceIds} onUpdate={loadResources}/>}
                 {currentPage === 'Profile' && <Profile currentUser={currentUser} onUpdateUser={handleUpdateCurrentUser} />}
                 {currentPage === 'Settings' && <Settings currentUser={currentUser} onUpdateUser={handleUpdateCurrentUser} theme={theme} setTheme={setTheme} />}
-                {currentPage === 'Incidents' && (currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR || currentUser.role === Role.ADMIN) && <Incidents isOnline={isOnline} students={students} setStudents={handleSetStudents} teachers={teachers} setTeachers={handleSetTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={setCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onUpdateAnnouncements={handleNewAnnouncement} guardians={guardians} onUpdateGuardians={handleSetGuardians} onShowSystemMessage={showSystemMessage} onReportAttention={handleNewAttentionReport} />}
+                {currentPage === 'Incidents' && (currentUser.role === Role.COORDINATOR || currentUser.role === Role.RECTOR || currentUser.role === Role.ADMIN) && <Incidents isOnline={isOnline} students={students} setStudents={handleSetStudents} teachers={teachers} setTeachers={handleSetTeachers} currentUser={currentUser as Teacher} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} allAttendanceRecords={attendanceRecords} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} onUpdateIncidents={handleUpdateIncidents} announcements={announcements} onUpdateAnnouncements={handleNewAnnouncement} guardians={guardians} onUpdateGuardians={handleSetGuardians} onShowSystemMessage={showSystemMessage} onReportAttention={handleNewAttentionReport} />}
                 {/* FIX: The 'allUsersMap' was incorrectly typed due to the 'Guardian' type not fully conforming to the 'User' type. The 'Guardian' type in 'types.ts' has been corrected, which resolves this mapping issue. I am also casting the map to the expected type as a safeguard. */}
-                {currentPage === 'ParentPortal' && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={setCitations} incidents={incidents} announcements={announcements} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap as Map<string | number, User>} currentUser={currentUser as Guardian} />}
-                {currentPage === 'StudentPortal' && <StudentPortal loggedInUser={currentUser as Student | Teacher} allStudents={students} teachers={teachers} subjectGrades={subjectGrades} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleSetStudentResult} citations={citations} icfesDrillSettings={icfesDrillSettings}/>}
-                {currentPage === 'Rectory' && (currentUser.role === Role.RECTOR || currentUser.role === Role.ADMIN) && <Rectory students={students} teachers={teachers} announcements={announcements} onUpdateAnnouncements={handleNewAnnouncement} onShowSystemMessage={showSystemMessage} currentUser={currentUser as Teacher} />}
+                {currentPage === 'ParentPortal' && <ParentPortal students={students} teachers={teachers} resources={resources} subjectGrades={subjectGrades} institutionProfile={institutionProfile} citations={citations} onUpdateCitations={handleUpdateCitations} incidents={incidents} announcements={announcements} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap as Map<string | number, User>} currentUser={currentUser as Guardian} />}
+                {currentPage === 'StudentPortal' && <StudentPortal loggedInUser={currentUser as Student | Teacher} allStudents={students} teachers={teachers} subjectGrades={subjectGrades} resources={resources} assessments={assessments} studentResults={studentResults} onAddResult={handleSetStudentResult} citations={citations} incidents={incidents} announcements={announcements} icfesDrillSettings={icfesDrillSettings}/>}
+                {currentPage === 'Rectory' && (currentUser.role === Role.RECTOR || currentUser.role === Role.ADMIN) && <Rectory students={students} teachers={teachers} incidents={incidents} announcements={announcements} onUpdateAnnouncements={handleNewAnnouncement} onShowSystemMessage={showSystemMessage} currentUser={currentUser as Teacher} />}
                 {currentPage === 'InstitutionProfile' && (currentUser.role === Role.RECTOR || currentUser.role === Role.ADMIN || currentUser.role === Role.COORDINATOR) && <InstitutionProfile profile={institutionProfile} setProfile={setInstitutionProfile} />}
                 {currentPage === 'Calificaciones' && <Calificaciones students={students} teachers={teachers} subjectGradesData={subjectGrades} setSubjectGradesData={handleSetSubjectGrades} currentUser={currentUser as Teacher} onShowSystemMessage={showSystemMessage} />}
                 {currentPage === 'Communication' && <Communication currentUser={currentUser as Teacher} students={students} teachers={teachers} guardians={guardians} conversations={conversations} onUpdateConversation={handleUpdateConversation} onCreateConversation={handleCreateConversation} allUsersMap={allUsersMap} />}

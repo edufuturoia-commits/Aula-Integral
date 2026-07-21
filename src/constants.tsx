@@ -176,8 +176,8 @@ export const MOCK_TEACHERS: Teacher[] = [
 ];
 
 export const MOCK_GUARDIANS: Guardian[] = [
-    { id: 'g-1', name: 'Laura Alvarez', avatarUrl: 'https://picsum.photos/seed/laura-a/100/100', role: Role.GUARDIAN, studentIds: [1] },
-    { id: 'g-2', name: 'Marcos Rojas', avatarUrl: 'https://picsum.photos/seed/marcos-r/100/100', role: Role.GUARDIAN, studentIds: [2] },
+    { id: 'g-1', name: 'Laura Alvarez', avatarUrl: 'https://picsum.photos/seed/laura-a/100/100', role: Role.GUARDIAN, studentIds: [1], password: 'password123', passwordChanged: true },
+    { id: 'g-2', name: 'Marcos Rojas', avatarUrl: 'https://picsum.photos/seed/marcos-r/100/100', role: Role.GUARDIAN, studentIds: [2], password: 'password123', passwordChanged: true },
 ];
 
 export const MOCK_ASSESSMENT_DATA: AssessmentData[] = [
@@ -297,24 +297,24 @@ export const SCHOOL_LOCATIONS: string[] = [
 ];
 
 export const GRADES = ["Jardín", "Transición", "1º", "2º", "3º", "4º", "5º", "6º", "7º", "8º", "9º", "10º", "11º"];
-export const GROUPS = ["A", "B", "C", "D", "E"];
+export const GROUPS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
 export const JORNADAS: ('Mañana' | 'Tarde')[] = ['Mañana', 'Tarde'];
 export const ACADEMIC_PERIODS: AcademicPeriod[] = [AcademicPeriod.FIRST, AcademicPeriod.SECOND, AcademicPeriod.THIRD, AcademicPeriod.FOURTH];
 
 export const GRADE_GROUP_MAP: Record<string, string[]> = {
-    "Jardín": ["A", "B"],
-    "Transición": ["A", "B"],
-    "1º": ["A", "B", "C"],
-    "2º": ["A", "B", "C"],
-    "3º": ["A", "B"],
-    "4º": ["A", "B"],
-    "5º": ["A", "B"],
-    "6º": ["A", "B", "C", "D"],
-    "7º": ["A", "B", "C", "D"],
-    "8º": ["A", "B", "C"],
-    "9º": ["A", "B", "C"],
-    "10º": ["A", "B"],
-    "11º": ["A", "B"],
+    "Jardín": GROUPS,
+    "Transición": GROUPS,
+    "1º": GROUPS,
+    "2º": GROUPS,
+    "3º": GROUPS,
+    "4º": GROUPS,
+    "5º": GROUPS,
+    "6º": GROUPS,
+    "7º": GROUPS,
+    "8º": GROUPS,
+    "9º": GROUPS,
+    "10º": GROUPS,
+    "11º": GROUPS,
 };
 
 

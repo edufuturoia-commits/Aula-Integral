@@ -192,7 +192,7 @@ const Profile: React.FC<ProfileProps> = ({ currentUser, onUpdateUser }) => {
     });
   };
 
-  const avatarUrl = 'avatarUrl' in user ? user.avatarUrl : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=005A9C&color=fff`;
+  const avatarUrl = user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=005A9C&color=fff`;
   const userRole = 'role' in user ? user.role : 'Acudiente';
 
   return (

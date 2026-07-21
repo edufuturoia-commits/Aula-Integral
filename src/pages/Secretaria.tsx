@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 import type { Student, Guardian, SubjectGrades, InstitutionProfileData, Teacher, Conversation, Message } from '../types';
 import { Role, DocumentType, Desempeno, AcademicPeriod } from '../types';
 import { GRADES, GROUPS } from '../constants';
@@ -137,10 +137,41 @@ const Secretaria: React.FC<SecretariaProps> = ({ students, setStudents, guardian
             doc.setPage(i);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
-            doc.text('_________________________', pageWidth / 2, pageHeight - 40, { align: 'center' });
-            doc.text(institutionProfile.rector, pageWidth / 2, pageHeight - 35, { align: 'center' });
-            doc.text('Rector(a)', pageWidth / 2, pageHeight - 30, { align: 'center' });
+            doc.setTextColor(40);
+
+            const footerY = pageHeight - 40;
+            const signatureHeight = 20;
+            const signatureWidth = 40;
+
+            // Rector Column (Left or Center)
+            const rectorX = institutionProfile.secretary ? pageWidth / 3 : pageWidth / 2;
+            
+            if (institutionProfile.rectorSignatureUrl) {
+                try {
+                    // Positioned to overlap the line slightly (+2mm) for a natural look
+                    doc.addImage(institutionProfile.rectorSignatureUrl, 'PNG', rectorX - (signatureWidth / 2), footerY - signatureHeight + 2, signatureWidth, signatureHeight);
+                } catch (e) { console.error("Error adding rector signature:", e); }
+            }
+            doc.text('_________________________', rectorX, footerY, { align: 'center' });
+            doc.text(institutionProfile.rector, rectorX, footerY + 5, { align: 'center' });
+            doc.text('Rector(a)', rectorX, footerY + 10, { align: 'center' });
+
+            // Secretary Column (Right)
+            if (institutionProfile.secretary) {
+                const secretaryX = (pageWidth / 3) * 2;
+                if (institutionProfile.secretarySignatureUrl) {
+                    try {
+                        // Positioned to overlap the line slightly (+2mm) for a natural look
+                        doc.addImage(institutionProfile.secretarySignatureUrl, 'PNG', secretaryX - (signatureWidth / 2), footerY - signatureHeight + 2, signatureWidth, signatureHeight);
+                    } catch (e) { console.error("Error adding secretary signature:", e); }
+                }
+                doc.text('_________________________', secretaryX, footerY, { align: 'center' });
+                doc.text(institutionProfile.secretary, secretaryX, footerY + 5, { align: 'center' });
+                doc.text('Secretario(a) Académico(a)', secretaryX, footerY + 10, { align: 'center' });
+            }
+
             doc.setFontSize(8);
+            doc.setTextColor(100);
             doc.text(`Generado el: ${new Date().toLocaleDateString('es-CO')}`, 15, pageHeight - 15);
         }
     };
@@ -191,7 +222,7 @@ const Secretaria: React.FC<SecretariaProps> = ({ students, setStudents, guardian
                 return [gradebook.subject, finalScore !== null ? finalScore.toFixed(2) : 'N/A', desempeno];
             });
 
-        autoTable(doc, {
+        (doc as any).autoTable({
             startY: 85,
             head: [['ASIGNATURA', 'NOTA FINAL', 'DESEMPEÑO']],
             body: studentGrades,

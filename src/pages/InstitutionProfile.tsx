@@ -149,6 +149,7 @@ const InstitutionProfile: React.FC<InstitutionProfileProps> = ({ profile, setPro
                                     <InputField label="Código DANE" name="daneCode" value={formData.daneCode} onChange={handleChange} />
                                     <InputField label="NIT" name="nit" value={formData.nit} onChange={handleChange} />
                                     <InputField label="Rector(a)" name="rector" value={formData.rector} onChange={handleChange} />
+                                    <InputField label="Secretario(a)" name="secretary" value={formData.secretary || ''} onChange={handleChange} />
                                 </>
                             ) : (
                                 <>
@@ -156,6 +157,7 @@ const InstitutionProfile: React.FC<InstitutionProfileProps> = ({ profile, setPro
                                     <InfoRow label="Código DANE" value={profile.daneCode} />
                                     <InfoRow label="NIT" value={profile.nit} />
                                     <InfoRow label="Rector(a)" value={profile.rector} />
+                                    <InfoRow label="Secretario(a)" value={profile.secretary || 'No asignado'} />
                                 </>
                             )}
                             </div>
@@ -202,6 +204,78 @@ const InstitutionProfile: React.FC<InstitutionProfileProps> = ({ profile, setPro
                                         <div className="flex items-center space-x-2">
                                             <div className="w-6 h-6 rounded-full" style={{ backgroundColor: profile.secondaryColor }}></div>
                                             <span className="text-xs">Secundario</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="w-full pt-4 border-t border-gray-100 space-y-4">
+                                    <h4 className="text-sm font-bold text-gray-700 text-center uppercase tracking-wider">Firmas Digitales (PNG)</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="flex flex-col items-center space-y-2">
+                                            <p className="text-[10px] font-medium text-gray-500">Rector(a)</p>
+                                            <div className="relative group">
+                                                <div className="w-full h-16 border-2 border-dashed rounded bg-gray-50 flex items-center justify-center overflow-hidden">
+                                                    {formData.rectorSignatureUrl ? (
+                                                        <img src={formData.rectorSignatureUrl} alt="Firma Rector" className="max-h-full object-contain" />
+                                                    ) : (
+                                                        <span className="text-[10px] text-gray-400">Sin firma</span>
+                                                    )}
+                                                </div>
+                                                {isEditing && (
+                                                    <button 
+                                                        onClick={() => {
+                                                            const input = document.createElement('input');
+                                                            input.type = 'file';
+                                                            input.accept = 'image/png';
+                                                            input.onchange = (e: any) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) {
+                                                                    const reader = new FileReader();
+                                                                    reader.onload = (ev) => setFormData(prev => ({ ...prev, rectorSignatureUrl: ev.target?.result as string }));
+                                                                    reader.readAsDataURL(file);
+                                                                }
+                                                            };
+                                                            input.click();
+                                                        }} 
+                                                        className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded"
+                                                    >
+                                                        <CameraIcon className="h-4 w-4 text-white" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-center space-y-2">
+                                            <p className="text-[10px] font-medium text-gray-500">Secretario(a)</p>
+                                            <div className="relative group">
+                                                <div className="w-full h-16 border-2 border-dashed rounded bg-gray-50 flex items-center justify-center overflow-hidden">
+                                                    {formData.secretarySignatureUrl ? (
+                                                        <img src={formData.secretarySignatureUrl} alt="Firma Secretaria" className="max-h-full object-contain" />
+                                                    ) : (
+                                                        <span className="text-[10px] text-gray-400">Sin firma</span>
+                                                    )}
+                                                </div>
+                                                {isEditing && (
+                                                    <button 
+                                                        onClick={() => {
+                                                            const input = document.createElement('input');
+                                                            input.type = 'file';
+                                                            input.accept = 'image/png';
+                                                            input.onchange = (e: any) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) {
+                                                                    const reader = new FileReader();
+                                                                    reader.onload = (ev) => setFormData(prev => ({ ...prev, secretarySignatureUrl: ev.target?.result as string }));
+                                                                    reader.readAsDataURL(file);
+                                                                }
+                                                            };
+                                                            input.click();
+                                                        }} 
+                                                        className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded"
+                                                    >
+                                                        <CameraIcon className="h-4 w-4 text-white" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

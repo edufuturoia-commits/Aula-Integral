@@ -1,5 +1,5 @@
-import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades, Guardian, Lesson, AttentionReport } from './types';
-import { MOCK_STUDENTS, MOCK_TEACHERS, MOCK_RESOURCES, MOCK_STUDENT_ASSESSMENT_RESULTS, MOCK_SUBJECT_GRADES, MOCK_ANNOUNCEMENTS, MOCK_GUARDIANS } from './constants';
+import type { Incident, Resource, AttendanceRecord, Announcement, Student, Teacher, Assessment, StudentAssessmentResult, SubjectGrades, Guardian, Lesson, AttentionReport, Citation } from './types';
+import { MOCK_STUDENTS, MOCK_TEACHERS, MOCK_RESOURCES, MOCK_STUDENT_ASSESSMENT_RESULTS, MOCK_SUBJECT_GRADES, MOCK_ANNOUNCEMENTS, MOCK_GUARDIANS, MOCK_CITATIONS } from './constants';
 import { Role } from './types';
 
 // --- In-memory store to simulate database ---
@@ -15,6 +15,7 @@ let subjectGrades: SubjectGrades[] = MOCK_SUBJECT_GRADES;
 let guardians: Guardian[] = MOCK_GUARDIANS;
 let lessons: Lesson[] = []; // For Tutor Mode history
 let attentionReports: AttentionReport[] = [];
+let citations: Citation[] = MOCK_CITATIONS;
 
 
 // --- Password Patch for Demo Security ---
@@ -205,5 +206,21 @@ export const updateLesson = (lesson: Lesson): Promise<void> => {
     if (index > -1) {
         lessons[index] = lesson;
     }
+    return simulateApiCall(undefined);
+};
+
+// --- Citation Functions ---
+export const getCitations = (): Promise<Citation[]> => simulateApiCall(citations);
+export const addCitation = (citation: Citation): Promise<Citation> => {
+    citations.unshift(citation);
+    return simulateApiCall(citation);
+};
+export const updateCitation = (citation: Citation): Promise<Citation> => {
+    const index = citations.findIndex(c => c.id === citation.id);
+    if (index > -1) citations[index] = citation;
+    return simulateApiCall(citation);
+};
+export const deleteCitation = (id: string): Promise<void> => {
+    citations = citations.filter(c => c.id !== id);
     return simulateApiCall(undefined);
 };

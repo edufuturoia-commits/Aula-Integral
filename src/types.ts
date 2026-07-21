@@ -26,7 +26,7 @@ export enum ResourceType {
 export enum CitationStatus {
   PENDING = 'Pendiente',
   CONFIRMED = 'Confirmada',
-  COMPLETED = 'Realizada',
+  COMPLETED = 'Cumplida',
   CANCELLED = 'Cancelada',
   RESCHEDULE_REQUESTED = 'Reprogramación Solicitada',
 }
@@ -128,6 +128,7 @@ export interface Student extends User {
   documentNumber?: string;
   address?: string;
   jornada?: 'Mañana' | 'Tarde';
+  isActive?: boolean;
 }
 
 export interface Certification {
@@ -238,7 +239,7 @@ export interface SubjectGrades {
     grade: string;
     group: string;
     period: AcademicPeriod;
-    teacherId: string;
+    teacherId: string | number;
     gradeItems: GradeItem[];
     scores: Score[];
     observations: Record<string | number, string>;
@@ -286,7 +287,7 @@ export interface Announcement {
   id: string;
   title: string;
   content: string;
-  recipients: 'all' | 'all_teachers' | 'all_parents' | string; // string for specific groups
+  recipients: 'all' | 'teachers' | 'parents' | 'students' | 'directors' | 'teachers_directors' | string;
   timestamp: string;
   sentBy: string;
 }
@@ -296,10 +297,13 @@ export interface InstitutionProfileData {
   daneCode: string;
   nit: string;
   rector: string;
+  secretary?: string;
   address: string;
   phone: string;
   email: string;
   logoUrl: string;
+  rectorSignatureUrl?: string;
+  secretarySignatureUrl?: string;
   primaryColor: string;
   secondaryColor: string;
 }

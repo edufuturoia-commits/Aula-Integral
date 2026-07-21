@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { AttentionReport, Student, Teacher, Conversation, Message, Guardian, Diagnosis, SessionLog, SessionProgress, InstitutionProfileData } from '../types';
 import { Role, AttentionReportStatus, DiagnosisArea } from '../types';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 
 interface PsychologyProps {
     reports: AttentionReport[];
@@ -383,7 +383,7 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
             doc.setFont('helvetica', 'bold');
             doc.text('DIAGNÓSTICOS / HIPÓTESIS', 15, y);
             y += 8;
-            autoTable(doc, {
+            (doc as any).autoTable({
                 startY: y,
                 head: [['Fecha', 'Diagnóstico/Hipótesis', 'Fuente', 'Autor']],
                 body: selectedReport.diagnoses.map(d => [
@@ -406,7 +406,7 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
             doc.setFont('helvetica', 'bold');
             doc.text('SEGUIMIENTO DE SESIONES', 15, y);
             y += 8;
-            autoTable(doc, {
+            (doc as any).autoTable({
                 startY: y,
                 head: [['Fecha', 'Tipo', 'Progreso', 'Notas']],
                 body: selectedReport.sessions.map(s => [
@@ -512,9 +512,9 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
                         <div className="space-y-4">
                             <Accordion title="Historial Psicológico" isOpen={openAccordion === 'historial'} onToggle={() => setOpenAccordion(openAccordion === 'historial' ? null : 'historial')}>
                                <div className="space-y-4">
-                                    <EditableField label="Antecedentes Familiares y Desarrollo" value={selectedReport.familyBackground} onSave={() => handleUpdateField('familyBackground')} isEditing={editingField?.field === 'familyBackground'} onStartEdit={() => setEditingField({ field: 'familyBackground', value: selectedReport.familyBackground || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status === 'CLOSED'} />
-                                    <EditableField label="Antecedentes Escolares" value={selectedReport.schoolBackground} onSave={() => handleUpdateField('schoolBackground')} isEditing={editingField?.field === 'schoolBackground'} onStartEdit={() => setEditingField({ field: 'schoolBackground', value: selectedReport.schoolBackground || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status === 'CLOSED'}/>
-                                    <EditableField label="Antecedentes Médicos" value={selectedReport.medicalBackground} onSave={() => handleUpdateField('medicalBackground')} isEditing={editingField?.field === 'medicalBackground'} onStartEdit={() => setEditingField({ field: 'medicalBackground', value: selectedReport.medicalBackground || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status === 'CLOSED'}/>
+                                    <EditableField label="Antecedentes Familiares y Desarrollo" value={selectedReport.familyBackground} onSave={() => handleUpdateField('familyBackground')} isEditing={editingField?.field === 'familyBackground'} onStartEdit={() => setEditingField({ field: 'familyBackground', value: selectedReport.familyBackground || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status === AttentionReportStatus.CLOSED} />
+                                    <EditableField label="Antecedentes Escolares" value={selectedReport.schoolBackground} onSave={() => handleUpdateField('schoolBackground')} isEditing={editingField?.field === 'schoolBackground'} onStartEdit={() => setEditingField({ field: 'schoolBackground', value: selectedReport.schoolBackground || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status === AttentionReportStatus.CLOSED}/>
+                                    <EditableField label="Antecedentes Médicos" value={selectedReport.medicalBackground} onSave={() => handleUpdateField('medicalBackground')} isEditing={editingField?.field === 'medicalBackground'} onStartEdit={() => setEditingField({ field: 'medicalBackground', value: selectedReport.medicalBackground || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status === AttentionReportStatus.CLOSED}/>
                                </div>
                             </Accordion>
                             
@@ -527,7 +527,7 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
                                                 <p className="text-sm text-gray-700 dark:text-gray-300 break-words">{diag.text}</p>
                                                 <p className="text-xs text-gray-500 mt-1">Fuente: {diag.source} | Por: {allUsersMap.get(diag.authorId)?.name} el {new Date(diag.timestamp).toLocaleDateString()}</p>
                                             </div>
-                                            {selectedReport.status !== 'CLOSED' && (
+                                            {selectedReport.status !== AttentionReportStatus.CLOSED && (
                                                 <div className="flex gap-2 flex-shrink-0 ml-2">
                                                     <button onClick={() => setEditingDiagnosis(diag)} className="text-xs text-blue-600 hover:underline font-medium">Editar</button>
                                                     <button onClick={() => handleDeleteDiagnosis(diag.id)} className="text-xs text-red-600 hover:underline font-medium">Eliminar</button>
@@ -537,13 +537,13 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
                                     </div>
                                 ))}
                                 {(isAddingDiagnosis || editingDiagnosis) && <DiagnosisForm currentUser={currentUser} initialDiagnosis={editingDiagnosis} onSave={handleSaveDiagnosis} onCancel={() => { setIsAddingDiagnosis(false); setEditingDiagnosis(null); }} />}
-                                {selectedReport.status !== 'CLOSED' && !isAddingDiagnosis && !editingDiagnosis && (
+                                {selectedReport.status !== AttentionReportStatus.CLOSED && !isAddingDiagnosis && !editingDiagnosis && (
                                     <button onClick={() => setIsAddingDiagnosis(true)} className="mt-2 text-sm font-semibold text-primary dark:text-secondary hover:underline">+ Añadir Diagnóstico</button>
                                 )}
                             </Accordion>
 
                              <Accordion title="Plan de Intervención" isOpen={openAccordion === 'intervencion'} onToggle={() => setOpenAccordion(openAccordion === 'intervencion' ? null : 'intervencion')}>
-                               <EditableField label="Estrategias y Objetivos" value={selectedReport.interventionPlan} onSave={() => handleUpdateField('interventionPlan')} isEditing={editingField?.field === 'interventionPlan'} onStartEdit={() => setEditingField({ field: 'interventionPlan', value: selectedReport.interventionPlan || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status === 'CLOSED'} />
+                               <EditableField label="Estrategias y Objetivos" value={selectedReport.interventionPlan} onSave={() => handleUpdateField('interventionPlan')} isEditing={editingField?.field === 'interventionPlan'} onStartEdit={() => setEditingField({ field: 'interventionPlan', value: selectedReport.interventionPlan || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status === AttentionReportStatus.CLOSED} />
                             </Accordion>
 
                              <Accordion title="Seguimiento de Sesiones" isOpen={openAccordion === 'sesiones'} onToggle={() => setOpenAccordion(openAccordion === 'sesiones' ? null : 'sesiones')}>
@@ -555,7 +555,7 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
                                                 <p className="text-sm text-gray-700 dark:text-gray-300 break-words mt-1">{sess.notes}</p>
                                                 <p className="text-xs text-gray-500 mt-2"><strong>Progreso:</strong> {sess.progressIndicator} | <strong>Por:</strong> {allUsersMap.get(sess.authorId)?.name}</p>
                                             </div>
-                                            {selectedReport.status !== 'CLOSED' && (
+                                            {selectedReport.status !== AttentionReportStatus.CLOSED && (
                                                 <div className="flex gap-2 flex-shrink-0 ml-2">
                                                     <button onClick={() => setEditingSession(sess)} className="text-xs text-blue-600 hover:underline font-medium">Editar</button>
                                                     <button onClick={() => handleDeleteSession(sess.id)} className="text-xs text-red-600 hover:underline font-medium">Eliminar</button>
@@ -565,13 +565,13 @@ const Psychology: React.FC<PsychologyProps> = ({ reports, onUpdateReport, studen
                                      </div>
                                 ))}
                                 {(isAddingSession || editingSession) && <SessionForm currentUser={currentUser} initialSession={editingSession} onSave={handleSaveSession} onCancel={() => { setIsAddingSession(false); setEditingSession(null); }} />}
-                                {selectedReport.status !== 'CLOSED' && !isAddingSession && !editingSession && (
+                                {selectedReport.status !== AttentionReportStatus.CLOSED && !isAddingSession && !editingSession && (
                                     <button onClick={() => setIsAddingSession(true)} className="mt-2 text-sm font-semibold text-primary dark:text-secondary hover:underline">+ Registrar Sesión</button>
                                 )}
                             </Accordion>
 
                              <Accordion title="Cierre del Caso" isOpen={openAccordion === 'cierre'} onToggle={() => setOpenAccordion(openAccordion === 'cierre' ? null : 'cierre')}>
-                                <EditableField label="Resumen de Cierre y Recomendaciones" value={selectedReport.closingSummary} onSave={() => handleUpdateField('closingSummary')} isEditing={editingField?.field === 'closingSummary'} onStartEdit={() => setEditingField({ field: 'closingSummary', value: selectedReport.closingSummary || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status !== 'IN_PROGRESS'}/>
+                                <EditableField label="Resumen de Cierre y Recomendaciones" value={selectedReport.closingSummary} onSave={() => handleUpdateField('closingSummary')} isEditing={editingField?.field === 'closingSummary'} onStartEdit={() => setEditingField({ field: 'closingSummary', value: selectedReport.closingSummary || '' })} onCancel={() => setEditingField(null)} onChange={(e) => setEditingField(prev => prev ? { ...prev, value: e.target.value } : null)} editingValue={editingField?.value || ''} disabled={selectedReport.status !== AttentionReportStatus.IN_PROGRESS}/>
                             </Accordion>
 
                              <Accordion title="Canal de Comunicación Confidencial" isOpen={openAccordion === 'comunicacion'} onToggle={() => setOpenAccordion(openAccordion === 'comunicacion' ? null : 'comunicacion')}>
